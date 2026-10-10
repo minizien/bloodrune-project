@@ -352,7 +352,7 @@
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           const user = userCredential.user;
 
-          // บันทึกเฉพาะข้อมูลโปรไฟล์ (ตัดฟิลด์ password ออกเพื่อความปลอดภัยสูงสุด)[cite: 4]
+          // บันทึกเฉพาะข้อมูลโปรไฟล์ (ตัดฟิลด์ password ออกเพื่อความปลอดภัยสูงสุด)
           await setDoc(doc(db, "users", user.uid), {
             RoleUser: "member",
             age: Number(age),
