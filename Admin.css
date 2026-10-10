@@ -18,25 +18,29 @@ body {
 .admin-header {
   background: linear-gradient(90deg, #180505 0%, #0d0d0d 100%);
   border-bottom: 2px solid #ff2a2a;
-  padding: 15px 30px;
+  padding: 15px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .admin-brand h2 {
   color: #ff2a2a;
   letter-spacing: 2px;
+  font-size: 1.25rem;
 }
 
 .btn-lobby {
   background: transparent;
   color: #ffffff;
   border: 1px solid #ff2a2a;
-  padding: 8px 16px;
+  padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
   transition: 0.3s;
+  font-size: 0.9rem;
 }
 
 .btn-lobby:hover {
@@ -46,15 +50,17 @@ body {
 .admin-container {
   display: flex;
   flex: 1;
+  flex-direction: row;
 }
 
 .admin-sidebar {
-  width: 240px;
+  width: 220px;
   background: #121212;
   border-right: 1px solid #222;
   display: flex;
   flex-direction: column;
   padding-top: 10px;
+  flex-shrink: 0;
 }
 
 .nav-tab {
@@ -62,9 +68,9 @@ body {
   color: #aaaaaa;
   border: none;
   border-left: 4px solid transparent;
-  padding: 15px 20px;
+  padding: 14px 18px;
   text-align: left;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: 0.2s;
@@ -78,8 +84,10 @@ body {
 
 .admin-content {
   flex: 1;
-  padding: 25px;
+  padding: 20px;
   background: #090909;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .tab-content {
@@ -93,26 +101,29 @@ body {
 .tab-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 20px;
   border-bottom: 1px solid #222;
   padding-bottom: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .tab-header h3 {
   color: #ffffff;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
 }
 
 .btn-primary {
   background: #ff2a2a;
   color: #fff;
   border: none;
-  padding: 8px 18px;
+  padding: 8px 16px;
   border-radius: 4px;
   font-weight: bold;
   cursor: pointer;
   transition: 0.2s;
+  font-size: 0.9rem;
 }
 
 .btn-primary:hover {
@@ -136,15 +147,15 @@ body {
 
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .card {
   background: #141414;
   border: 1px solid #2a2a2a;
   border-radius: 8px;
-  padding: 18px;
+  padding: 16px;
   position: relative;
   box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
@@ -162,74 +173,70 @@ body {
 .status-active { background: #1e7e34; color: #fff; }
 
 .card-title {
-  font-size: 1.2rem;
-  margin-bottom: 10px;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
   color: #fff;
 }
 
 .card-info {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #aaa;
-  margin-bottom: 15px;
-  line-height: 1.5;
+  margin-bottom: 12px;
+  line-height: 1.4;
 }
 
 .card-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .news-grid {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
 }
 
 .news-card {
   background: #141414;
   border: 1px solid #222;
   border-left: 4px solid #ff2a2a;
-  padding: 15px;
+  padding: 12px;
   border-radius: 4px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-}
-
-.news-info h4 {
-  color: #fff;
-  font-size: 1.1rem;
-}
-
-.news-date {
-  font-size: 0.85rem;
-  color: #888;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .update-box {
   background: #141414;
   border: 2px dashed #ff2a2a;
-  padding: 40px;
+  padding: 30px 15px;
   text-align: center;
   border-radius: 8px;
-  margin-top: 30px;
+  margin-top: 20px;
 }
 
 .table-responsive {
+  width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .user-table {
   width: 100%;
+  min-width: 550px;
   border-collapse: collapse;
   background: #141414;
 }
 
 .user-table th, .user-table td {
-  padding: 12px 15px;
+  padding: 10px 12px;
   text-align: left;
   border-bottom: 1px solid #222;
+  font-size: 0.9rem;
 }
 
 .user-table th {
@@ -251,6 +258,7 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s;
+  padding: 10px;
 }
 
 .modal-overlay.open {
@@ -261,10 +269,10 @@ body {
 .modal-card {
   background: #141414;
   border: 1px solid #ff2a2a;
-  width: 90%;
+  width: 100%;
   max-width: 700px;
   border-radius: 8px;
-  padding: 25px;
+  padding: 20px;
   position: relative;
   max-height: 90vh;
   overflow-y: auto;
@@ -272,23 +280,24 @@ body {
 
 .close-modal {
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: 12px;
+  right: 12px;
   background: transparent;
   border: none;
   color: #aaa;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   cursor: pointer;
+  padding: 4px;
 }
 
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .form-group label {
   display: block;
-  font-size: 0.9rem;
-  margin-bottom: 5px;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
   color: #ddd;
 }
 
@@ -299,35 +308,37 @@ body {
   border: 1px solid #333;
   border-radius: 4px;
   color: #fff;
+  font-size: 0.95rem;
 }
 
 .role-row, .question-row {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 6px;
+  margin-bottom: 6px;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 8px;
+  margin-top: 15px;
+  flex-wrap: wrap;
 }
 
 .app-item {
   background: #090909;
   border: 1px solid #222;
   border-left: 4px solid #ff2a2a;
-  padding: 15px;
-  margin-bottom: 15px;
+  padding: 12px;
+  margin-bottom: 12px;
   border-radius: 6px;
 }
 
 .badge-status {
   display: inline-block;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 12px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: bold;
 }
 
@@ -337,10 +348,59 @@ body {
 .status-approved { background: #28a745; color: #fff; }
 .status-rejected { background: #333; color: #aaa; }
 
-.interview-box {
-  background: #1a1a1a;
-  border: 1px dashed #f0ad4e;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 4px;
+/* ==========================================
+   📱 RESPONSIVE MEDIA QUERIES (สำหรับมือถือและแท็บเล็ต)
+   ========================================== */
+@media (max-width: 768px) {
+  .admin-container {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid #222;
+    padding-top: 0;
+  }
+
+  .nav-tab {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+  }
+
+  .nav-tab:hover, .nav-tab.active {
+    border-left-color: transparent;
+    border-bottom-color: #ff2a2a;
+  }
+
+  .admin-content {
+    padding: 15px 10px;
+  }
+
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-card {
+    padding: 15px;
+    max-height: 95vh;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+
+  #projectWindow3Modal .modal-card > div[style*="grid-template-columns"] {
+    display: flex !important;
+    flex-direction: column;
+  }
 }
