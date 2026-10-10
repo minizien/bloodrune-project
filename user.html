@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BR.PJ - User Status & Portal</title>
+    <link rel="stylesheet" href="user.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="top-nav">
+      <div style="display: flex; align-items: center; gap: 15px">
+        <button class="hamburger-btn" onclick="toggleSidebar()">☰ เมนู</button>
+      </div>
+      <h1 class="nav-title">USER PORTAL & STATUS</h1>
+      <div style="width: 100px"></div>
+    </header>
+
+    <div id="sideDrawer" class="side-drawer">
+      <button class="close-drawer-btn" onclick="toggleSidebar()">✕</button>
+      <nav class="drawer-nav">
+        <a href="index.html" class="drawer-item">LOBBY</a>
+        <a href="News.html" class="drawer-item">NEWS</a>
+        <a href="Store.html" class="drawer-item">STORE</a>
+        <a href="Project.html" class="drawer-item">PROJECT</a>
+      </nav>
+    </div>
+    <div id="drawerOverlay" class="drawer-overlay" onclick="toggleSidebar()"></div>
+
+    <main class="project-container">
+      <section class="user-profile-banner">
+        <div class="profile-info-box">
+          <h3 id="userWelcomeName">กำลังตรวจสอบการเข้าสู่ระบบ...</h3>
+          <p id="userEmailText" style="color: #aaa; font-size: 0.9rem; margin-top: 4px"></p>
+        </div>
+      </section>
+
+      <div class="user-tabs-nav">
+        <button class="user-tab-btn active" onclick="switchUserTab('applicationsSection', this)">
+          📋 ติดตามสถานะการสมัคร
+        </button>
+        <button class="user-tab-btn" onclick="switchUserTab('acceptedProjectsSection', this)">
+          🚀 ส่งเอกสารรอบ 2 และโปรเจกต์
+        </button>
+      </div>
+
+      <section id="applicationsSection" class="user-section-content active">
+        <h2>สถานะการสมัครและพิจารณาบทบาท</h2>
+        <div id="myApplicationsList" class="my-apps-grid">
+          <div class="loading-state"><div class="spinner"></div><p>Loading Applications...</p></div>
+        </div>
+      </section>
+
+      <section id="acceptedProjectsSection" class="user-section-content">
+        <h2>การส่งเอกสารรอบ 2 และพื้นที่โปรเจกต์</h2>
+        <div id="myAcceptedProjectsList" class="my-apps-grid">
+          <div class="loading-state"><div class="spinner"></div><p>Loading Accepted Projects...</p></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- MODAL STAGE 2 -->
+    <div id="stage2Modal" class="modal-overlay">
+      <div class="modal-card" style="max-width: 650px">
+        <button class="close-modal" onclick="closeStage2Modal()">✕</button>
+        <h3 style="color: #17a2b8; margin-bottom: 5px">📝 ส่งหรือแก้ไขเอกสารรอบ 2</h3>
+        <p id="s2ModalSub" style="color: #aaa; font-size: 0.85rem; margin-bottom: 10px"></p>
+        <form id="stage2UserForm" onsubmit="submitStage2Answers(event)">
+          <div id="stage2QuestionsInputsContainer"></div>
+          <div class="modal-actions" style="margin-top: 20px">
+            <button type="submit" class="btn-primary-action" style="background: #17a2b8">📤 ส่งเอกสารรอบ 2 (ส่งกลับหาแอดมิน)</button>
+            <button type="button" class="btn-secondary-action" onclick="closeStage2Modal()">ยกเลิก</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL REQUEST EDIT (1.9.5) -->
+    <div id="requestEditModal" class="modal-overlay">
+      <div class="modal-card">
+        <button class="close-modal" onclick="closeRequestEditModal()">✕</button>
+        <h3 style="color: #f0ad4e; margin-bottom: 5px">🔄 ขอแก้ไขเอกสารรอบ 2 (ขั้นที่ 1.9.5)</h3>
+        <form onsubmit="submitRequestEdit(event)">
+          <div class="form-group-input">
+            <label>เหตุผลในการขอแก้ไข:</label>
+            <textarea id="editReasonInput" rows="3" required placeholder="ระบุเหตุผล..."></textarea>
+          </div>
+          <div class="modal-actions" style="margin-top: 20px">
+            <button type="submit" class="btn-primary-action" style="background: #f0ad4e; color: #000">📤 ส่งคำขอแก้ไข</button>
+            <button type="button" class="btn-secondary-action" onclick="closeRequestEditModal()">ยกเลิก</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL PROJECT NEWS -->
+    <div id="projectNewsModal" class="modal-overlay">
+      <div class="modal-card" style="max-width: 700px">
+        <button class="close-modal" onclick="closeProjectNewsModal()">✕</button>
+        <h3 id="pNewsModalTitle" style="color: #28a745; margin-bottom: 5px">📢 ประกาศภายในโปรเจกต์</h3>
+        <div id="projectNewsContentList" style="display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto;"></div>
+      </div>
+    </div>
+
+    <script>
+      function toggleSidebar() {
+        document.getElementById("sideDrawer").classList.toggle("open");
+        document.getElementById("drawerOverlay").classList.toggle("open");
+      }
+      window.switchUserTab = function (sectionId, btnElement) {
+        document.querySelectorAll(".user-section-content").forEach((sec) => sec.classList.remove("active"));
+        document.querySelectorAll(".user-tab-btn").forEach((btn) => btn.classList.remove("active"));
+        document.getElementById(sectionId).classList.add("active");
+        btnElement.classList.add("active");
+      };
+    </script>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        onSnapshot,
+        doc,
+        updateDoc,
+        getDoc,
+      } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyA-SB3kOtVOK0xwEt2xjF6JJHZKPYhNURY",
+        authDomain: "bloodrune-project.firebaseapp.com",
+        projectId: "bloodrune-project",
+        storageBucket: "bloodrune-project.firebasestorage.app",
+        messagingSenderId: "394744755352",
+        appId: "1:394744755352:web:0af156b7f8c888dc164ced",
+        measurementId: "G-B6BX636YH3",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+
+      let currentUid = "N/A";
+      let currentEmail = "";
+      let currentName = "ผู้ใช้งานทั่วไป";
+      let currentProjectsData = [];
+      let activeStage2Target = null;
+      let activeRequestEditTarget = null;
+
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          alert("⚠️ กรุณาเข้าสู่ระบบก่อนใช้งาน");
+          window.location.href = "login-signin.html";
+          return;
+        }
+        currentUid = user.uid;
+        currentEmail = user.email || "";
+
+        try {
+          const userDocSnap = await getDoc(doc(db, "users", currentUid));
+          if (userDocSnap.exists()) {
+            const uData = userDocSnap.data();
+            currentName = uData.nickname || uData.name || currentEmail.split("@")[0];
+          } else {
+            const localData = JSON.parse(localStorage.getItem("userData") || "{}");
+            currentName = localData.nickname || currentEmail.split("@")[0];
+          }
+        } catch (e) {
+          currentName = currentEmail.split("@")[0];
+        }
+
+        document.getElementById("userWelcomeName").innerText = `👋 สวัสดีคุณ: ${currentName}`;
+        document.getElementById("userEmailText").innerText = `UID: ${currentUid} | Email: ${currentEmail}`;
+
+        initUserPortal();
+      });
+
+      function renderFirstRoundAnswers(appItem) {
+        let html = "";
+        if (appItem.answers && typeof appItem.answers === "object") {
+          html += `<div style="background: #181818; padding: 12px; border-radius: 6px; margin-top: 10px; border: 1px solid #333;">`;
+          html += `<p style="color: #ff4d4d; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px;">📋 ข้อมูลที่สมัครไว้ (รอบแรก):</p>`;
+          for (const [key, val] of Object.entries(appItem.answers)) {
+            html += `<p style="color: #ccc; font-size: 0.85rem; margin: 3px 0;">• <strong>${key}:</strong> ${val !== undefined && val !== null ? val : "-"}</p>`;
+          }
+          html += `</div>`;
+        }
+        return html;
+      }
+
+      function renderStage2Answers(appItem) {
+        let html = "";
+        if (appItem.stage2Answers && typeof appItem.stage2Answers === "object") {
+          html += `<div style="background: #181818; padding: 12px; border-radius: 6px; margin-top: 10px; border: 1px solid #333;">`;
+          html += `<p style="color: #17a2b8; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px;">📋 ข้อมูลรอบที่ 2 ที่ส่ง:</p>`;
+          for (const [key, val] of Object.entries(appItem.stage2Answers)) {
+            html += `<p style="color: #ccc; font-size: 0.85rem; margin: 3px 0;">• <strong>${key}:</strong> ${val !== undefined && val !== null ? val : "-"}</p>`;
+          }
+          html += `</div>`;
+        }
+        return html;
+      }
+
+      function initUserPortal() {
+        onSnapshot(collection(db, "projects"), (snapshot) => {
+          const containerApps = document.getElementById("myApplicationsList");
+          const containerAccepted = document.getElementById("myAcceptedProjectsList");
+
+          containerApps.innerHTML = "";
+          containerAccepted.innerHTML = "";
+          currentProjectsData = [];
+
+          let userAppsList = [];
+          let acceptedAppsList = [];
+
+          snapshot.forEach((docSnap) => {
+            const proj = { firebaseId: docSnap.id, ...docSnap.data() };
+            currentProjectsData.push(proj);
+
+            if (proj.applications && Array.isArray(proj.applications)) {
+              proj.applications.forEach((appItem, appIndex) => {
+                const matchUid = appItem.uid && appItem.uid === currentUid;
+                const matchEmail = appItem.accountEmail && appItem.accountEmail === currentEmail;
+
+                if (matchUid || matchEmail) {
+                  const fullItem = { projectData: proj, appIndex: appIndex, appDetails: appItem };
+                  const st = appItem.status || "pending";
+
+                  userAppsList.push(fullItem);
+
+                  if ([
+                    "passed",
+                    "stage2_submitted",
+                    "revision_requested",
+                    "edit_requested",
+                    "edit_allowed",
+                    "approved"
+                  ].includes(st)) {
+                    acceptedAppsList.push(fullItem);
+                  }
+                }
+              });
+            }
+          });
+
+          // แสดงผลฝั่งแท็บ 1 (ติดตามสถานะการสมัคร)
+          if (userAppsList.length === 0) {
+            containerApps.innerHTML = `<div style="padding: 40px; text-align: center;"><p style="color: #aaa;">📭 ไม่พบประวัติการสมัครเข้าร่วมโปรเจกต์</p></div>`;
+          } else {
+            userAppsList.forEach((item) => {
+              const status = item.appDetails.status || "pending";
+              const proj = item.projectData;
+              const appItem = item.appDetails;
+
+              let statusText = "⏳ 1. ยืนสมัคร (รอตรวจสอบ)";
+              if (status === "interview") statusText = `📅 1.1 สัมภาษณ์: ${appItem.interviewDate || "-"}`;
+              else if (status === "rejected") statusText = "❌ ไม่ผ่านการคัดเลือก";
+              else if (["passed", "revision_requested", "edit_allowed"].includes(status)) statusText = "🎉 พิจารณาบทบาทแล้ว / อนุญาตให้แก้ไขเอกสาร";
+              else if (status === "stage2_submitted") statusText = "⏳ ส่งเอกสารรอบ 2 แล้ว (รอแอดมินตรวจสอบ)";
+              else if (status === "approved") statusText = `🎉 เข้าสู่โปรเจกต์แล้ว (${appItem.assignedRole || "ทีมงาน"})`;
+
+              const card = document.createElement("div");
+              card.className = "app-status-card";
+              card.innerHTML = `
+                <div class="app-card-header"><span class="app-proj-name">${proj.name}</span><span class="badge-status">${statusText}</span></div>
+                <div class="app-card-body">${renderFirstRoundAnswers(appItem)}</div>
+              `;
+              containerApps.appendChild(card);
+            });
+          }
+
+          // แสดงผลฝั่งแท็บ 2 (ส่งเอกสารรอบ 2 และพื้นที่โปรเจกต์ - แบบเต็มรูปแบบเหมือนอดีต)
+          if (acceptedAppsList.length === 0) {
+            containerAccepted.innerHTML = `<div style="padding: 40px; text-align: center;"><p style="color: #aaa;">🔒 ยังไม่มีโปรเจกต์ที่ผ่านเข้าสู่ขั้นตอนที่ 2 หรือ 3</p></div>`;
+          } else {
+            acceptedAppsList.forEach((item) => {
+              const status = item.appDetails.status;
+              const proj = item.projectData;
+              const appItem = item.appDetails;
+
+              let actionAreaHtml = "";
+              let statusBadge = "";
+
+              const stage2DescHtml = proj.stage2Description ? `
+                <div style="background: #111; padding: 10px; border-left: 3px solid #17a2b8; margin: 10px 0; border-radius: 4px;">
+                  <p style="color: #17a2b8; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;">📌 คำอธิบาย / คำแนะนำเอกสารฉบับที่ 2:</p>
+                  <p style="color: #ccc; font-size: 0.85rem;">${proj.stage2Description}</p>
+                </div>
+              ` : "";
+
+              if (["passed", "revision_requested", "edit_allowed"].includes(status)) {
+                statusBadge = '<span class="badge-status" style="background: #f0ad4e; color: #000; font-weight: bold;">รอบที่ 2: กรุณาส่งหรือแก้ไขเอกสารรอบ 2</span>';
+                actionAreaHtml = `
+                  ${stage2DescHtml}
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+                    <button class="btn-action-floating btn-stage2" onclick="openStage2Modal('${proj.firebaseId}', ${item.appIndex})">📝 กรอก/แก้ไขเอกสารรอบ 2</button>
+                  </div>
+                `;
+              } else if (status === "stage2_submitted") {
+                statusBadge = '<span class="badge-status" style="background: #17a2b8; color: #fff;">⏳ ส่งเอกสารรอบ 2 แล้ว (รอแอดมินตรวจสอบ)</span>';
+                actionAreaHtml = `${stage2DescHtml} ${renderStage2Answers(appItem)}`;
+              } else if (status === "edit_requested") {
+                statusBadge = '<span class="badge-status" style="background: #f0ad4e; color: #000;">🔄 ส่งคำขอแก้ไขแล้ว (รอแอดมินอนุมัติ)</span>';
+                actionAreaHtml = `${stage2DescHtml} ${renderStage2Answers(appItem)}`;
+              } else if (status === "approved") {
+                statusBadge = `<span class="badge-status" style="background: #28a745; color: #fff;">🎉 รอบ 3: สมาชิกอย่างเป็นทางการ (${appItem.assignedRole || "สมาชิก"})</span>`;
+                actionAreaHtml = `
+                  ${stage2DescHtml}
+                  ${renderStage2Answers(appItem)}
+                  <div style="background: #181818; padding: 10px; border-radius: 6px; margin: 10px 0; border: 1px solid #333;">
+                    <p style="color: #28a745; font-size: 0.85rem; font-weight: bold;">🔒 บทบาทของคุณถูกล็อค (${appItem.assignedRole || "สมาชิก"}) และอนุมัติอย่างเป็นทางการแล้ว ไม่สามารถขอเปลี่ยนบทบาทได้</p>
+                  </div>
+                  <div style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn-action-floating" style="background: #28a745; color: #fff;" onclick="openProjectNewsModal('${proj.firebaseId}')">📢 รอบ 3: ดูข่าวสาร</button>
+                    <button class="btn-action-floating" style="background: #495057; color: #fff;" onclick="openRequestEditModal('${proj.firebaseId}', ${item.appIndex})">🔄 ส่งคำขอแก้กลับไปที่แอดมิน (รอบ 3)</button>
+                  </div>
+                `;
+              }
+
+              const card = document.createElement("div");
+              card.className = "app-status-card";
+              card.innerHTML = `
+                <div class="app-card-header"><span class="app-proj-name">${proj.name}</span>${statusBadge}</div>
+                <div class="app-card-body">
+                  ${renderFirstRoundAnswers(appItem)}
+                  <p style="color: #ff4d4d; font-size: 0.85rem; margin-top: 8px;">🎯 บทบาทปัจจุบัน: <strong>${appItem.assignedRole || appItem.rolePriority?.rank1 || "-"}</strong></p>
+                  ${appItem.revisionNote ? `<div style="background: #2a1b1b; padding: 10px; border-left: 3px solid #ff4d4d; margin-top: 8px;"><p style="color:#ff4d4d; font-size:0.85rem;">💬 ข้อความล่าสุดจากแอดมิน: ${appItem.revisionNote}</p></div>` : ""}
+                  ${actionAreaHtml}
+                  <p style="color: #777; font-size: 0.75rem; margin-top: 10px;">🕒 ยื่นสมัครเมื่อ: ${appItem.createdAt || "-"}</p>
+                </div>
+              `;
+              containerAccepted.appendChild(card);
+            });
+          }
+        });
+      }
+
+      window.openStage2Modal = function (projId, appIndex) {
+        const proj = currentProjectsData.find((p) => p.firebaseId === projId);
+        if (!proj) return;
+        activeStage2Target = { proj, appIndex };
+        document.getElementById("s2ModalSub").innerText = `โปรเจกต์: ${proj.name}`;
+
+        const container = document.getElementById("stage2QuestionsInputsContainer");
+        container.innerHTML = "";
+        const s2Questions = proj.stage2Questions || [{ title: "ลิงก์ Discord / ข้อมูลติดต่อ", type: "text" }];
+        const existingAnswers = proj.applications[appIndex].stage2Answers || {};
+
+        s2Questions.forEach((q, idx) => {
+          const div = document.createElement("div");
+          div.className = "form-group-input";
+          const savedValue = existingAnswers[q.title] || "";
+          div.innerHTML = `<label>${q.title}</label><input type="text" name="s2_q_${idx}" value="${savedValue}" required />`;
+          container.appendChild(div);
+        });
+        document.getElementById("stage2Modal").classList.add("open");
+      };
+
+      window.closeStage2Modal = function () {
+        document.getElementById("stage2Modal").classList.remove("open");
+      };
+
+      window.submitStage2Answers = async function (e) {
+        e.preventDefault();
+        if (!activeStage2Target) return;
+        const { proj, appIndex } = activeStage2Target;
+        const formData = new FormData(e.target);
+        let answersMap = {};
+        proj.stage2Questions.forEach((q, idx) => {
+          answersMap[q.title] = formData.get(`s2_q_${idx}`) || "";
+        });
+        proj.applications[appIndex].stage2Answers = answersMap;
+        proj.applications[appIndex].status = "stage2_submitted";
+        proj.applications[appIndex].editReason = null;
+
+        try {
+          await updateDoc(doc(db, "projects", proj.firebaseId), { applications: proj.applications });
+          window.closeStage2Modal();
+          alert("📤 ส่งเอกสารรอบ 2 กลับไปยังแอดมินเรียบร้อยแล้ว!");
+        } catch (err) {
+          alert("❌ เกิดข้อผิดพลาด: " + err.message);
+        }
+      };
+
+      window.openRequestEditModal = function (projId, appIndex) {
+        activeRequestEditTarget = { projId, appIndex };
+        document.getElementById("editReasonInput").value = "";
+        document.getElementById("requestEditModal").classList.add("open");
+      };
+
+      window.closeRequestEditModal = function () {
+        document.getElementById("requestEditModal").classList.remove("open");
+      };
+
+      window.submitRequestEdit = async function (e) {
+        e.preventDefault();
+        if (!activeRequestEditTarget) return;
+        const { projId, appIndex } = activeRequestEditTarget;
+        const reason = document.getElementById("editReasonInput").value;
+        const proj = currentProjectsData.find((p) => p.firebaseId === projId);
+        if (!proj) return;
+
+        proj.applications[appIndex].status = "edit_requested";
+        proj.applications[appIndex].editReason = reason;
+
+        try {
+          await updateDoc(doc(db, "projects", proj.firebaseId), { applications: proj.applications });
+          window.closeRequestEditModal();
+          alert("📤 ส่งคำขอแก้ไขเรียบร้อย รอแอดมินอนุมัติสิทธิ์!");
+        } catch (err) {
+          alert("❌ เกิดข้อผิดพลาด: " + err.message);
+        }
+      };
+
+      window.openProjectNewsModal = function (projId) {
+        const proj = currentProjectsData.find((p) => p.firebaseId === projId);
+        if (!proj) return;
+        document.getElementById("pNewsModalTitle").innerText = `📢 ข้อมูลโปรเจกต์: ${proj.name}`;
+        const container = document.getElementById("projectNewsContentList");
+        container.innerHTML = "";
+        const newsList = proj.projectNews || [];
+        if (newsList.length === 0) {
+          container.innerHTML = '<p style="color:#888; text-align:center;">ยังไม่มีประกาศ</p>';
+        } else {
+          newsList.forEach((item) => {
+            container.innerHTML += `<div style="background: #181818; padding: 12px; border-radius: 4px;"><h4 style="color:#fff;">${item.title}</h4><p style="color:#ccc;">${item.content}</p></div>`;
+          });
+        }
+        document.getElementById("projectNewsModal").classList.add("open");
+      };
+
+      window.closeProjectNewsModal = function () {
+        document.getElementById("projectNewsModal").classList.remove("open");
+      };
+    </script>
+  </body>
+</html>

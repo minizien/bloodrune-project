@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="Lobby.css" />
+    <title>BR.PJ-Lobby</title>
+  </head>
+  <body>
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+      <!-- ปุ่มเมนู 3 ขีด ด้านซ้ายบน -->
+      <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
+      
+      <!-- เมนูด้านขวาบน -->
+      <div class="top-nav-right">
+        <button class="nav-btn" id="auth-btn">Login / Sign In</button>
+        <!-- ปุ่ม Setting เปลี่ยนเป็นไอคอนฟันเฟือง -->
+        <button class="icon-btn" onclick="location.href='settings.html'" title="Settings">⚙</button>
+      </div>
+    </header>
+
+    <!-- Side Drawer Menu (สไลด์เปิดออกจากซ้าย) -->
+    <div id="sideDrawer" class="side-drawer">
+      <button class="close-drawer-btn" onclick="toggleSidebar()">✕</button>
+      <nav class="drawer-nav">
+        <a href="News.html" class="drawer-item">NEWS</a>
+        <a href="Store.html" class="drawer-item">STORE</a>
+        <a href="Project.html" class="drawer-item">PROJECT</a>
+        <a href="user.html" class="drawer-item">USER</a>
+      </nav>
+    </div>
+    <!-- ฉากหลังสีคล้ำเวลาเปิด Sidebar -->
+    <div id="drawerOverlay" class="drawer-overlay" onclick="toggleSidebar()"></div>
+
+    <main class="lobby-main">
+      <!-- Hero / Home Section -->
+      <div class="HOME">
+        <h1 class="HOMEH1">BloodRune Project</h1>
+        <div class="search-Lobby">
+          <input type="text" class="search-input" placeholder="Search projects, products, news..." />
+          <button class="search-button">🔍︎</button>
+        </div>
+      </div>
+
+      <!-- Full-Width Slider Container -->
+      <div class="slide-container">
+        <div class="slide-ALL" id="slider">
+          <div class="slide-page">
+            <a>
+              <img src="https://lh3.googleusercontent.com/d/1TBHjj9cQz0g9Hp6nWB9IQFx6kFIby_hh" alt="Slide 1" />
+            </a>
+          </div>
+          <div class="slide-page">
+            <a>
+              <img src="https://lh3.googleusercontent.com/d/1n6gi6gNaO5WPDM-ebwXmr4RSByTVGpyN" alt="Slide 2" />
+            </a>
+          </div>
+          <div class="slide-page">
+            <a>
+              <img src="https://lh3.googleusercontent.com/d/1bnP71geWli2R6TAxd_KpgQ4NlpLa-oih" alt="Slide 3" />
+            </a>
+          </div>
+          <div class="slide-page">
+            <a>
+              <img src="https://lh3.googleusercontent.com/d/1EeTmru63oZcDwrDoTKG8xVos-VHBIrSX" alt="Slide 4" />
+            </a>
+          </div>
+        </div>
+        
+        <!-- Slider Navigation Controls -->
+        <div class="slider-controls">
+          <button id="prevBtn">❮</button>
+          <button id="nextBtn">❯</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Profile Section (Pop-up Modal ลอย) -->
+    <div id="profileModal" class="profile-modal-overlay">
+      <div class="profile-card">
+        <button class="btn-close" onclick="closeProfile()">✕</button>
+        <h2>👤 ข้อมูลโปรไฟล์</h2>
+        <div class="profile-info">
+          <p><span>ชื่อเล่น:</span> <strong id="prof-nickname">-</strong></p>
+          <p><span>อายุ:</span> <strong id="prof-age">-</strong> ปี</p>
+          <p><span>วันเกิด:</span> <strong id="prof-dob">-</strong></p>
+          <p><span>Gmail:</span> <strong id="prof-email">-</strong></p>
+          <p><span>ระดับบัญชี:</span> <strong id="prof-role" style="color: #ff1e27;">-</strong></p>
+        </div>
+        <div class="profile-actions">
+          <!-- ปุ่มสำหรับ Admin เท่านั้น (ซ่อนไว้เป็นค่าเริ่มต้นเพื่อความปลอดภัย) -->
+          <button id="adminBtn" class="btn-admin" style="display: none;" onclick="location.href='Admin.html'">
+            🔑 เข้าสู่ระบบพนักงาน (Admin Panel)
+          </button>
+          <button class="btn-logout" onclick="handleLogout()">ออกจากระบบ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ฟังก์ชัน JS เปิด-ปิด Side Drawer -->
+    <script>
+      function toggleSidebar() {
+        const drawer = document.getElementById('sideDrawer');
+        const overlay = document.getElementById('drawerOverlay');
+        drawer.classList.toggle('open');
+        overlay.classList.toggle('open');
+      }
+    </script>
+
+    <!-- External Script File (กำหนดประเภทเป็น type="module" เพื่อรองรับ Firebase SDK) -->
+    <script type="module" src="script.js"></script>
+  </body>
+</html>

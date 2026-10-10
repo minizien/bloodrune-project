@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BR.PJ - News & Updates</title>
+    <link rel="stylesheet" href="News.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <header class="top-nav">
+      <button class="hamburger-btn" onclick="toggleSidebar()">☰ เมนู</button>
+      <h1 class="nav-title">NEWS & UPDATES</h1>
+      <div style="width: 80px;"></div>
+    </header>
+
+    <div id="sideDrawer" class="side-drawer">
+      <button class="close-drawer-btn" onclick="toggleSidebar()">✕</button>
+      <nav class="drawer-nav">
+        <a href="index.html" class="drawer-item active">LOBBY</a>
+        <a href="Store.html" class="drawer-item">STORE</a>
+        <a href="Project.html" class="drawer-item">PROJECT</a>
+        <a href="user.html" class="drawer-item">USER</a>
+      </nav>
+    </div>
+    <div id="drawerOverlay" class="drawer-overlay" onclick="toggleSidebar()"></div>
+
+    <main class="news-container">
+      <div class="news-header">
+        <h2>📰 ข่าวสารและอัปเดตล่าสุด</h2>
+        <p>ติดตามข่าวสาร กิจกรรม และการอัปเดตของ bloodrune-project ได้ที่นี่</p>
+      </div>
+
+      <div id="newsGrid" class="news-grid">
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    </main>
+
+    <div id="newsDetailModal" class="modal-overlay">
+      <div class="modal-card">
+        <button class="close-modal" onclick="closeNewsDetail()">✕</button>
+        <h3 id="modalNewsTitle" class="modal-title">-</h3>
+        <span id="modalNewsDate" class="modal-date">📅 -</span>
+        <div id="modalNewsGallery" class="news-gallery"></div>
+        <p id="modalNewsContent" class="modal-content-text">-</p>
+        <div id="modalNewsLinkContainer" class="modal-link-container"></div>
+      </div>
+    </div>
+
+    <script>
+      function toggleSidebar() {
+        const drawer = document.getElementById('sideDrawer');
+        const overlay = document.getElementById('drawerOverlay');
+        drawer.classList.toggle('open');
+        overlay.classList.toggle('open');
+      }
+    </script>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyA-SB3kOtVOK0xwEt2xjF6JJHZKPYhNURY",
+        authDomain: "bloodrune-project.firebaseapp.com",
+        projectId: "bloodrune-project",
+        storageBucket: "bloodrune-project.firebasestorage.app",
+        messagingSenderId: "394744755352",
+        appId: "1:394744755352:web:0af156b7f8c888dc164ced",
+        measurementId: "G-B6BX636YH3"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      let newsDataList = [];
+      const newsQuery = query(collection(db, "news"), orderBy("date", "desc"));
+
+      onSnapshot(newsQuery, (snapshot) => {
+        const newsGrid = document.getElementById('newsGrid');
+        newsGrid.innerHTML = '';
+        newsDataList = [];
+
+        if (snapshot.empty) {
+          newsGrid.innerHTML = `
+            <div class="loading-state">
+              <p>ยังไม่มีข่าวสารในระบบ</p>
+            </div>`;
+          return;
+        }
+
+        snapshot.forEach((doc) => {
+          newsDataList.push({ id: doc.id, ...doc.data() });
+        });
+
+        renderNewsList(newsDataList);
+      }, (error) => {
+        console.error("Error fetching news from Firebase: ", error);
+        document.getElementById('newsGrid').innerHTML = `
+          <div class="loading-state">
+            <p style="color:#ff2a2a;">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
+          </div>`;
+      });
+
+      function renderNewsList(items) {
+        const newsGrid = document.getElementById('newsGrid');
+        newsGrid.innerHTML = '';
+
+        items.forEach((item) => {
+          // แปลง imageUrl ที่คั่นด้วยจุลภาคหรือขึ้นบรรทัดใหม่ให้อยู่ในรูป Array
+          let imageUrls = [];
+          if (item.imageUrl) {
+            imageUrls = item.imageUrl.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0);
+          }
+
+          const hasImage = imageUrls.length > 0;
+          const coverImg = hasImage ? imageUrls[0] : '';
+
+          const card = document.createElement('div');
+          card.className = `news-item-card ${hasImage ? '' : 'no-image'}`;
+          card.onclick = () => openNewsDetail(item, imageUrls);
+
+          const imgHTML = hasImage 
+            ? `<div class="card-img-wrapper">
+                 <img src="${coverImg}" alt="${item.title || 'News'}" onerror="this.parentElement.style.display='none';" />
+               </div>`
+            : '';
+
+          // แสดงวันที่สร้าง และวันที่แก้ไขล่าสุด (ถ้ามี)
+          let dateInfo = `📅 วันที่ประกาศ: ${item.date || '-'}`;
+          if (item.updatedAtString) {
+            dateInfo += `<br>✏️ แก้ไขล่าสุด: ${item.updatedAtString}`;
+          }
+
+          card.innerHTML = `
+            ${imgHTML}
+            <div class="card-body">
+              <div>
+                <span class="card-date">${dateInfo}</span>
+                <h3 class="card-title">${item.title || 'ไม่มีหัวข้อ'}</h3>
+                <p class="card-snippet">${item.content || ''}</p>
+              </div>
+              <span class="read-more">อ่านเพิ่มเติม ❯</span>
+            </div>
+          `;
+          newsGrid.appendChild(card);
+        });
+      }
+
+      window.openNewsDetail = function(item, precomputedImages = null) {
+        document.getElementById('modalNewsTitle').innerText = item.title || 'ข่าวสาร';
+        
+        let modalDateText = '📅 วันที่ประกาศ: ' + (item.date || '-');
+        if (item.updatedAtString) {
+          modalDateText += ' | ✏️ แก้ไขล่าสุด: ' + item.updatedAtString;
+        }
+        document.getElementById('modalNewsDate').innerHTML = modalDateText;
+        document.getElementById('modalNewsContent').innerText = item.content || '';
+
+        const gallery = document.getElementById('modalNewsGallery');
+        gallery.innerHTML = '';
+
+        let imageUrls = precomputedImages;
+        if (!imageUrls && item.imageUrl) {
+          imageUrls = item.imageUrl.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0);
+        }
+
+        if (imageUrls && imageUrls.length > 0) {
+          imageUrls.forEach(imgUrl => {
+            const img = document.createElement('img');
+            img.src = imgUrl;
+            img.onerror = function() { this.style.display = 'none'; };
+            gallery.appendChild(img);
+          });
+        }
+
+        const linkContainer = document.getElementById('modalNewsLinkContainer');
+        linkContainer.innerHTML = '';
+        if (item.link && item.link.trim() !== '') {
+          const linkBtn = document.createElement('a');
+          linkBtn.href = item.link;
+          linkBtn.className = 'btn-news-link';
+          linkBtn.innerText = '🔗 ไปยังหน้าเนื้อหาที่เกี่ยวข้อง';
+          linkBtn.target = item.link.startsWith('http') ? '_blank' : '_self';
+          linkContainer.appendChild(linkBtn);
+        }
+
+        document.getElementById('newsDetailModal').classList.add('open');
+      };
+
+      window.closeNewsDetail = function() {
+        document.getElementById('newsDetailModal').classList.remove('open');
+      };
+    </script>
+  </body>
+</html>

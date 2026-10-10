@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BR.PJ - Admin Panel</title>
+    <!-- ใช้ Admin_2.css ตามที่คุณมีอยู่จริง -->
+    <link rel="stylesheet" href="Admin.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="admin-header">
+      <div class="admin-brand">
+        <h2>🔑 ADMIN PANEL</h2>
+      </div>
+      <div class="admin-actions">
+        <button class="btn-lobby" onclick="location.href = 'index.html'">
+          กลับสู่หน้า Lobby
+        </button>
+      </div>
+    </header>
+
+    <div class="admin-container">
+      <aside class="admin-sidebar">
+        <button class="nav-tab active" onclick="switchTab('projectTab', this)">
+          📁 Projects
+        </button>
+        <button class="nav-tab" onclick="switchTab('newsTab', this)">
+          📰 News
+        </button>
+        <button class="nav-tab" onclick="switchTab('storeTab', this)">
+          🛒 Store
+        </button>
+        <button class="nav-tab" onclick="switchTab('userTab', this)">
+          👤 Users
+        </button>
+      </aside>
+
+      <main class="admin-content">
+        <!-- PROJECT TAB -->
+        <section id="projectTab" class="tab-content active">
+          <div class="tab-header">
+            <h3>จัดการโปรเจกต์ (Project Management & 3 Windows)</h3>
+            <button class="btn-primary" onclick="openProjectModal()">
+              + สร้างโปรเจกต์ใหม่
+            </button>
+          </div>
+          <div id="projectList" class="cards-grid">
+            <p style="color: #888; grid-column: 1/-1; text-align: center">
+              ⏳ กำลังโหลดข้อมูลโปรเจกต์...
+            </p>
+          </div>
+        </section>
+
+        <!-- NEWS TAB -->
+        <section id="newsTab" class="tab-content">
+          <div class="tab-header">
+            <h3>จัดการข่าวสารส่วนกลาง (Global News)</h3>
+            <button class="btn-primary" onclick="openNewsModal()">
+              + เพิ่มข่าวสารใหม่
+            </button>
+          </div>
+          <div id="newsList" class="news-grid">
+            <p style="color: #888; text-align: center">
+              ⏳ กำลังโหลดข้อมูลข่าวสาร...
+            </p>
+          </div>
+        </section>
+
+        <!-- STORE TAB -->
+        <section id="storeTab" class="tab-content">
+          <div class="tab-header">
+            <h3>ร้านค้า (Store)</h3>
+          </div>
+          <div class="update-box">
+            <h2>🛒 Store System - update v.New</h2>
+            <p>ระบบร้านค้ากำลังอยู่ระหว่างการพัฒนาเวอร์ชันใหม่</p>
+          </div>
+        </section>
+
+        <!-- USER TAB -->
+        <section id="userTab" class="tab-content">
+          <div class="tab-header">
+            <h3>จัดการผู้ใช้งาน (User Management)</h3>
+          </div>
+          <div class="table-responsive">
+            <table class="user-table">
+              <thead>
+                <tr>
+                  <th>ชื่อเล่น / ชื่อ</th>
+                  <th>Gmail</th>
+                  <th>สถานะ / Role</th>
+                  <th>จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="userTableBody">
+                <tr>
+                  <td colspan="4" style="text-align: center; color: #888">
+                    ⏳ กำลังโหลดข้อมูลผู้ใช้งาน...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- MODAL: WINDOW 1 - CREATE / EDIT PROJECT & STAGE 1 SETUP -->
+    <div id="projectModal" class="modal-overlay">
+      <div class="modal-card">
+        <button class="close-modal" type="button" onclick="closeProjectModal()">
+          ✕
+        </button>
+        <h3 id="projectModalTitle">หน้าต่างที่ 1: ตั้งค่าโปรเจกต์</h3>
+
+        <form id="projectForm" onsubmit="handleSaveProject(event)">
+          <input type="hidden" id="projId" />
+
+          <div class="form-group">
+            <label for="projName">ชื่อโปรเจกต์</label>
+            <input
+              type="text"
+              id="projName"
+              placeholder="กรอกชื่อโปรเจกต์..."
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="projImageUrl"
+              >ลิงก์รูปภาพโปรเจกต์ (Image URLs - ใส่หลายรูปคั่นด้วย ,
+              หรือขึ้นบรรทัดใหม่)</label
+            >
+            <textarea
+              id="projImageUrl"
+              rows="2"
+              placeholder="https://example.com/img1.png, https://example.com/img2.jpg"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="projDescription">รายละเอียดโปรเจกต์เพิ่มเติม</label>
+            <textarea
+              id="projDescription"
+              rows="3"
+              placeholder="อธิบายรายละเอียดเกี่ยวกับโปรเจกต์นี้..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="projHidden">สถานะการมองเห็น</label>
+            <select id="projHidden">
+              <option value="true">ซ่อนอยู่ (Hidden)</option>
+              <option value="false">เปิดใช้งาน / เผยแพร่ (Public)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="projMaxMembers">จำนวนคนที่รับรวม (Max Members)</label>
+            <input
+              type="number"
+              id="projMaxMembers"
+              min="1"
+              placeholder="เช่น 10"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label style="color: #ff2a2a; font-weight: bold"
+              >1. กำหนดบทบาท และจำนวนคน</label
+            >
+            <div id="roleInputsContainer"></div>
+            <button
+              type="button"
+              class="btn-secondary"
+              onclick="addRoleInput()"
+            >
+              + เพิ่มบทบาท
+            </button>
+            <small
+              id="roleError"
+              style="display: none; color: #ff2a2a; margin-top: 5px"
+            >
+              ⚠️ สรุปรวมจำนวนคนของทุกบทบาท ต้องไม่เกินจำนวนคนที่รับรวม!
+            </small>
+          </div>
+
+          <div
+            class="form-group"
+            style="
+              border-top: 1px dashed #333;
+              padding-top: 15px;
+              margin-top: 15px;
+            "
+          >
+            <label style="color: #ff2a2a; font-weight: bold"
+              >2. ตั้งค่าคำถามรอบแรก (Stage 1 Form Builder)</label
+            >
+            <div id="customQuestionsContainer"></div>
+            <button
+              type="button"
+              class="btn-secondary"
+              onclick="addQuestionInput()"
+            >
+              + เพิ่มคำถามรอบแรก
+            </button>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn-primary">
+              บันทึกข้อมูลเข้า Firebase
+            </button>
+            <button
+              type="button"
+              class="btn-secondary"
+              onclick="closeProjectModal()"
+            >
+              ยกเลิก
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: WINDOW 2 - STAGE 2 FORM BUILDER CONFIGURATION -->
+    <div id="stage2ConfigModal" class="modal-overlay">
+      <div class="modal-card">
+        <button
+          class="close-modal"
+          type="button"
+          onclick="closeStage2ConfigModal()"
+        >
+          ✕
+        </button>
+        <h3 style="color: #ff2a2a; margin-bottom: 5px">
+          หน้าต่างที่ 2: ตั้งค่าคำถามรอบสอง (Stage 2 Form)
+        </h3>
+        <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 15px">
+          กำหนดชุดคำถามและคำอธิบายที่ผู้สมัครจะต้องกรอกเพิ่มเติมเมื่อผ่านการสัมภาษณ์แล้ว
+        </p>
+
+        <form id="stage2ConfigForm" onsubmit="handleSaveStage2Config(event)">
+          <div class="form-group">
+            <label
+              for="stage2Description"
+              style="color: #ff2a2a; font-weight: bold"
+              >คำอธิบาย / รายละเอียดสำหรับผู้สมัคร (Stage 2 Instructions)</label
+            >
+            <textarea
+              id="stage2Description"
+              rows="3"
+              placeholder="ระบุคำแนะนำ เอกสารที่ต้องเตรียม หรือขั้นตอนสำหรับผู้สมัครก่อนกรอกฟอร์มรอบสอง..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label style="color: #ff2a2a; font-weight: bold"
+              >คำถามชุดที่ 2 (รองรับหลายประเภท รวมถึงอัปโหลดภาพ)</label
+            >
+            <div id="stage2QuestionsContainer"></div>
+            <button
+              type="button"
+              class="btn-secondary"
+              onclick="addStage2QuestionInput()"
+              style="margin-top: 8px"
+            >
+              + เพิ่มคำถามรอบสอง
+            </button>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn-primary">
+              บันทึกรูปแบบฟอร์มรอบสอง
+            </button>
+            <button
+              type="button"
+              class="btn-secondary"
+              onclick="closeStage2ConfigModal()"
+            >
+              ปิด
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: VIEW APPLICATIONS & STAGE 1 / STAGE 2 MANAGEMENT -->
+    <div id="appModal" class="modal-overlay">
+      <div class="modal-card" style="max-width: 850px">
+        <button class="close-modal" type="button" onclick="closeAppModal()">
+          ✕
+        </button>
+        <h3 id="appModalTitle">📋 รายชื่อผู้ยื่นสมัครเข้าร่วมโปรเจกต์</h3>
+
+        <div style="display: flex; gap: 10px; margin: 15px 0">
+          <input
+            type="text"
+            id="appSearchInput"
+            placeholder="🔍 ค้นหาชื่อผู้สมัคร หรือ อีเมล..."
+            oninput="renderApplicationsList()"
+            style="
+              flex: 2;
+              padding: 10px;
+              background: #090909;
+              border: 1px solid #333;
+              color: #fff;
+              border-radius: 4px;
+            "
+          />
+          <select
+            id="appStatusFilter"
+            onchange="renderApplicationsList()"
+            style="
+              flex: 1;
+              padding: 10px;
+              background: #090909;
+              border: 1px solid #333;
+              color: #fff;
+              border-radius: 4px;
+            "
+          >
+            <option value="all">ทุกสถานะ</option>
+            <option value="pending">1. ระยะยืนยันสิทธิ์ (รอบแรก)</option>
+            <option value="interview">2. ระยะนัดสัมภาษณ์</option>
+            <option value="passed">3. สัมภาษณ์เสร็จ (รอบสอง)</option>
+            <option value="approved">ผ่านเข้าโปรเจกต์ (Approved)</option>
+            <option value="rejected">ปฏิเสธ</option>
+          </select>
+        </div>
+
+        <div
+          id="appListContent"
+          class="app-list"
+          style="margin-top: 15px; max-height: 60vh; overflow-y: auto"
+        ></div>
+      </div>
+    </div>
+
+    <!-- MODAL: WINDOW 3 - PROJECT EXCLUSIVE NEWS & MEMBER MANAGER -->
+    <div id="projectWindow3Modal" class="modal-overlay">
+      <div class="modal-card" style="max-width: 900px">
+        <button
+          class="close-modal"
+          type="button"
+          onclick="closeProjectWindow3()"
+        >
+          ✕
+        </button>
+        <h3 id="w3ProjTitle" style="color: #ff2a2a; margin-bottom: 5px">
+          หน้าต่างที่ 3: ระบบจัดการสมาชิกและประกาศเฉพาะโปรเจกต์
+        </h3>
+        <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 20px">
+          หน้านี้จะประกาศข่าวสารที่เห็นเฉพาะสมาชิกที่ผ่านเข้าร่วมโปรเจกต์นี้เท่านั้น
+          (และสามารถปลดสมาชิกออกได้)
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
+          <div
+            style="
+              background: #101010;
+              padding: 15px;
+              border-radius: 6px;
+              border: 1px solid #222;
+            "
+          >
+            <h4
+              style="
+                color: #fff;
+                margin-bottom: 12px;
+                border-bottom: 1px solid #222;
+                padding-bottom: 8px;
+              "
+            >
+              📢 สร้างประกาศสำหรับสมาชิกโปรเจกต์
+            </h4>
+            <form onsubmit="handleSaveProjectNews(event)">
+              <div class="form-group">
+                <label>หัวข้อประกาศ</label>
+                <input
+                  type="text"
+                  id="pNewsTitle"
+                  placeholder="หัวข้อประกาศ..."
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label>เนื้อหาประกาศ</label>
+                <textarea
+                  id="pNewsContent"
+                  rows="4"
+                  placeholder="รายละเอียดประกาศ..."
+                  required
+                ></textarea>
+              </div>
+              <button type="submit" class="btn-primary" style="width: 100%">
+                📤 ส่งประกาศไปยังหน้า USER ของสมาชิก
+              </button>
+            </form>
+
+            <div style="margin-top: 20px">
+              <h5 style="color: #aaa; margin-bottom: 10px">
+                ประกาศที่ส่งแล้วในโปรเจกต์นี้:
+              </h5>
+              <div
+                id="projectNewsListContainer"
+                style="
+                  max-height: 200px;
+                  overflow-y: auto;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 8px;
+                "
+              ></div>
+            </div>
+          </div>
+
+          <div
+            style="
+              background: #101010;
+              padding: 15px;
+              border-radius: 6px;
+              border: 1px solid #222;
+            "
+          >
+            <h4
+              style="
+                color: #fff;
+                margin-bottom: 12px;
+                border-bottom: 1px solid #222;
+                padding-bottom: 8px;
+              "
+            >
+              👥 สมาชิกที่ผ่านเข้าโปรเจกต์นี้
+            </h4>
+            <div
+              id="projectMembersListContainer"
+              style="
+                max-height: 400px;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+              "
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: PICK INTERVIEW DATE & TIME -->
+    <div id="interviewModal" class="modal-overlay">
+      <div class="modal-card" style="max-width: 400px">
+        <button
+          class="close-modal"
+          type="button"
+          onclick="closeInterviewModal()"
+        >
+          ✕
+        </button>
+        <h3 style="color: #ff2a2a; margin-bottom: 15px">
+          📅 เลือกวันและเวลานัดสัมภาษณ์
+        </h3>
+
+        <div class="form-group">
+          <label>เลือกวันที่และเวลา:</label>
+          <input
+            type="datetime-local"
+            id="interviewDatetimeInput"
+            style="
+              width: 100%;
+              padding: 12px;
+              background: #090909;
+              border: 1px solid #ff2a2a;
+              color: #fff;
+              border-radius: 6px;
+              color-scheme: dark;
+            "
+          />
+        </div>
+
+        <div class="modal-actions" style="margin-top: 20px">
+          <button
+            type="button"
+            class="btn-primary"
+            onclick="confirmInterviewSchedule()"
+          >
+            ยืนยันนัดหมาย
+          </button>
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="closeInterviewModal()"
+          >
+            ยกเลิก
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: GLOBAL NEWS -->
+    <div id="newsModal" class="modal-overlay">
+      <div class="modal-card">
+        <button class="close-modal" type="button" onclick="closeNewsModal()">
+          ✕
+        </button>
+        <h3 id="newsModalTitle">สร้างข่าวสารส่วนกลาง</h3>
+
+        <form id="newsForm" onsubmit="handleSaveNews(event)">
+          <input type="hidden" id="newsId" />
+          <div class="form-group">
+            <label for="newsTitle">หัวข้อข่าว</label>
+            <input
+              type="text"
+              id="newsTitle"
+              placeholder="หัวข้อข่าวสาร..."
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="newsContent">ข้อความ / เนื้อหา</label>
+            <textarea
+              id="newsContent"
+              rows="4"
+              placeholder="รายละเอียดข่าวสาร..."
+              required
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label for="newsLink">ลิงก์เชื่อมโยง (Link URL)</label>
+            <input
+              type="text"
+              id="newsLink"
+              placeholder="เช่น store.html หรือ https://..."
+            />
+          </div>
+          <div class="form-group">
+            <label for="newsImageUrl"
+              >รูปภาพข่าว (URL คั่นด้วยจุลภาค , หรือขึ้นบรรทัดใหม่)</label
+            >
+            <textarea
+              id="newsImageUrl"
+              rows="2"
+              placeholder="https://img1.png, https://img2.jpg"
+            ></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="submit" class="btn-primary">
+              บันทึกข่าวสารเข้า Firebase
+            </button>
+            <button
+              type="button"
+              class="btn-secondary"
+              onclick="closeNewsModal()"
+            >
+              ยกเลิก
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ใช้ไฟล์ Admin.js ตัวเดิมที่คุณมีอยู่แล้วเพื่อคุมระบบทั้งหมด -->
+    <script type="module" src="Admin.js"></script>
+  </body>
+</html>

@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BR.PJ - Projects Hub</title>
+    <!-- เรียกใช้งานไฟล์ CSS ที่แยกออกมา -->
+    <link rel="stylesheet" href="Project.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <header class="top-nav">
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <button class="hamburger-btn" onclick="toggleSidebar()">☰ เมนู</button>
+      </div>
+      <h1 class="nav-title">PROJECTS HUB</h1>
+      <div style="width: 100px;"></div>
+    </header>
+
+    <div id="sideDrawer" class="side-drawer">
+      <button class="close-drawer-btn" onclick="toggleSidebar()">✕</button>
+      <nav class="drawer-nav">
+        <a href="index.html" class="drawer-item">LOBBY</a>
+        <a href="News.html" class="drawer-item">NEWS</a>
+        <a href="Store.html" class="drawer-item">STORE</a>
+        <a href="user.html" class="drawer-item">USER</a>
+      </nav>
+    </div>
+    <div id="drawerOverlay" class="drawer-overlay" onclick="toggleSidebar()"></div>
+
+    <main class="project-container">
+      
+      <!-- หน้าที่ 1: รายการโปรเจกต์ -->
+      <div id="projectListView">
+        <div class="project-header">
+          <h2>🚀 ศูนย์รวมโปรเจกต์ทั้งหมด</h2>
+          <p>เลือกโปรเจกต์ที่ต้องการเพื่อดูข้อมูล รายชื่อสมาชิก หรือส่งใบสมัครเข้าร่วม</p>
+        </div>
+        <div id="projectBannerContainer" class="banner-container">
+          <div class="loading-state inner-load">
+            <p>กำลังโหลดข้อมูลจาก Firebase...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- หน้าที่ 2: หน้าภายในโปรเจกต์ -->
+      <div id="projectInnerView">
+        <button class="back-to-list-btn" onclick="backToList()">⬅ กลับสู่หน้าแบนเนอร์โปรเจกต์</button>
+        
+        <div class="project-header" style="margin-bottom: 15px;">
+          <div id="innerImageGallery" style="display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px;"></div>
+          <h2 id="innerProjName" style="color: #ef4444;">ชื่อโปรเจกต์</h2>
+          <p id="innerProjDesc" style="color: #9ca3af;">รายละเอียดโปรเจกต์</p>
+        </div>
+
+        <div class="project-tabs">
+          <button class="tab-btn active" onclick="switchTab('info', event)">📌 1. ข้อมูลโปรเจกต์</button>
+          <button class="tab-btn" onclick="switchTab('passed', event)">🎉 2. ผู้ผ่านการคัดเลือก</button>
+          <button class="tab-btn" onclick="switchTab('apply', event)">📝 3. สมัครเข้าร่วม</button>
+        </div>
+
+        <div id="tab-info" class="tab-pane active">
+          <div style="background: #121216; padding: 20px; border-radius: 8px; border: 1px solid #2a1b1b;">
+            <h3 style="color: #fff; margin-bottom: 10px;">📋 รายละเอียดและตำแหน่งที่เปิดรับ</h3>
+            <p id="infoMaxMember" style="color: #9ca3af; margin-bottom: 15px;"></p>
+            <div id="infoRolesList" class="roles-box"></div>
+          </div>
+        </div>
+
+        <!-- แท็บที่ 2: รายชื่อผู้ผ่านการคัดเลือก -->
+        <div id="tab-passed" class="tab-pane">
+          <div style="background: #121216; padding: 20px; border-radius: 8px; border: 1px solid #2a1b1b;">
+            <h3 style="color: #ef4444; margin-bottom: 10px;">🎉 รายชื่อผู้ผ่านการคัดเลือก</h3>
+            <p style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 15px;">คลิกที่ปุ่มเพื่อเปิดดูข้อมูลและคำถาม-คำตอบ</p>
+            <div id="passedUsersContainer"></div>
+          </div>
+        </div>
+
+        <div id="tab-apply" class="tab-pane">
+          <div style="background: #121216; padding: 20px; border-radius: 8px; border: 1px solid #2a1b1b; max-width: 650px;">
+            <h3 style="color: #ef4444; margin-bottom: 10px;">🎯 ยื่นใบสมัครเข้าร่วมโปรเจกต์</h3>
+            <p id="applyStatusNotice" style="font-size: 0.9rem; color: #ccc; margin-bottom: 15px;"></p>
+
+            <form id="applyForm" onsubmit="submitApplication(event)">
+              <div class="form-group" style="background:#09090b; padding:15px; border-radius:6px; border:1px solid #222;">
+                <label style="color:#ef4444; font-weight:bold; margin-bottom:8px; display:block;">เลือกลำดับบทบาทที่ต้องการสมัคร</label>
+                
+                <div style="margin-bottom:10px;">
+                  <label style="font-size:0.85rem; color:#aaa;">🥇 อันดับที่ 1 (หลัก):</label>
+                  <select id="roleRank1" required onchange="validateRoleSelection()"></select>
+                </div>
+                <div style="margin-bottom:10px;">
+                  <label style="font-size:0.85rem; color:#aaa;">🥈 อันดับที่ 2 (สำรอง):</label>
+                  <select id="roleRank2" onchange="validateRoleSelection()"></select>
+                </div>
+                <div>
+                  <label style="font-size:0.85rem; color:#aaa;">🥉 อันดับที่ 3 (สำรอง):</label>
+                  <select id="roleRank3" onchange="validateRoleSelection()"></select>
+                </div>
+              </div>
+
+              <div id="dynamicQuestionsContainer" style="margin-top: 15px;"></div>
+
+              <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="submit" id="submitAppBtn" class="banner-action-btn" style="flex: 1; padding: 10px;">ยื่นใบสมัคร</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Modal (แบนเนอร์ลอย) แสดงข้อมูล -->
+    <div id="userDetailModal" class="modal-overlay">
+      <div class="modal-card">
+        <h3 style="color: #ef4444; margin-bottom: 5px;" id="modalUserTitle">👤 คำถามและคำตอบ</h3>
+        <p style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 15px;">รายละเอียดคำตอบที่บันทึกไว้ในระบบ</p>
+        
+        <div id="userDetailContent" style="background: #09090b; padding: 15px; border-radius: 6px; border: 1px solid #222; font-size: 0.9rem; color: #ddd; max-height: 350px; overflow-y: auto; margin-bottom: 20px;"></div>
+        
+        <button type="button" class="banner-action-btn" onclick="closeUserDetailModal()" style="width:100%;">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+
+    <script>
+      function toggleSidebar() {
+        const drawer = document.getElementById('sideDrawer');
+        const overlay = document.getElementById('drawerOverlay');
+        drawer.classList.toggle('open');
+        overlay.classList.toggle('open');
+      }
+    </script>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+      import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyA-SB3kOtVOK0xwEt2xjF6JJHZKPYhNURY",
+        authDomain: "bloodrune-project.firebaseapp.com",
+        projectId: "bloodrune-project",
+        storageBucket: "bloodrune-project.firebasestorage.app",
+        messagingSenderId: "394744755352",
+        appId: "1:394744755352:web:0af156b7f8c888dc164ced",
+        measurementId: "G-B6BX636YH3"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+
+      let loadedProjects = [];
+      let currentActiveProjIndex = null;
+      let activeUsersList = [];
+
+      function isCountedAsPassed(status) {
+        const countedStatuses = [
+          "passed",
+          "stage2_submitted",
+          "revision_requested",
+          "edit_requested",
+          "edit_allowed",
+          "edit_approved",
+          "approved",
+          "completed"
+        ];
+        return countedStatuses.includes(status);
+      }
+
+      onSnapshot(collection(db, "projects"), (snapshot) => {
+        const container = document.getElementById('projectBannerContainer');
+        container.innerHTML = '';
+        loadedProjects = [];
+
+        if (snapshot.empty) {
+          container.innerHTML = `<p style="color:#666; text-align:center;">ไม่พบข้อมูลโปรเจกต์ในฐานข้อมูล Firebase</p>`;
+          return;
+        }
+
+        snapshot.forEach((docSnap) => {
+          loadedProjects.push({ docId: docSnap.id, ...docSnap.data() });
+        });
+
+        renderProjectBanners(loadedProjects);
+
+        if (currentActiveProjIndex !== null) {
+          openProjectInner(currentActiveProjIndex);
+        }
+      }, (err) => {
+        console.error("Firebase Error:", err);
+        document.getElementById('projectBannerContainer').innerHTML = `<p style="color:#ef4444; text-align:center;">เกิดข้อผิดพลาดในการเชื่อมต่อ Firebase: ${err.message}</p>`;
+      });
+
+      function renderProjectBanners(projectsList) {
+        const container = document.getElementById('projectBannerContainer');
+        container.innerHTML = '';
+
+        projectsList.forEach((proj, index) => {
+          const isHidden = proj.hidden === true || proj.hidden === "true";
+
+          const totalApps = proj.applications ? proj.applications.length : 0;
+          const passedCount = proj.applications 
+            ? proj.applications.filter(a => isCountedAsPassed(a.status)).length 
+            : 0;
+
+          let imageUrls = [];
+          const rawImg = proj.imageUrl || proj.image || '';
+          if (rawImg) {
+            imageUrls = rawImg.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0);
+          }
+          const thumbHtml = imageUrls.length > 0 
+            ? `<img src="${imageUrls[0]}" class="banner-thumb" onerror="this.style.display='none'" />` 
+            : `<div class="banner-thumb" style="display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem;">ไม่มีรูป</div>`;
+
+          const banner = document.createElement('div');
+          banner.className = `project-banner ${isHidden ? 'locked' : ''}`;
+          banner.innerHTML = `
+            ${thumbHtml}
+            <div class="banner-info">
+              <h3>🚀 ${proj.name || 'โปรเจกต์ไม่มีชื่อ'} ${isHidden ? '<span style="color:#ef4444; font-size:0.8rem;">🔒 [Coming Soon]</span>' : ''}</h3>
+              <p>รับสมัครสูงสุด: ${proj.maxMembers || 0} คน | สมัครทั้งหมด ${totalApps} คน | ผ่านคัดเลือกแล้ว ${passedCount} คน</p>
+            </div>
+            <button class="banner-action-btn ${isHidden ? 'disabled' : ''}" ${isHidden ? 'disabled' : `onclick="openProjectInner(${index})"`}>${isHidden ? 'Coming Soon' : 'เข้าสู่โปรเจกต์ ➔'}</button>
+          `;
+          container.appendChild(banner);
+        });
+      }
+
+      window.openProjectInner = function(index) {
+        currentActiveProjIndex = index;
+        const proj = loadedProjects[index];
+        if (!proj) return;
+
+        if (proj.hidden === true || proj.hidden === "true") {
+          alert("⚠️ โปรเจกต์นี้ยังไม่เปิดรับสมัคร (Coming Soon)");
+          return;
+        }
+
+        document.getElementById('projectListView').style.display = 'none';
+        document.getElementById('projectInnerView').style.display = 'block';
+
+        document.getElementById('innerProjName').innerText = proj.name || 'โปรเจกต์ไม่มีชื่อ';
+        document.getElementById('innerProjDesc').innerText = proj.description || 'ศูนย์รวมข้อมูลและการรับสมัครประจำโปรเจกต์';
+
+        const galleryContainer = document.getElementById('innerImageGallery');
+        galleryContainer.innerHTML = '';
+        const rawImg = proj.imageUrl || proj.image || '';
+        if (rawImg) {
+          const urls = rawImg.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0);
+          urls.forEach(url => {
+            galleryContainer.innerHTML += `<div style="flex: 0 0 140px; height: 90px; border-radius: 6px; overflow: hidden; background: #000; border: 1px solid #333;"><img src="${url}" alt="Project Image" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"/></div>`;
+          });
+        }
+
+        const applications = proj.applications || [];
+        // กรองเฉพาะผู้ที่ผ่านสถานะคัดเลือกแล้วมาแสดงในแท็บที่ 2
+        activeUsersList = applications.filter(app => isCountedAsPassed(app.status));
+
+        const totalPassedCount = activeUsersList.length;
+        document.getElementById('infoMaxMember').innerText = `👥 จำนวนสมาชิกสูงสุดที่รับ: ${totalPassedCount}/${proj.maxMembers || 0} คน`;
+        const rolesListContainer = document.getElementById('infoRolesList');
+        
+        if (proj.roles && proj.roles.length > 0) {
+          rolesListContainer.innerHTML = `<h4 style="color:#ff2a2a; margin-bottom:8px;">ตำแหน่งที่เปิดรับ:</h4><ul>` + 
+            proj.roles.map(r => {
+              const currentFilledCount = activeUsersList.filter(item => {
+                const itemRole = item.assignedRole || (item.rolePriority ? item.rolePriority.rank1 : '') || '';
+                return itemRole.trim() === r.name.trim();
+              }).length;
+
+              return `<li><span>${r.name}</span> <span>(${currentFilledCount}/${r.count} คน)</span></li>`;
+            }).join('') + `</ul>`;
+        } else {
+          rolesListContainer.innerHTML = `<p style="color:#666;">ยังไม่มีการระบุตำแหน่ง</p>`;
+        }
+
+        const passedContainer = document.getElementById('passedUsersContainer');
+        let htmlContent = '';
+        if (activeUsersList.length > 0) {
+          activeUsersList.forEach((item, i) => {
+            const userName = item.user || item.name || item.username || item.fullName || item.uid || 'ผู้ใช้งาน';
+            const userRole = item.assignedRole || (item.rolePriority ? item.rolePriority.rank1 : '') || 'ไม่ระบุบทบาท';
+            
+            htmlContent += `
+              <div class="new-user-card" onclick="window.showUserModalData(${index}, ${i})">
+                <div>
+                  <h4 style="color: #fff; font-size: 1.1rem; margin-bottom: 3px;">👤 ${userName}</h4>
+                  <p style="color: #9ca3af; font-size: 0.85rem;">บทบาทที่ผ่าน: <span style="color: #ef4444; font-weight: bold;">[${userRole}]</span></p>
+                </div>
+                <button type="button" class="banner-action-btn" style="padding: 6px 14px; font-size: 0.85rem;" onclick="event.stopPropagation(); window.showUserModalData(${index}, ${i})">ดูข้อมูลคำถาม-คำตอบ ➔</button>
+              </div>
+            `;
+          });
+        } else {
+          htmlContent = `
+            <div class="new-user-card" style="text-align:center; padding:20px;">
+              <h4 style="color: #aaa; font-size: 1.1rem;">ℹ️ ยังไม่มีผู้ผ่านการคัดเลือกในระบบ</h4>
+              <p style="color: #9ca3af; font-size: 0.85rem; margin-top:5px;">รายชื่อจะแสดงที่นี่เมื่อแอดมินอนุมัติผ่านรอบ 1 หรือผ่านเข้าโปรเจกต์</p>
+            </div>
+          `;
+        }
+        passedContainer.innerHTML = htmlContent;
+
+        const currentUser = auth.currentUser;
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        const currentUid = currentUser ? currentUser.uid : (userData.uid || '');
+        const userApp = proj.applications ? proj.applications.find(app => app.uid === currentUid) : null;
+        const alreadyApplied = !!userApp;
+
+        const rank1 = document.getElementById('roleRank1');
+        const rank2 = document.getElementById('roleRank2');
+        const rank3 = document.getElementById('roleRank3');
+        rank1.innerHTML = '<option value="">-- เลือกบทบาทอันดับ 1 --</option>';
+        rank2.innerHTML = '<option value="">-- เลือกบทบาทอันดับ 2 (สำรอง) --</option>';
+        rank3.innerHTML = '<option value="">-- เลือกบทบาทอันดับ 3 (สำรอง) --</option>';
+
+        if (proj.roles) {
+          proj.roles.forEach(r => {
+            rank1.innerHTML += `<option value="${r.name}">${r.name} (รับ ${r.count})</option>`;
+            rank2.innerHTML += `<option value="${r.name}">${r.name} (รับ ${r.count})</option>`;
+            rank3.innerHTML += `<option value="${r.name}">${r.name} (รับ ${r.count})</option>`;
+          });
+        }
+
+        if (userApp && userApp.rolePriority) {
+          rank1.value = userApp.rolePriority.rank1 || '';
+          rank2.value = userApp.rolePriority.rank2 || '';
+          rank3.value = userApp.rolePriority.rank3 || '';
+        }
+
+        const qContainer = document.getElementById('dynamicQuestionsContainer');
+        qContainer.innerHTML = '';
+        if (proj.customQuestions && proj.customQuestions.length > 0) {
+          proj.customQuestions.forEach((qItem) => {
+            const qTitle = typeof qItem === 'object' ? qItem.title : qItem;
+            const prevAns = (userApp && userApp.answers) ? (userApp.answers[qTitle] || '') : '';
+            qContainer.innerHTML += `
+              <div class="form-group">
+                <label>${qTitle}</label>
+                <input type="text" class="custom-ans-input" data-title="${qTitle}" value="${prevAns}" placeholder="กรอกคำตอบของคุณ..." required />
+              </div>`;
+          });
+        }
+
+        const statusNotice = document.getElementById('applyStatusNotice');
+        const submitBtn = document.getElementById('submitAppBtn');
+        const withdrawBtn = document.getElementById('withdrawAppBtn');
+
+        if (!currentUser && !currentUid) {
+          statusNotice.innerHTML = '⚠️ <span style="color:#ef4444;">กรุณาเข้าสู่ระบบ (Login) ก่อนจึงจะสามารถส่งใบสมัครได้</span>';
+          submitBtn.innerText = 'กรุณาเข้าสู่ระบบก่อนสมัคร';
+          submitBtn.disabled = true;
+          submitBtn.style.background = '#555';
+          submitBtn.style.cursor = 'not-allowed';
+          withdrawBtn.style.display = 'none';
+          setFormInputsEditable(false);
+        } else if (alreadyApplied) {
+          statusNotice.innerHTML = `✨ <span style="color:#10b981;">สถานะการสมัคร: [${userApp.status || 'pending'}] / บันทึกข้อมูลเรียบร้อยแล้ว</span>`;
+          submitBtn.innerText = 'ส่งใบสมัครเรียบร้อยแล้ว';
+          submitBtn.disabled = true;
+          submitBtn.style.background = '#555';
+          submitBtn.style.cursor = 'not-allowed';
+          withdrawBtn.style.display = 'block'; 
+          setFormInputsEditable(false);
+        } else {
+          statusNotice.innerHTML = 'กรอกข้อมูลบทบาทและตอบคำถามด้านล่างเพื่อยื่นใบสมัคร';
+          submitBtn.innerText = 'ยืนยันการส่งใบสมัคร';
+          submitBtn.disabled = false;
+          submitBtn.style.background = '#dc2626';
+          submitBtn.style.cursor = 'pointer';
+          withdrawBtn.style.display = 'none'; 
+          setFormInputsEditable(true);
+        }
+      };
+
+      function setFormInputsEditable(isEditable) {
+        document.getElementById('roleRank1').disabled = !isEditable;
+        document.getElementById('roleRank2').disabled = !isEditable;
+        document.getElementById('roleRank3').disabled = !isEditable;
+        document.querySelectorAll('.custom-ans-input').forEach(input => {
+          input.disabled = !isEditable;
+        });
+      }
+
+      window.backToList = function() {
+        currentActiveProjIndex = null;
+        document.getElementById('projectInnerView').style.display = 'none';
+        document.getElementById('projectListView').style.display = 'block';
+      };
+
+      window.switchTab = function(tabName, event) {
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        if (event && event.currentTarget) {
+          event.currentTarget.classList.add('active');
+        }
+      };
+
+      window.validateRoleSelection = function() {
+        const r1 = document.getElementById('roleRank1').value;
+        const r2 = document.getElementById('roleRank2').value;
+        const r3 = document.getElementById('roleRank3').value;
+        if (r2 && r2 === r1) {
+          alert('⚠️ บทบาทอันดับที่ 2 ต้องไม่ซ้ำกับอันดับที่ 1');
+          document.getElementById('roleRank2').value = '';
+        }
+        if (r3 && (r3 === r1 || r3 === r2)) {
+          alert('⚠️ บทบาทอันดับที่ 3 ต้องไม่ซ้ำกับอันดับที่ 1 หรือ 2');
+          document.getElementById('roleRank3').value = '';
+        }
+      };
+
+      window.showUserModalData = function(projIdx, userIdx) {
+        let content = '';
+        
+        if (userIdx === -1 || activeUsersList.length === 0) {
+          document.getElementById('modalUserTitle').innerText = `ℹ️ ข้อมูลสถานะระบบ`;
+          content = `
+            <div style="background:#111; padding:12px; border-radius:6px; border: 1px solid #222; text-align:center;">
+              <p style="color:#aaa; margin-bottom:8px;">ขณะนี้ยังไม่มีสมาชิกหรือข้อมูลผู้สมัครที่ผ่านการคัดเลือกในระบบ</p>
+            </div>
+          `;
+        } else {
+          const uData = activeUsersList[userIdx];
+          const userName = uData.user || uData.name || uData.username || uData.fullName || uData.uid || 'ผู้ใช้งาน';
+
+          document.getElementById('modalUserTitle').innerText = `👤 ข้อมูลของ: ${userName}`;
+
+          const answers = uData.answers || {};
+          if (Object.keys(answers).length > 0) {
+            for (const [qTitle, qAns] of Object.entries(answers)) {
+              let displayAnswer = qAns;
+              if (typeof qAns === 'string' && (qAns.startsWith('http://') || qAns.startsWith('https://')) && (qAns.match(/\.(jpeg|jpg|gif|png)$/i) || qAns.includes('imgur') || qAns.includes('firebasestorage'))) {
+                displayAnswer = `<br><a href="${qAns}" target="_blank" style="color:#ef4444; text-decoration:underline;">🔗 เปิดดูลิงก์รูปภาพ</a><br><img src="${qAns}" style="max-width:100%; height:auto; border-radius:4px; margin-top:6px; border:1px solid #333;" onerror="this.style.display='none'"/>`;
+              }
+
+              content += `
+                <div style="background:#111; padding:12px; border-radius:6px; margin-bottom:10px; border: 1px solid #222;">
+                  <span style="color:#fbbf24; font-weight:600; font-size: 0.95rem;">❓ คำถาม: ${qTitle}</span>
+                  <div style="margin-top:6px; color:#fff; word-break: break-all; font-size: 0.9rem;">💬 คำตอบ: ${displayAnswer}</div>
+                </div>
+              `;
+            }
+          } else {
+            content += `<p style="color:#888; font-style:italic; text-align:center; padding: 20px;">ไม่มีข้อมูลคำตอบในระบบ</p>`;
+          }
+        }
+
+        document.getElementById('userDetailContent').innerHTML = content;
+        const modal = document.getElementById('userDetailModal');
+        if (modal) {
+          modal.style.setProperty('display', 'flex', 'important');
+        }
+      };
+
+      window.closeUserDetailModal = function() {
+        const modal = document.getElementById('userDetailModal');
+        if (modal) {
+          modal.style.setProperty('display', 'none', 'important');
+        }
+      };
+
+      window.submitApplication = async function(e) {
+        e.preventDefault();
+        if (currentActiveProjIndex === null) return;
+
+        const currentUser = auth.currentUser;
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        const currentUid = currentUser ? currentUser.uid : (userData.uid || '');
+
+        if (!currentUser && !currentUid) {
+          alert('⚠️ กรุณาเข้าสู่ระบบก่อนส่งใบสมัครโปรเจกต์');
+          return;
+        }
+
+        const proj = loadedProjects[currentActiveProjIndex];
+        const r1 = document.getElementById('roleRank1').value;
+        const r2 = document.getElementById('roleRank2').value;
+        const r3 = document.getElementById('roleRank3').value;
+
+        if (!r1) {
+          alert('⚠️ กรุณาเลือกบทบาทอันดับที่ 1');
+          return;
+        }
+
+        const existingApp = proj.applications ? proj.applications.find(app => app.uid === currentUid) : null;
+        if (existingApp) {
+          alert('⚠️ คุณได้ส่งใบสมัครโปรเจกต์นี้ไปแล้ว ไม่สามารถส่งซ้ำได้');
+          return;
+        }
+
+        const newAnswers = {};
+        document.querySelectorAll('.custom-ans-input').forEach(input => {
+          newAnswers[input.getAttribute('data-title')] = input.value.trim();
+        });
+
+        try {
+          const projRef = doc(db, "projects", proj.docId);
+          let updatedApps = [...(proj.applications || [])];
+
+          const newApp = {
+            user: userData.nickname || userData.fullName || (currentUser ? currentUser.displayName : 'ผู้ใช้งาน'),
+            uid: currentUid,
+            accountEmail: currentUser ? currentUser.email : (userData.email || '-'),
+            rolePriority: { rank1: r1, rank2: r2 || null, rank3: r3 || null },
+            status: 'pending', // สถานะเริ่มต้นเมื่อส่งสมัคร
+            answers: newAnswers,
+            createdAt: new Date().toISOString()
+          };
+          updatedApps.push(newApp);
+
+          await updateDoc(projRef, { applications: updatedApps });
+          alert('✅ ส่งใบสมัครเรียบร้อยแล้ว!');
+          openProjectInner(currentActiveProjIndex);
+        } catch (err) {
+          console.error("Error submitting application:", err);
+          alert('❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + err.message);
+        }
+      };
+
+      window.withdrawApplication = async function() {
+        if (currentActiveProjIndex === null) return;
+        if (!confirm("⚠️ คุณต้องการถอนตัวและออกจากโปรเจกต์นี้ใช่หรือไม่? ข้อมูลการสมัครจะถูกลบออก")) return;
+
+        const currentUser = auth.currentUser;
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        const currentUid = currentUser ? currentUser.uid : (userData.uid || '');
+
+        if (!currentUid) {
+          alert("⚠️ ไม่พบข้อมูลการเข้าสู่ระบบ");
+          return;
+        }
+
+        const proj = loadedProjects[currentActiveProjIndex];
+        try {
+          const projRef = doc(db, "projects", proj.docId);
+          let updatedApps = (proj.applications || []).filter(app => app.uid !== currentUid);
+
+          await updateDoc(projRef, { applications: updatedApps });
+          alert("✅ ถอนตัวออกจากโปรเจกต์สำเร็จ!");
+          openProjectInner(currentActiveProjIndex);
+        } catch (err) {
+          console.error("Error withdrawing application:", err);
+          alert("❌ เกิดข้อผิดพลาด: " + err.message);
+        }
+      };
+    </script>
+  </body>
+</html>

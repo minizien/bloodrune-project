@@ -1,0 +1,206 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #0a0a0a;
+  background-image: radial-gradient(circle at center, #1a0505 0%, #050505 100%);
+  color: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.auth-container {
+  background: rgba(15, 15, 15, 0.95);
+  border: 2px solid #ff1e27;
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(255, 30, 39, 0.3);
+  width: 100%;
+  max-width: 420px;
+  padding: 30px;
+  position: relative;
+}
+
+.tab-nav {
+  display: flex;
+  border-bottom: 2px solid #333;
+  margin-bottom: 25px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+  color: #ff1e27;
+  border-bottom: 3px solid #ff1e27;
+}
+
+.auth-section {
+  display: none;
+}
+
+.auth-section.active {
+  display: block;
+}
+
+.section-title {
+  font-size: 22px;
+  color: #ff1e27;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.section-subtitle {
+  font-size: 13px;
+  color: #aaa;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  color: #ddd;
+  margin-bottom: 6px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: #121212;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus {
+  border-color: #ff1e27;
+  box-shadow: 0 0 8px rgba(255, 30, 39, 0.4);
+}
+
+.form-group input[readonly] {
+  background-color: #1a1a1a;
+  color: #888;
+  cursor: not-allowed;
+}
+
+/* จัดตำแหน่งปุ่มเปิด/ซ่อนรหัสผ่าน */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper input {
+  padding-right: 40px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #aaa;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 5px;
+  user-select: none;
+  transition: color 0.2s;
+}
+
+.toggle-password:hover {
+  color: #ff1e27;
+}
+
+/* UI เลือกวันเดือนปีเกิดแบบ Dropdown */
+.dob-group {
+  display: flex;
+  gap: 8px;
+}
+
+.dob-group select {
+  flex: 1;
+  padding: 10px 8px;
+  background-color: #121212;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.dob-group select:focus {
+  border-color: #ff1e27;
+  box-shadow: 0 0 8px rgba(255, 30, 39, 0.4);
+}
+
+.dob-group select option {
+  background-color: #1a0505;
+  color: #ffffff;
+}
+
+.btn-submit {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #ff1e27 0%, #b30008 100%);
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.btn-submit:hover {
+  opacity: 0.9;
+}
+
+.btn-submit:active {
+  transform: scale(0.98);
+}
+
+.message-box {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.message-box.error {
+  background-color: rgba(255, 0, 0, 0.2);
+  border: 1px solid #ff1e27;
+  color: #ff6b6b;
+}
+
+.message-box.success {
+  background-color: rgba(0, 255, 100, 0.15);
+  border: 1px solid #00ff64;
+  color: #51ff85;
+}

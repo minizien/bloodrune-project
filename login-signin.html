@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>เข้าสู่ระบบ / ลงทะเบียน - BloodRune System</title>
+    <link rel="stylesheet" href="login-sign.css" />
+  </head>
+  <body>
+    <div class="auth-container">
+      <!-- ปุ่มสลับ Tab (Login / Sign Up) -->
+      <div class="tab-nav">
+        <button
+          class="tab-btn active"
+          type="button"
+          onclick="switchTab('login')"
+        >
+          เข้าสู่ระบบ
+        </button>
+        <button class="tab-btn" type="button" onclick="switchTab('signup')">
+          สมัครสมาชิก
+        </button>
+      </div>
+
+      <!-- SECTION 1: LOGIN -->
+      <section id="login-section" class="auth-section active">
+        <h2 class="section-title">เข้าสู่ระบบ</h2>
+        <p class="section-subtitle">เข้าใช้งานระบบ BloodRune</p>
+
+        <form id="login-form" novalidate onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="login-email">อีเมล</label>
+            <input
+              type="text"
+              id="login-email"
+              placeholder="example@gmail.com"
+              autocomplete="off"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="login-password">รหัสผ่าน</label>
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="login-password"
+                placeholder="••••••••"
+                required
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                onclick="togglePasswordVisibility('login-password', this)"
+              >
+                👁️
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit">เข้าสู่ระบบ</button>
+        </form>
+
+        <div id="login-msg" class="message-box"></div>
+      </section>
+
+      <!-- SECTION 2: SIGN UP -->
+      <section id="signup-section" class="auth-section">
+        <h2 class="section-title">ลงทะเบียนสมาชิก</h2>
+        <p class="section-subtitle">กรอกข้อมูลเพื่อสร้างบัญชีผู้ใช้ใหม่</p>
+
+        <form id="signup-form" novalidate onsubmit="handleSignUp(event)">
+          <div class="form-group">
+            <label for="signup-nickname">ชื่อเล่น</label>
+            <input
+              type="text"
+              id="signup-nickname"
+              placeholder="เช่น BRPJAdmin1"
+              autocomplete="off"
+              required
+            />
+          </div>
+
+          <!-- เลือกวันเดือนปีเกิด (UI แบบ Dropdown) -->
+          <div class="form-group">
+            <label>วันเดือนปีเกิด</label>
+            <div class="dob-group">
+              <select id="signup-day" required>
+                <option value="" disabled selected>วัน</option>
+              </select>
+
+              <select id="signup-month" required>
+                <option value="" disabled selected>เดือน</option>
+                <option value="01">มกราคม</option>
+                <option value="02">กุมภาพันธ์</option>
+                <option value="03">มีนาคม</option>
+                <option value="04">เมษายน</option>
+                <option value="05">พฤษภาคม</option>
+                <option value="06">มิถุนายน</option>
+                <option value="07">กรกฎาคม</option>
+                <option value="08">สิงหาคม</option>
+                <option value="09">กันยายน</option>
+                <option value="10">ตุลาคม</option>
+                <option value="11">พฤศจิกายน</option>
+                <option value="12">ธันวาคม</option>
+              </select>
+
+              <select id="signup-year" required>
+                <option value="" disabled selected>ปี (พ.ศ.)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="signup-age">อายุ (คำนวณให้อัตโนมัติ)</label>
+            <input
+              type="number"
+              id="signup-age"
+              placeholder="เลือกวันเกิดด้านบน"
+              readonly
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="signup-email">Gmail</label>
+            <input
+              type="text"
+              id="signup-email"
+              placeholder="example@gmail.com"
+              autocomplete="off"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="signup-email-confirm">ยืนยัน Gmail</label>
+            <input
+              type="text"
+              id="signup-email-confirm"
+              placeholder="example@gmail.com"
+              autocomplete="off"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="signup-password">รหัสผ่าน</label>
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="signup-password"
+                placeholder="อย่างน้อย 6 ตัวอักษร"
+                minlength="6"
+                required
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                onclick="togglePasswordVisibility('signup-password', this)"
+              >
+                👁️
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="signup-password-confirm">ยืนยันรหัสผ่าน</label>
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="signup-password-confirm"
+                placeholder="พิมพ์รหัสผ่านซ้ำอีกครั้ง"
+                minlength="6"
+                required
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                onclick="togglePasswordVisibility('signup-password-confirm', this)"
+              >
+                👁️
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit">ลงทะเบียน</button>
+        </form>
+
+        <div id="signup-msg" class="message-box"></div>
+      </section>
+    </div>
+
+    <!-- FIREBASE SDK & SCRIPT -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import {
+        getAuth,
+        createUserWithEmailAndPassword,
+        signInWithEmailAndPassword,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+      import {
+        getFirestore,
+        doc,
+        setDoc,
+        getDoc,
+        serverTimestamp,
+      } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyA-SB3kOtVOK0xwEt2xjF6JJHZKPYhNURY",
+        authDomain: "bloodrune-project.firebaseapp.com",
+        projectId: "bloodrune-project",
+        storageBucket: "bloodrune-project.firebasestorage.app",
+        messagingSenderId: "394744755352",
+        appId: "1:394744755352:web:0af156b7f8c888dc164ced",
+        measurementId: "G-B6BX636YH3",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      window.togglePasswordVisibility = function (inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (input.type === "password") {
+          input.type = "text";
+          btn.innerText = "🙈";
+        } else {
+          input.type = "password";
+          btn.innerText = "👁️";
+        }
+      };
+
+      function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const daySelect = document.getElementById("signup-day");
+        const yearSelect = document.getElementById("signup-year");
+        const monthSelect = document.getElementById("signup-month");
+        const ageInput = document.getElementById("signup-age");
+
+        if (daySelect) {
+          for (let i = 1; i <= 31; i++) {
+            const val = i.toString().padStart(2, "0");
+            const opt = document.createElement("option");
+            opt.value = val;
+            opt.textContent = i;
+            daySelect.appendChild(opt);
+          }
+        }
+
+        if (yearSelect) {
+          const currentYearCE = new Date().getFullYear();
+          for (let y = currentYearCE; y >= currentYearCE - 100; y--) {
+            const opt = document.createElement("option");
+            opt.value = y;
+            opt.textContent = `${y + 543} (${y})`;
+            yearSelect.appendChild(opt);
+          }
+        }
+
+        function autoCalculateAge() {
+          const day = daySelect.value;
+          const month = monthSelect.value;
+          const year = yearSelect.value;
+
+          if (day && month && year) {
+            const birthDate = new Date(year, month - 1, day);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+              age--;
+            }
+            if (ageInput) ageInput.value = age >= 0 ? age : 0;
+          }
+        }
+
+        if (daySelect && yearSelect && monthSelect) {
+          daySelect.addEventListener("change", autoCalculateAge);
+          monthSelect.addEventListener("change", autoCalculateAge);
+          yearSelect.addEventListener("change", autoCalculateAge);
+        }
+      });
+
+      window.switchTab = function (tabName) {
+        document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
+        document.querySelectorAll(".auth-section").forEach((sec) => sec.classList.remove("active"));
+
+        if (tabName === "login") {
+          document.querySelectorAll(".tab-btn")[0].classList.add("active");
+          document.getElementById("login-section").classList.add("active");
+        } else {
+          document.querySelectorAll(".tab-btn")[1].classList.add("active");
+          document.getElementById("signup-section").classList.add("active");
+        }
+      };
+
+      window.handleSignUp = async function (e) {
+        e.preventDefault();
+        const msgBox = document.getElementById("signup-msg");
+        msgBox.className = "message-box";
+        msgBox.innerText = "กำลังลงทะเบียน...";
+
+        const nickname = document.getElementById("signup-nickname").value.trim();
+        const day = document.getElementById("signup-day").value;
+        const month = document.getElementById("signup-month").value;
+        const year = document.getElementById("signup-year").value;
+        const dob = `${year}-${month}-${day}`;
+        const age = document.getElementById("signup-age").value;
+        const email = document.getElementById("signup-email").value.trim();
+        const emailConfirm = document.getElementById("signup-email-confirm").value.trim();
+        const password = document.getElementById("signup-password").value;
+        const passwordConfirm = document.getElementById("signup-password-confirm").value;
+
+        if (!nickname || !day || !month || !year || !email || !password) {
+          msgBox.className = "message-box error";
+          msgBox.innerText = "❌ กรุณากรอกข้อมูลให้ครบถ้วนทุกช่อง";
+          return;
+        }
+
+        if (!isValidEmail(email)) {
+          msgBox.className = "message-box error";
+          msgBox.innerText = "❌ รูปแบบอีเมลไม่ถูกต้อง";
+          return;
+        }
+
+        if (email !== emailConfirm) {
+          msgBox.className = "message-box error";
+          msgBox.innerText = "❌ อีเมลและยืนยันอีเมลไม่ตรงกัน";
+          return;
+        }
+
+        if (password.length < 6) {
+          msgBox.className = "message-box error";
+          msgBox.innerText = "❌ รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร";
+          return;
+        }
+
+        if (password !== passwordConfirm) {
+          msgBox.className = "message-box error";
+          msgBox.innerText = "❌ รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน";
+          return;
+        }
+
+        try {
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          const user = userCredential.user;
+
+          // บันทึกเฉพาะข้อมูลโปรไฟล์ (ตัดฟิลด์ password ออกเพื่อความปลอดภัยสูงสุด)[cite: 4]
+          await setDoc(doc(db, "users", user.uid), {
+            RoleUser: "member",
+            age: Number(age),
+            createdAt: serverTimestamp(),
+            dob: dob,
+            email: email,
+            nickname: nickname,
+            status: "Active",
+          });
+
+          await signOut(auth);
+
+          msgBox.className = "message-box success";
+          msgBox.innerText = "✅ สมัครสมาชิกสำเร็จ! กำลังสลับไปหน้าเข้าสู่ระบบ...";
+          document.getElementById("signup-form").reset();
+
+          setTimeout(() => {
+            switchTab("login");
+            document.getElementById("login-email").value = email;
+          }, 1500);
+        } catch (error) {
+          console.error(error);
+          msgBox.className = "message-box error";
+          let errText = error.message;
+          if (error.code === "auth/email-already-in-use") {
+            errText = "อีเมลนี้มีการใช้งานในระบบแล้ว";
+          }
+          msgBox.innerText = `❌ เกิดข้อผิดพลาด: ${errText}`;
+        }
+      };
+
+      window.handleLogin = async function (e) {
+        e.preventDefault();
+        const msgBox = document.getElementById("login-msg");
+        msgBox.className = "message-box";
+        msgBox.innerText = "กำลังตรวจสอบข้อมูล...";
+
+        const email = document.getElementById("login-email").value.trim();
+        const password = document.getElementById("login-password").value;
+
+        if (!email || !password) {
+          msgBox.className = "message-box error";
+          msgBox.innerText = "❌ กรุณากรอกอีเมลและรหัสผ่าน";
+          return;
+        }
+
+        try {
+          const userCredential = await signInWithEmailAndPassword(auth, email, password);
+          const user = userCredential.user;
+
+          const userDocRef = doc(db, "users", user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+
+          let userData = {
+            nickname: email.split("@")[0],
+            age: 0,
+            dob: "",
+            email: user.email,
+            RoleUser: "member",
+            status: "Active",
+          };
+
+          if (userDocSnap.exists()) {
+            userData = userDocSnap.data();
+          }
+
+          localStorage.setItem("userLoggedIn", "true");
+          localStorage.setItem(
+            "userData",
+            JSON.stringify({
+              uid: user.uid,
+              nickname: userData.nickname,
+              age: userData.age,
+              dob: userData.dob,
+              email: userData.email,
+              RoleUser: userData.RoleUser || "member",
+              status: userData.status || "Active",
+            }),
+          );
+
+          msgBox.className = "message-box success";
+          msgBox.innerText = `🎉 ยินดีต้อนรับคุณ ${userData.nickname}! กำลังเข้าสู่ Lobby...`;
+
+          setTimeout(() => {
+            window.location.href = "index.html";
+          }, 1200);
+        } catch (error) {
+          console.error(error);
+          msgBox.className = "message-box error";
+          msgBox.innerText = `❌ เข้าสู่ระบบไม่สำเร็จ: อีเมลหรือรหัสผ่านไม่ถูกต้อง`;
+        }
+      };
+    </script>
+  </body>
+</html>[cite: 9]

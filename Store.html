@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BR.PJ - Store</title>
+    <link rel="stylesheet" href="Store.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <header class="top-nav">
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <button class="hamburger-btn" onclick="toggleSidebar()">☰ เมนู</button>
+      </div>
+      <h1 class="nav-title">BLOODRUNE STORE</h1>
+      <div style="width: 100px;"></div>
+    </header>
+
+    <div id="sideDrawer" class="side-drawer">
+      <button class="close-drawer-btn" onclick="toggleSidebar()">✕</button>
+      <nav class="drawer-nav">
+        <a href="index.html" class="drawer-item">LOBBY</a>
+        <a href="News.html" class="drawer-item">NEWS</a>
+        <a href="Project.html" class="drawer-item">PROJECTS</a>
+        <a href="user.html" class="drawer-item">USER</a>
+      </nav>
+    </div>
+    <div id="drawerOverlay" class="drawer-overlay" onclick="toggleSidebar()"></div>
+
+    <main class="store-container">
+      <div class="store-header">
+        <h2>🛒 คลังสินค้าและไอเทม</h2>
+        <p>เลือกซื้อสินค้าและแลกเปลี่ยนไอเทมพิเศษสำหรับสมาชิก BloodRune</p>
+      </div>
+
+      <div id="productGrid" class="product-grid">
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- โมดอลสั่งซื้อสินค้า -->
+    <div id="buyModal" class="modal-overlay">
+      <div class="modal-card" style="max-width: 580px;">
+        <button class="close-modal" onclick="closeBuyModal()">✕</button>
+        <h3 id="modalProductName">ยืนยันการสั่งซื้อสินค้า</h3>
+        <p class="modal-subtitle">กรอกข้อมูลเพิ่มเติมเพื่อดำเนินการสั่งซื้อไอเทม</p>
+
+        <form id="buyForm" onsubmit="submitPurchase(event)">
+          <input type="hidden" id="buyProductIndex" />
+
+          <div class="form-group" style="background:#090909; padding:12px; border-radius:6px; border:1px solid #222; margin-bottom:12px;">
+            <label style="color:#ff2a2a; font-weight:bold; margin-bottom:8px; display:block;">💎 รายละเอียดรายการ</label>
+            <p id="modalProductPrice" style="color:#fff; font-size:1.1rem; margin-bottom:6px;">ราคา: -</p>
+            <p id="modalProductDesc" style="color:#aaa; font-size:0.85rem;">-</p>
+          </div>
+
+          <div class="form-group">
+            <label style="display:block; margin-bottom:5px; font-size:0.9rem;">จำนวนที่ต้องการซื้อ:</label>
+            <input type="number" id="purchaseQuantity" value="1" min="1" required onchange="updateTotalPrice()" style="width:100%; padding:8px; background:#111; border:1px solid #333; color:#fff; border-radius:4px;" />
+          </div>
+
+          <div style="margin-top:10px; font-weight:bold; color:#4cd137;" id="totalPriceDisplay">
+            ราคารวมทั้งสิ้น: -
+          </div>
+
+          <!-- ช่องกรอกข้อมูลคำถามเพิ่มเติม (ถ้ามี) -->
+          <div id="dynamicQuestionsContainer"></div>
+
+          <div class="modal-actions" style="margin-top:15px;">
+            <button type="submit" class="btn-primary">ยืนยันการสั่งซื้อ</button>
+            <button type="button" class="btn-secondary" onclick="closeBuyModal()">ยกเลิก</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      function toggleSidebar() {
+        const drawer = document.getElementById('sideDrawer');
+        const overlay = document.getElementById('drawerOverlay');
+        drawer.classList.toggle('open');
+        overlay.classList.toggle('open');
+      }
+    </script>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import { getFirestore, collection, onSnapshot, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyA-SB3kOtVOK0xwEt2xjF6JJHZKPYhNURY",
+        authDomain: "bloodrune-project.firebaseapp.com",
+        projectId: "bloodrune-project",
+        storageBucket: "bloodrune-project.firebasestorage.app",
+        messagingSenderId: "394744755352",
+        appId: "1:394744755352:web:0af156b7f8c888dc164ced",
+        measurementId: "G-B6BX636YH3"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      let loadedProducts = [];
+
+      // ดึงข้อมูลสินค้าแบบ Realtime จาก Firestore Collection "products"
+      onSnapshot(collection(db, "products"), (snapshot) => {
+        const container = document.getElementById('productGrid');
+        container.innerHTML = '';
+        loadedProducts = [];
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="loading-state">
+              <div class="spinner"></div>
+              <p>ไม่มีรายการสินค้าในขณะนี้</p>
+            </div>`;
+          return;
+        }
+
+        snapshot.forEach((docSnap) => {
+          loadedProducts.push({ docId: docSnap.id, ...docSnap.data() });
+        });
+
+        renderProducts(loadedProducts);
+      }, (err) => {
+        console.error("Firebase Snapshot Error:", err);
+        document.getElementById('productGrid').innerHTML = `
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading...</p>
+          </div>`;
+      });
+
+      function renderProducts(productsList) {
+        const container = document.getElementById('productGrid');
+        container.innerHTML = '';
+
+        productsList.forEach((item, index) => {
+          if (item.hidden === true || item.hidden === "true") {
+            const loadingCard = document.createElement('div');
+            loadingCard.className = 'product-card hidden-card';
+            loadingCard.innerHTML = `
+              <div class="loading-state inner-load">
+                <div class="spinner"></div>
+                <p>Loading...</p>
+                <small style="color:#666; margin-top:5px;">สินค้าชิ้นนี้ยังไม่เปิดขาย</small>
+              </div>
+            `;
+            container.appendChild(loadingCard);
+            return;
+          }
+
+          const card = document.createElement('div');
+          card.className = 'product-card';
+          card.innerHTML = `
+            <div class="card-status-bar">
+              <span class="status-badge active">🛍️ พร้อมจำหน่าย</span>
+              <span class="seat-badge">คงเหลือ ${item.stock ?? 'ไม่จำกัด'} ชิ้น</span>
+            </div>
+            <h3 class="product-title">${item.name || 'สินค้า'}</h3>
+            <p class="product-desc">${item.description || 'ไม่มีคำอธิบายสินค้า'}</p>
+            
+            <div class="price-box" style="margin: 10px 0;">
+              <span class="price-label" style="color:#4cd137; font-weight:bold; font-size:1.1rem;">💰 ราคา: ${item.price || 0} Gold</span>
+            </div>
+
+            <div class="card-footer">
+              <span class="app-count">🛒 ขายแล้ว ${item.orders ? item.orders.length : 0} ชิ้น</span>
+              <button class="btn-apply" onclick="openBuyModal(${index})">🛒 สั่งซื้อสินค้า</button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+
+      window.openBuyModal = function(index) {
+        const item = loadedProducts[index];
+        if (!item) return;
+
+        document.getElementById('modalProductName').innerText = `สั่งซื้อสินค้า: ${item.name}`;
+        document.getElementById('modalProductPrice').innerText = `ราคาต่อชิ้น: ${item.price || 0} Gold`;
+        document.getElementById('modalProductDesc').innerText = item.description || '';
+        document.getElementById('buyProductIndex').value = index;
+        document.getElementById('purchaseQuantity').value = 1;
+
+        updateTotalPrice();
+
+        const qContainer = document.getElementById('dynamicQuestionsContainer');
+        qContainer.innerHTML = '';
+
+        if (item.customQuestions && item.customQuestions.length > 0) {
+          item.customQuestions.forEach((qItem) => {
+            const qTitle = typeof qItem === 'object' ? qItem.title : qItem;
+            const qType = typeof qItem === 'object' ? qItem.type : 'text';
+
+            const div = document.createElement('div');
+            div.className = 'form-group';
+            div.style.marginTop = '12px';
+
+            let inputHtml = '';
+            if (qType === 'textarea') {
+              inputHtml = `<textarea class="custom-ans-input" data-title="${qTitle}" rows="3" placeholder="กรอกรายละเอียดเพิ่มเติม..." required></textarea>`;
+            } else if (qType === 'number') {
+              inputHtml = `<input type="number" class="custom-ans-input" data-title="${qTitle}" placeholder="กรอกตัวเลข..." required />`;
+            } else {
+              inputHtml = `<input type="text" class="custom-ans-input" data-title="${qTitle}" placeholder="กรอกข้อความสั้น..." required />`;
+            }
+
+            div.innerHTML = `<label style="display:block; margin-bottom:5px; font-size:0.9rem;">${qTitle}</label>${inputHtml}`;
+            qContainer.appendChild(div);
+          });
+        }
+
+        document.getElementById('buyModal').classList.add('open');
+      };
+
+      window.updateTotalPrice = function() {
+        const index = document.getElementById('buyProductIndex').value;
+        const item = loadedProducts[index];
+        const qty = Number(document.getElementById('purchaseQuantity').value) || 1;
+        if (item) {
+          const total = (item.price || 0) * qty;
+          document.getElementById('totalPriceDisplay').innerText = `ราคารวมทั้งสิ้น: ${total} Gold`;
+        }
+      };
+
+      window.closeBuyModal = function() {
+        document.getElementById('buyModal').classList.remove('open');
+      };
+
+      window.submitPurchase = async function(e) {
+        e.preventDefault();
+        const index = document.getElementById('buyProductIndex').value;
+        const qty = Number(document.getElementById('purchaseQuantity').value) || 1;
+
+        const ansInputs = document.querySelectorAll('.custom-ans-input');
+        let answersObj = {};
+        ansInputs.forEach(input => {
+          const title = input.getAttribute('data-title');
+          answersObj[title] = input.value.trim();
+        });
+
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        const userName = userData.nickname || userData.fullName || 'ผู้ใช้งานทั่วไป';
+        const userUid = userData.uid || 'N/A';
+        const userEmail = userData.email || '-';
+
+        const targetItem = loadedProducts[index];
+        const totalPrice = (targetItem.price || 0) * qty;
+
+        const newOrder = {
+          user: userName,
+          uid: userUid,
+          accountEmail: userEmail,
+          quantity: qty,
+          totalPrice: totalPrice,
+          answers: answersObj,
+          createdAt: new Date().toISOString()
+        };
+
+        try {
+          if (targetItem && targetItem.docId) {
+            const itemRef = doc(db, "products", targetItem.docId);
+            await updateDoc(itemRef, {
+              orders: arrayUnion(newOrder)
+            });
+            alert('✅ ส่งคำสั่งซื้อของคุณเรียบร้อยแล้ว!');
+            document.getElementById('buyForm').reset();
+            closeBuyModal();
+          }
+        } catch (err) {
+          console.error("Error submitting order: ", err);
+          alert('❌ เกิดข้อผิดพลาดในการสั่งซื้อ: ' + err.message);
+        }
+      };
+    </script>
+  </body>
+</html>
