@@ -11,9 +11,9 @@
   <body>
     <header class="top-nav">
       <div style="display: flex; align-items: center; gap: 15px;">
-        <button class="hamburger-btn" onclick="toggleSidebar()">☰ เมนู</button>
+        <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
       </div>
-      <h1 class="nav-title">PROJECTS HUB</h1>
+      <h1 class="nav-title">PROJECTS</h1>
       <div style="width: 100px;"></div>
     </header>
 
@@ -33,8 +33,7 @@
       <!-- หน้าที่ 1: รายการโปรเจกต์ -->
       <div id="projectListView">
         <div class="project-header">
-          <h2>🚀 ศูนย์รวมโปรเจกต์ทั้งหมด</h2>
-          <p>เลือกโปรเจกต์ที่ต้องการเพื่อดูข้อมูล รายชื่อสมาชิก หรือส่งใบสมัครเข้าร่วม</p>
+          <h2>ศูนย์รวมโปรเจกต์ทั้งหมด</h2>
         </div>
         <div id="projectBannerContainer" class="banner-container">
           <div class="loading-state inner-load">
@@ -99,10 +98,12 @@
                 </div>
               </div>
 
+              <!-- ส่วนฟิลด์คำถามตามประเภทที่แอดมินตั้งค่า -->
               <div id="dynamicQuestionsContainer" style="margin-top: 15px;"></div>
 
               <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
                 <button type="submit" id="submitAppBtn" class="banner-action-btn" style="flex: 1; padding: 10px;">ยื่นใบสมัคร</button>
+                <button type="button" id="withdrawAppBtn" class="banner-action-btn" style="background: #c9302c; display: none;" onclick="withdrawApplication()">ถอนตัวออกจากโปรเจกต์</button>
               </div>
             </form>
           </div>
@@ -255,7 +256,6 @@
         }
 
         const applications = proj.applications || [];
-        // กรองเฉพาะผู้ที่ผ่านสถานะคัดเลือกแล้วมาแสดงในแท็บที่ 2
         activeUsersList = applications.filter(app => isCountedAsPassed(app.status));
 
         const totalPassedCount = activeUsersList.length;
@@ -330,16 +330,32 @@
           rank3.value = userApp.rolePriority.rank3 || '';
         }
 
+        // 🛠️ อัปเกรดสร้างฟิลด์รับค่าตามประเภทที่แอดมินตั้งค่า (text, textarea, number, date, email)
         const qContainer = document.getElementById('dynamicQuestionsContainer');
         qContainer.innerHTML = '';
         if (proj.customQuestions && proj.customQuestions.length > 0) {
           proj.customQuestions.forEach((qItem) => {
             const qTitle = typeof qItem === 'object' ? qItem.title : qItem;
+            const qType = typeof qItem === 'object' && qItem.type ? qItem.type : 'text';
             const prevAns = (userApp && userApp.answers) ? (userApp.answers[qTitle] || '') : '';
+
+            let inputHtml = '';
+            if (qType === 'textarea') {
+              inputHtml = `<textarea class="custom-ans-input" data-title="${qTitle}" placeholder="กรอกคำตอบของคุณ..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; min-height:80px; box-sizing:border-box;">${prevAns}</textarea>`;
+            } else if (qType === 'date') {
+              inputHtml = `<input type="date" class="custom-ans-input" data-title="${qTitle}" value="${prevAns}" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+            } else if (qType === 'number') {
+              inputHtml = `<input type="number" class="custom-ans-input" data-title="${qTitle}" value="${prevAns}" placeholder="กรอกตัวเลข..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+            } else if (qType === 'email') {
+              inputHtml = `<input type="email" class="custom-ans-input" data-title="${qTitle}" value="${prevAns}" placeholder="example@email.com" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+            } else {
+              inputHtml = `<input type="text" class="custom-ans-input" data-title="${qTitle}" value="${prevAns}" placeholder="กรอกคำตอบของคุณ..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+            }
+
             qContainer.innerHTML += `
-              <div class="form-group">
-                <label>${qTitle}</label>
-                <input type="text" class="custom-ans-input" data-title="${qTitle}" value="${prevAns}" placeholder="กรอกคำตอบของคุณ..." required />
+              <div class="form-group" style="margin-bottom:14px;">
+                <label style="display:block; margin-bottom:6px; color:#ddd; font-size:0.9rem;">${qTitle}</label>
+                ${inputHtml}
               </div>`;
           });
         }
@@ -498,6 +514,8 @@
           newAnswers[input.getAttribute('data-title')] = input.value.trim();
         });
 
+        const roleChoicesArray = [r1, r2, r3].filter(Boolean);
+
         try {
           const projRef = doc(db, "projects", proj.docId);
           let updatedApps = [...(proj.applications || [])];
@@ -507,7 +525,8 @@
             uid: currentUid,
             accountEmail: currentUser ? currentUser.email : (userData.email || '-'),
             rolePriority: { rank1: r1, rank2: r2 || null, rank3: r3 || null },
-            status: 'pending', // สถานะเริ่มต้นเมื่อส่งสมัคร
+            choices: roleChoicesArray,
+            status: 'pending', 
             answers: newAnswers,
             createdAt: new Date().toISOString()
           };
