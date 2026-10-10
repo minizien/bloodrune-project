@@ -13,7 +13,7 @@
   <body>
     <header class="top-nav">
       <div style="display: flex; align-items: center; gap: 15px">
-        <button class="hamburger-btn" onclick="toggleSidebar()">☰ เมนู</button>
+        <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
       </div>
       <h1 class="nav-title">USER PORTAL & STATUS</h1>
       <div style="width: 100px"></div>
@@ -40,10 +40,10 @@
 
       <div class="user-tabs-nav">
         <button class="user-tab-btn active" onclick="switchUserTab('applicationsSection', this)">
-          📋 ติดตามสถานะการสมัคร
+          ติดตามสถานะการสมัคร
         </button>
         <button class="user-tab-btn" onclick="switchUserTab('acceptedProjectsSection', this)">
-          🚀 ส่งเอกสารรอบ 2 และโปรเจกต์
+          สถานะภายในโปรเจกต์
         </button>
       </div>
 
@@ -93,6 +93,28 @@
             <button type="button" class="btn-secondary-action" onclick="closeRequestEditModal()">ยกเลิก</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- MODAL ROLE APPEAL & CANCELLATION (1.2.5) -->
+    <div id="roleAppealModal" class="modal-overlay">
+      <div class="modal-card" style="max-width: 480px; background: #1a1a1a; border: 1px solid #444;">
+        <button class="close-modal" onclick="closeRoleAppealModal()">✕</button>
+        <h3 style="color: #f0ad4e; margin-bottom: 10px;">🔄 1.2.5 เลือกบทบาทที่ต้องการอุทธรณ์</h3>
+        <p style="color: #aaa; font-size: 0.85rem; margin-bottom: 15px;">เลือกบทบาทสำรองที่ต้องการส่งให้แอดมินตรวจสอบและอนุมัติ (แสดงเฉพาะที่ยังไม่เต็ม)</p>
+        
+        <div id="availableRolesAppealContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; max-height: 250px; overflow-y: auto;"></div>
+
+        <hr style="border: 0; border-top: 1px solid #333; margin: 15px 0;">
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button type="button" class="btn-secondary-action" style="background: #c9302c; color: #fff; width: 100%; border: none; padding: 10px; border-radius: 6px; font-weight: bold;" onclick="confirmCancelProjectParticipation()">
+            ❌ ขอยกเลิกการเข้าร่วมโปรเจกต์นี้
+          </button>
+          <button type="button" class="btn-secondary-action" style="background: #444; color: #fff; width: 100%; border: none; padding: 8px; border-radius: 6px;" onclick="closeRoleAppealModal()">
+            ปิดหน้าต่าง
+          </button>
+        </div>
       </div>
     </div>
 
@@ -153,6 +175,7 @@
       let currentProjectsData = [];
       let activeStage2Target = null;
       let activeRequestEditTarget = null;
+      let activeRoleAppealTarget = null;
 
       onAuthStateChanged(auth, async (user) => {
         if (!user) {
@@ -182,6 +205,18 @@
         initUserPortal();
       });
 
+      function isCountedAsPassed(status) {
+        return [
+          "passed",
+          "stage2_submitted",
+          "revision_requested",
+          "edit_requested",
+          "edit_allowed",
+          "approved",
+          "completed"
+        ].includes(status);
+      }
+
       function renderFirstRoundAnswers(appItem) {
         let html = "";
         if (appItem.answers && typeof appItem.answers === "object") {
@@ -201,7 +236,11 @@
           html += `<div style="background: #181818; padding: 12px; border-radius: 6px; margin-top: 10px; border: 1px solid #333;">`;
           html += `<p style="color: #17a2b8; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px;">📋 ข้อมูลรอบที่ 2 ที่ส่ง:</p>`;
           for (const [key, val] of Object.entries(appItem.stage2Answers)) {
-            html += `<p style="color: #ccc; font-size: 0.85rem; margin: 3px 0;">• <strong>${key}:</strong> ${val !== undefined && val !== null ? val : "-"}</p>`;
+            let displayVal = val;
+            if (typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://')) && (val.match(/\.(jpeg|jpg|gif|png)$/i) || val.includes('imgur') || val.includes('firebasestorage'))) {
+              displayVal = `<br><a href="${val}" target="_blank" style="color:#17a2b8; text-decoration:underline;">🔗 เปิดดูลิงก์รูปภาพ</a><br><img src="${val}" style="max-width:100%; height:auto; border-radius:4px; margin-top:6px; border:1px solid #333;" onerror="this.style.display='none'"/>`;
+            }
+            html += `<p style="color: #ccc; font-size: 0.85rem; margin: 6px 0;">• <strong>${key}:</strong> ${displayVal}</p>`;
           }
           html += `</div>`;
         }
@@ -250,7 +289,6 @@
             }
           });
 
-          // แสดงผลฝั่งแท็บ 1 (ติดตามสถานะการสมัคร)
           if (userAppsList.length === 0) {
             containerApps.innerHTML = `<div style="padding: 40px; text-align: center;"><p style="color: #aaa;">📭 ไม่พบประวัติการสมัครเข้าร่วมโปรเจกต์</p></div>`;
           } else {
@@ -262,9 +300,13 @@
               let statusText = "⏳ 1. ยืนสมัคร (รอตรวจสอบ)";
               if (status === "interview") statusText = `📅 1.1 สัมภาษณ์: ${appItem.interviewDate || "-"}`;
               else if (status === "rejected") statusText = "❌ ไม่ผ่านการคัดเลือก";
-              else if (["passed", "revision_requested", "edit_allowed"].includes(status)) statusText = "🎉 พิจารณาบทบาทแล้ว / อนุญาตให้แก้ไขเอกสาร";
-              else if (status === "stage2_submitted") statusText = "⏳ ส่งเอกสารรอบ 2 แล้ว (รอแอดมินตรวจสอบ)";
-              else if (status === "approved") statusText = `🎉 เข้าสู่โปรเจกต์แล้ว (${appItem.assignedRole || "ทีมงาน"})`;
+              else if (status === "role_pending_review") statusText = "⏳ 1.2.5 รอแอดมินพิจารณาอุทธรณ์บทบาท";
+              else if (status === "revision_requested") statusText = "🔄 1.2.5 แจ้งยื่นอุทธรณ์บทบาทใหม่";
+              else if (status === "passed") statusText = `🎉 ผ่านการคัดเลือก / บทบาทปัจจุบัน: [${appItem.assignedRole || "-"}] (เข้าสู่ขั้นตอนที่ 2)`;
+              else if (status === "stage2_submitted") statusText = "⏳ 2. ส่งเอกสารรอบ 2 แล้ว (รอแอดมินตรวจสอบ)";
+              else if (status === "edit_requested") statusText = "🔄 1.9.5 ขอแก้ไขเอกสารรอบ 2 (รอแอดมินอนุมัติ)";
+              else if (status === "edit_allowed") statusText = "🔓 1.9.5 แอดมินอนุญาตให้แก้ไขเอกสารรอบ 2 แล้ว";
+              else if (status === "approved") statusText = `🎉 3. เข้าสู่โปรเจกต์แล้ว (${appItem.assignedRole || "ทีมงาน"})`;
 
               const card = document.createElement("div");
               card.className = "app-status-card";
@@ -276,7 +318,6 @@
             });
           }
 
-          // แสดงผลฝั่งแท็บ 2 (ส่งเอกสารรอบ 2 และพื้นที่โปรเจกต์ - แบบเต็มรูปแบบเหมือนอดีต)
           if (acceptedAppsList.length === 0) {
             containerAccepted.innerHTML = `<div style="padding: 40px; text-align: center;"><p style="color: #aaa;">🔒 ยังไม่มีโปรเจกต์ที่ผ่านเข้าสู่ขั้นตอนที่ 2 หรือ 3</p></div>`;
           } else {
@@ -295,8 +336,18 @@
                 </div>
               ` : "";
 
-              if (["passed", "revision_requested", "edit_allowed"].includes(status)) {
-                statusBadge = '<span class="badge-status" style="background: #f0ad4e; color: #000; font-weight: bold;">รอบที่ 2: กรุณาส่งหรือแก้ไขเอกสารรอบ 2</span>';
+              if (status === "role_pending_review") {
+                statusBadge = '<span class="badge-status" style="background: #17a2b8; color: #fff;">⏳ 1.2.5 รอแอดมินอนุมัติอุทธรณ์บทบาท</span>';
+                actionAreaHtml = `<p style="color: #f0ad4e; font-size: 0.85rem; margin-top: 10px;">กำลังรอผู้ดูแลระบบพิจารณาคำขอเปลี่ยนเป็นบทบาท: <strong>${appItem.pendingAppealRole || "-"}</strong></p>`;
+              } else if (status === "revision_requested") {
+                statusBadge = '<span class="badge-status" style="background: #f0ad4e; color: #000; font-weight: bold;">1.2.5 กรุณาเลือกบทบาทอุทธรณ์ใหม่</span>';
+                actionAreaHtml = `
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+                    <button class="btn-action-floating" style="background: #f0ad4e; color: #000; font-weight: bold;" onclick="openRoleAppealModal('${proj.firebaseId}', ${item.appIndex})">🔄 1.2.5 เลือกบทบาทอุทธรณ์ / ยกเลิกโปรเจกต์</button>
+                  </div>
+                `;
+              } else if (status === "passed" || status === "edit_allowed") {
+                statusBadge = `<span class="badge-status" style="background: #28a745; color: #fff; font-weight: bold;">🎉 ผ่านการคัดเลือก (บทบาท: ${appItem.assignedRole || "-"}) - เข้าสู่ขั้นตอนที่ 2</span>`;
                 actionAreaHtml = `
                   ${stage2DescHtml}
                   <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
@@ -304,22 +355,23 @@
                   </div>
                 `;
               } else if (status === "stage2_submitted") {
-                statusBadge = '<span class="badge-status" style="background: #17a2b8; color: #fff;">⏳ ส่งเอกสารรอบ 2 แล้ว (รอแอดมินตรวจสอบ)</span>';
+                statusBadge = '<span class="badge-status" style="background: #17a2b8; color: #fff;">⏳ 2. ส่งเอกสารรอบ 2 แล้ว (รอแอดมินตรวจสอบ)</span>';
                 actionAreaHtml = `${stage2DescHtml} ${renderStage2Answers(appItem)}`;
               } else if (status === "edit_requested") {
-                statusBadge = '<span class="badge-status" style="background: #f0ad4e; color: #000;">🔄 ส่งคำขอแก้ไขแล้ว (รอแอดมินอนุมัติ)</span>';
+                statusBadge = '<span class="badge-status" style="background: #f0ad4e; color: #000;">🔄 1.9.5 ขอแก้ไขเอกสารรอบ 2 (รอแอดมินอนุมัติ)</span>';
                 actionAreaHtml = `${stage2DescHtml} ${renderStage2Answers(appItem)}`;
               } else if (status === "approved") {
-                statusBadge = `<span class="badge-status" style="background: #28a745; color: #fff;">🎉 รอบ 3: สมาชิกอย่างเป็นทางการ (${appItem.assignedRole || "สมาชิก"})</span>`;
+                statusBadge = `<span class="badge-status" style="background: #28a745; color: #fff;">🎉 3. สมาชิกอย่างเป็นทางการ (${appItem.assignedRole || "สมาชิก"})</span>`;
+
                 actionAreaHtml = `
                   ${stage2DescHtml}
                   ${renderStage2Answers(appItem)}
-                  <div style="background: #181818; padding: 10px; border-radius: 6px; margin: 10px 0; border: 1px solid #333;">
-                    <p style="color: #28a745; font-size: 0.85rem; font-weight: bold;">🔒 บทบาทของคุณถูกล็อค (${appItem.assignedRole || "สมาชิก"}) และอนุมัติอย่างเป็นทางการแล้ว ไม่สามารถขอเปลี่ยนบทบาทได้</p>
+                  <div style="background: #181818; padding: 10px; border-radius: 6px; margin: 10px 0; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <p style="color: #28a745; font-size: 0.85rem; font-weight: bold; margin: 0;">🎯 บทบาทปัจจุบัน: ${appItem.assignedRole || "สมาชิก"}</p>
                   </div>
                   <div style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn-action-floating" style="background: #28a745; color: #fff;" onclick="openProjectNewsModal('${proj.firebaseId}')">📢 รอบ 3: ดูข่าวสาร</button>
-                    <button class="btn-action-floating" style="background: #495057; color: #fff;" onclick="openRequestEditModal('${proj.firebaseId}', ${item.appIndex})">🔄 ส่งคำขอแก้กลับไปที่แอดมิน (รอบ 3)</button>
+                    <button class="btn-action-floating" style="background: #28a745; color: #fff;" onclick="openProjectNewsModal('${proj.firebaseId}')">📢 3. ดูข่าวสารโปรเจกต์</button>
+                    <button class="btn-action-floating" style="background: #495057; color: #fff;" onclick="openRequestEditModal('${proj.firebaseId}', ${item.appIndex})">🔄 1.9.5 ส่งคำขอแก้ไขเอกสารรอบ 2</button>
                   </div>
                 `;
               }
@@ -330,7 +382,6 @@
                 <div class="app-card-header"><span class="app-proj-name">${proj.name}</span>${statusBadge}</div>
                 <div class="app-card-body">
                   ${renderFirstRoundAnswers(appItem)}
-                  <p style="color: #ff4d4d; font-size: 0.85rem; margin-top: 8px;">🎯 บทบาทปัจจุบัน: <strong>${appItem.assignedRole || appItem.rolePriority?.rank1 || "-"}</strong></p>
                   ${appItem.revisionNote ? `<div style="background: #2a1b1b; padding: 10px; border-left: 3px solid #ff4d4d; margin-top: 8px;"><p style="color:#ff4d4d; font-size:0.85rem;">💬 ข้อความล่าสุดจากแอดมิน: ${appItem.revisionNote}</p></div>` : ""}
                   ${actionAreaHtml}
                   <p style="color: #777; font-size: 0.75rem; margin-top: 10px;">🕒 ยื่นสมัครเมื่อ: ${appItem.createdAt || "-"}</p>
@@ -341,6 +392,98 @@
           }
         });
       }
+
+      window.openRoleAppealModal = function (projId, appIndex) {
+        const proj = currentProjectsData.find((p) => p.firebaseId === projId);
+        if (!proj) return;
+        activeRoleAppealTarget = { projId, appIndex };
+
+        const container = document.getElementById("availableRolesAppealContainer");
+        container.innerHTML = "";
+
+        if (!proj.roles || proj.roles.length === 0) {
+          container.innerHTML = `<p style="color: #888; text-align: center;">ไม่มีข้อมูลบทบาทในโปรเจกต์นี้</p>`;
+          document.getElementById("roleAppealModal").classList.add("open");
+          return;
+        }
+
+        let availableCount = 0;
+
+        proj.roles.forEach((roleConfig) => {
+          const filledCount = proj.applications.filter(
+            (a) => isCountedAsPassed(a.status) && a.assignedRole === roleConfig.name
+          ).length;
+
+          const remainingSeats = Number(roleConfig.count) - filledCount;
+
+          if (remainingSeats > 0) {
+            availableCount++;
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn-secondary-action";
+            btn.style.cssText = "background: #28a745; color: #fff; border: none; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;";
+            btn.innerHTML = `<span><strong>${roleConfig.name}</strong></span> <span style="font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px;">ว่าง ${remainingSeats} ที่</span>`;
+            btn.onclick = () => submitUserRoleAppeal(roleConfig.name);
+            container.appendChild(btn);
+          }
+        });
+
+        if (availableCount === 0) {
+          container.innerHTML = `<p style="color: #ff4d4d; text-align: center;">⚠️ ทุกบทบาทในโปรเจกต์นี้เต็มหมดแล้ว ไม่สามารถเลือกอุทธรณ์ได้ในขณะนี้</p>`;
+        }
+
+        document.getElementById("roleAppealModal").classList.add("open");
+      };
+
+      window.closeRoleAppealModal = function () {
+        document.getElementById("roleAppealModal").classList.remove("open");
+        activeRoleAppealTarget = null;
+      };
+
+      window.submitUserRoleAppeal = async function (selectedRole) {
+        if (!activeRoleAppealTarget) return;
+        const { projId, appIndex } = activeRoleAppealTarget;
+        const proj = currentProjectsData.find((p) => p.firebaseId === projId);
+        if (!proj) return;
+
+        if (!confirm(`⚠️ ยืนยันเลือกอุทธรณ์ขอเปลี่ยนเป็นบทบาท "${selectedRole}" และส่งให้แอดมินอนุมัติ?`)) return;
+
+        proj.applications[appIndex].appealStatus = "pending";
+        proj.applications[appIndex].pendingAppealRole = selectedRole;
+        proj.applications[appIndex].status = "role_pending_review";
+        proj.applications[appIndex].revisionNote = `ผู้ใช้ส่งคำขออุทธรณ์เปลี่ยนเป็นบทบาท: ${selectedRole} (1.2.5 รอแอดมินอนุมัติ)`;
+
+        try {
+          await updateDoc(doc(db, "projects", proj.firebaseId), { applications: proj.applications });
+          window.closeRoleAppealModal();
+          alert(`📤 ส่งคำขออุทธรณ์บทบาท "${selectedRole}" ไปยังแอดมินเรียบร้อยแล้ว!`);
+        } catch (err) {
+          alert("❌ เกิดข้อผิดพลาด: " + err.message);
+        }
+      };
+
+      window.confirmCancelProjectParticipation = async function () {
+        if (!activeRoleAppealTarget) return;
+        const { projId, appIndex } = activeRoleAppealTarget;
+        const proj = currentProjectsData.find((p) => p.firebaseId === projId);
+        if (!proj) return;
+
+        if (!confirm("⚠️ คำเตือน: คุณต้องการขอยกเลิกการเข้าร่วมโปรเจกต์นี้ใช่หรือไม่? การกระทำนี้จะเปลี่ยนสถานะเป็นไม่ผ่านและปลดออกจากโปรเจกต์ทันที!")) return;
+
+        proj.applications[appIndex].status = "rejected";
+        proj.applications[appIndex].assignedRole = null;
+        proj.applications[appIndex].appealStatus = null;
+        proj.applications[appIndex].pendingAppealRole = null;
+        proj.applications[appIndex].revisionNote = "ผู้ใช้กดยกเลิกการเข้าร่วมโปรเจกต์ด้วยตนเอง";
+
+        try {
+          await updateDoc(doc(db, "projects", proj.firebaseId), { applications: proj.applications });
+          window.closeRoleAppealModal();
+          alert("🚫 ยกเลิกการเข้าร่วมโปรเจกต์เรียบร้อยแล้ว");
+        } catch (err) {
+          alert("❌ เกิดข้อผิดพลาด: " + err.message);
+        }
+      };
 
       window.openStage2Modal = function (projId, appIndex) {
         const proj = currentProjectsData.find((p) => p.firebaseId === projId);
@@ -354,10 +497,29 @@
         const existingAnswers = proj.applications[appIndex].stage2Answers || {};
 
         s2Questions.forEach((q, idx) => {
+          const qTitle = typeof q === 'object' ? q.title : q;
+          const qType = typeof q === 'object' && q.type ? q.type : 'text';
+          const savedValue = existingAnswers[qTitle] || "";
+
+          let inputHtml = "";
+          if (qType === 'textarea') {
+            inputHtml = `<textarea class="stage2-ans-input" name="s2_q_${idx}" placeholder="กรอกคำตอบของคุณ..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; min-height:80px; box-sizing:border-box;">${savedValue}</textarea>`;
+          } else if (qType === 'date') {
+            inputHtml = `<input type="date" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+          } else if (qType === 'number') {
+            inputHtml = `<input type="number" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" placeholder="กรอกตัวเลข..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+          } else if (qType === 'email') {
+            inputHtml = `<input type="email" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" placeholder="example@email.com" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+          } else if (qType === 'image') {
+            inputHtml = `<input type="url" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" placeholder="วางลิงก์รูปภาพ (เช่น URL รูปผลงาน หรือ อัปโหลดผ่านเว็บฝากไฟล์)" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+          } else {
+            inputHtml = `<input type="text" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" placeholder="กรอกคำตอบของคุณ..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+          }
+
           const div = document.createElement("div");
           div.className = "form-group-input";
-          const savedValue = existingAnswers[q.title] || "";
-          div.innerHTML = `<label>${q.title}</label><input type="text" name="s2_q_${idx}" value="${savedValue}" required />`;
+          div.style.marginBottom = "14px";
+          div.innerHTML = `<label style="display:block; margin-bottom:6px; color:#ddd; font-size:0.9rem;">${qTitle}</label>${inputHtml}`;
           container.appendChild(div);
         });
         document.getElementById("stage2Modal").classList.add("open");
@@ -374,7 +536,8 @@
         const formData = new FormData(e.target);
         let answersMap = {};
         proj.stage2Questions.forEach((q, idx) => {
-          answersMap[q.title] = formData.get(`s2_q_${idx}`) || "";
+          const qTitle = typeof q === 'object' ? q.title : q;
+          answersMap[qTitle] = formData.get(`s2_q_${idx}`) || "";
         });
         proj.applications[appIndex].stage2Answers = answersMap;
         proj.applications[appIndex].status = "stage2_submitted";
@@ -413,7 +576,7 @@
         try {
           await updateDoc(doc(db, "projects", proj.firebaseId), { applications: proj.applications });
           window.closeRequestEditModal();
-          alert("📤 ส่งคำขอแก้ไขเรียบร้อย รอแอดมินอนุมัติสิทธิ์!");
+          alert("📤 ส่งคำขอแก้ไข (1.9.5) เรียบร้อย รอแอดมินอนุมัติสิทธิ์!");
         } catch (err) {
           alert("❌ เกิดข้อผิดพลาด: " + err.message);
         }
