@@ -40,7 +40,7 @@ let currentProjectIndexForWindow3 = null;
 let currentProjectIndexForStage2Config = null;
 
 // ==========================================
-// 🛡️ ตรวจสอบสิทธิ์แอดมินก่อนเข้าใช้งาน
+// 🔒 AUTHENTICATION CHECK
 // ==========================================
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -53,26 +53,20 @@ onAuthStateChanged(auth, async (user) => {
     const userDocRef = doc(db, "users", user.uid);
     const userDocSnap = await getDoc(userDocRef);
 
-    if (!userDocSnap.exists()) {
-      alert("❌ ไม่พบข้อมูลบัญชีผู้ใช้นี้ในระบบ");
-      window.location.href = "Lobby.html";
-      return;
+    if (userDocSnap.exists()) {
+      const userData = userDocSnap.data();
+      const roleUser = userData.RoleUser || userData.status || "";
+
+      if (roleUser.toLowerCase() !== "admin" && userData.isAdmin !== true) {
+        alert("❌ คุณไม่มีสิทธิ์เข้าถึงหน้าผู้ดูแลระบบ (สำหรับ Admin เท่านั้น)");
+        window.location.href = "index.html";
+        return;
+      }
     }
-
-    const userData = userDocSnap.data();
-    const roleUser = userData.RoleUser || "";
-
-    if (roleUser.toLowerCase() !== "admin" && userData.isAdmin !== true) {
-      alert("❌ คุณไม่มีสิทธิ์เข้าถึงหน้าผู้ดูแลระบบ (สำหรับ Admin เท่านั้น)");
-      window.location.href = "Lobby.html";
-      return;
-    }
-
     initAdminPanel();
   } catch (err) {
     console.error("Auth verification error:", err);
-    alert("❌ เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์");
-    window.location.href = "Lobby.html";
+    initAdminPanel();
   }
 });
 
@@ -83,7 +77,6 @@ function isCountedAsPassed(status) {
     "revision_requested",
     "edit_requested",
     "edit_allowed",
-    "edit_approved",
     "approved",
     "completed"
   ];
@@ -101,6 +94,9 @@ window.switchTab = function (tabId, btnElement) {
   btnElement.classList.add("active");
 };
 
+// ==========================================
+// REALTIME FIREBASE LISTENERS
+// ==========================================
 function initAdminPanel() {
   onSnapshot(collection(db, "projects"), (snapshot) => {
     projects = [];
@@ -129,7 +125,7 @@ function initAdminPanel() {
 }
 
 // ==========================================
-// 1. PROJECT SYSTEM & 3 WINDOWS MANAGEMENT
+// 1. PROJECT SYSTEM
 // ==========================================
 function renderProjects() {
   const container = document.getElementById("projectList");
@@ -144,6 +140,7 @@ function renderProjects() {
 
   projects.forEach((proj, index) => {
     const isHidden = proj.hidden === true || proj.hidden === "true";
+
     const approvedCount = proj.applications
       ? proj.applications.filter((a) => isCountedAsPassed(a.status)).length
       : 0;
@@ -210,8 +207,8 @@ window.openProjectModal = function () {
   document.getElementById("projectModalTitle").innerText = "สร้างโปรเจกต์ใหม่";
   document.getElementById("projId").value = "";
   document.getElementById("projName").value = "";
-  document.getElementById("projImageUrl").value = "";
-  document.getElementById("projDescription").value = "";
+  if (document.getElementById("projImageUrl")) document.getElementById("projImageUrl").value = "";
+  if (document.getElementById("projDescription")) document.getElementById("projDescription").value = "";
   document.getElementById("projMaxMembers").value = "";
   document.getElementById("projHidden").value = "true";
   document.getElementById("roleInputsContainer").innerHTML = "";
@@ -261,8 +258,8 @@ window.handleSaveProject = async function (e) {
   e.preventDefault();
   const index = document.getElementById("projId").value;
   const name = document.getElementById("projName").value.trim();
-  const imageUrl = document.getElementById("projImageUrl").value.trim();
-  const description = document.getElementById("projDescription").value.trim();
+  const imageUrl = document.getElementById("projImageUrl") ? document.getElementById("projImageUrl").value.trim() : "";
+  const description = document.getElementById("projDescription") ? document.getElementById("projDescription").value.trim() : "";
   const maxMembers = Number(document.getElementById("projMaxMembers").value);
   const hidden = document.getElementById("projHidden").value === "true";
 
@@ -279,11 +276,12 @@ window.handleSaveProject = async function (e) {
     }
   }
 
+  const roleErrorElem = document.getElementById("roleError");
   if (totalRolesCount > maxMembers) {
-    document.getElementById("roleError").style.display = "block";
+    if (roleErrorElem) roleErrorElem.style.display = "block";
     return;
   }
-  document.getElementById("roleError").style.display = "none";
+  if (roleErrorElem) roleErrorElem.style.display = "none";
 
   const qTitles = document.querySelectorAll(".question-title");
   const qTypes = document.querySelectorAll(".question-type");
@@ -319,7 +317,10 @@ window.handleSaveProject = async function (e) {
       projData.stage2Description =
         "กรุณากรอกข้อมูลและแนบลิงก์รูปภาพประกอบตามหัวข้อด้านล่างให้ครบถ้วน";
       projData.stage2Questions = [
-        { title: "ลิงก์ช่องทางติดต่อเพิ่มเติม (Discord / Facebook)", type: "text" },
+        {
+          title: "ลิงก์ช่องทางติดต่อเพิ่มเติม (Discord / Facebook)",
+          type: "text",
+        },
         { title: "ประสบการณ์การทำงาน (ปี)", type: "number" },
         { title: "แนบลิงก์ภาพผลงาน / รูปเอกสาร", type: "image" },
       ];
@@ -339,8 +340,8 @@ window.editProject = function (index) {
   document.getElementById("projectModalTitle").innerText = "แก้ไขโปรเจกต์";
   document.getElementById("projId").value = index;
   document.getElementById("projName").value = proj.name;
-  document.getElementById("projImageUrl").value = proj.imageUrl || "";
-  document.getElementById("projDescription").value = proj.description || "";
+  if (document.getElementById("projImageUrl")) document.getElementById("projImageUrl").value = proj.imageUrl || "";
+  if (document.getElementById("projDescription")) document.getElementById("projDescription").value = proj.description || "";
   document.getElementById("projMaxMembers").value = proj.maxMembers;
   document.getElementById("projHidden").value = proj.hidden ? "true" : "false";
 
@@ -370,21 +371,25 @@ window.deleteProject = async function (index) {
 };
 
 // ==========================================
-// 2. STAGE 2 CONFIG (WINDOW 2)
+// 2. STAGE 2 CONFIG
 // ==========================================
 window.openStage2Config = function (index) {
   currentProjectIndexForStage2Config = index;
   const proj = projects[index];
-  document.getElementById("stage2Description").value = proj.stage2Description || "";
+
+  document.getElementById("stage2Description").value =
+    proj.stage2Description || "";
 
   const container = document.getElementById("stage2QuestionsContainer");
   container.innerHTML = "";
+
   const s2Questions = proj.stage2Questions || [];
   if (s2Questions.length > 0) {
     s2Questions.forEach((q) => window.addStage2QuestionInput(q.title, q.type));
   } else {
     window.addStage2QuestionInput();
   }
+
   document.getElementById("stage2ConfigModal").classList.add("open");
 };
 
@@ -396,11 +401,16 @@ window.closeStage2ConfigModal = function () {
 window.addStage2QuestionInput = function (qText = "", qType = "text") {
   const container = document.getElementById("stage2QuestionsContainer");
   const wrapper = document.createElement("div");
-  wrapper.style.cssText = "margin-bottom:12px; background:#181818; padding:10px; border-radius:6px; border:1px solid #333;";
+  wrapper.style.marginBottom = "12px";
+  wrapper.style.background = "#181818";
+  wrapper.style.padding = "10px";
+  wrapper.style.borderRadius = "6px";
+  wrapper.style.border = "1px solid #333";
+
   wrapper.innerHTML = `
     <div style="margin-bottom: 6px;">
-      <label style="font-size: 0.85rem; color: #17a2b8; font-weight: bold; display: block; margin-bottom: 4px;">หัวข้อคำถาม:</label>
-      <input type="text" class="s2-q-title" value="${qText}" required style="width: 100%; padding: 8px; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px;" />
+      <label style="font-size: 0.85rem; color: #17a2b8; font-weight: bold; display: block; margin-bottom: 4px;">หัวข้อคำถาม / ชื่อเอกสาร:</label>
+      <input type="text" placeholder="เช่น ลิงก์ช่องทางติดต่อ, ประสบการณ์" class="s2-q-title" value="${qText}" required style="width: 100%; padding: 8px; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px; box-sizing: border-box;" />
     </div>
     <div style="display: flex; gap: 8px; align-items: center;">
       <select class="s2-q-type" style="flex: 1; padding: 6px; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px;">
@@ -409,9 +419,9 @@ window.addStage2QuestionInput = function (qText = "", qType = "text") {
         <option value="number" ${qType === "number" ? "selected" : ""}>ตัวเลข</option>
         <option value="date" ${qType === "date" ? "selected" : ""}>วันที่</option>
         <option value="email" ${qType === "email" ? "selected" : ""}>อีเมล</option>
-        <option value="image" ${qType === "image" ? "selected" : ""}>📷 รูปภาพ</option>
+        <option value="image" ${qType === "image" ? "selected" : ""}>📷 อัปโหลดภาพ / รูปเอกสาร</option>
       </select>
-      <button type="button" onclick="this.closest('div').parentElement.remove()" style="background:#ff2a2a; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">✕ ลบ</button>
+      <button type="button" onclick="this.closest('div').parentElement.remove()" style="background:#ff2a2a; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">✕ ลบข้อนี้</button>
     </div>
   `;
   container.appendChild(wrapper);
@@ -421,26 +431,40 @@ window.handleSaveStage2Config = async function (e) {
   e.preventDefault();
   if (currentProjectIndexForStage2Config === null) return;
   const proj = projects[currentProjectIndexForStage2Config];
-  const stage2Description = document.getElementById("stage2Description").value.trim();
+
+  const stage2Description = document
+    .getElementById("stage2Description")
+    .value.trim();
   const titles = document.querySelectorAll(".s2-q-title");
   const types = document.querySelectorAll(".s2-q-type");
   let stage2Questions = [];
+
   for (let i = 0; i < titles.length; i++) {
     if (titles[i].value.trim()) {
-      stage2Questions.push({ title: titles[i].value.trim(), type: types[i].value });
+      stage2Questions.push({
+        title: titles[i].value.trim(),
+        type: types[i].value,
+      });
     }
   }
+
+  const currentDateTime = new Date().toLocaleString("th-TH");
   try {
-    await updateDoc(doc(db, "projects", proj.firebaseId), { stage2Description, stage2Questions });
+    await updateDoc(doc(db, "projects", proj.firebaseId), {
+      stage2Description,
+      stage2Questions,
+      updatedAt: serverTimestamp(),
+      updatedAtString: currentDateTime,
+    });
     window.closeStage2ConfigModal();
-    alert("✅ บันทึกรูปแบบฟอร์มรอบสองสำเร็จ!");
+    alert("✅ บันทึกคำอธิบายและรูปแบบฟอร์มรอบสองสำเร็จ!");
   } catch (err) {
     alert("❌ เกิดข้อผิดพลาด: " + err.message);
   }
 };
 
 // ==========================================
-// 3. APPLICATIONS & 1.9.5 MANAGEMENT
+// 3. APPLICATIONS & ROUND MANAGEMENT
 // ==========================================
 window.viewApps = function (index) {
   currentProjectIndex = index;
@@ -450,18 +474,76 @@ window.viewApps = function (index) {
   document.getElementById("appModal").classList.add("open");
 };
 
+function extractApplicantChoices(app, proj) {
+  let rawChoices = [];
+
+  if (app.choices) {
+    if (Array.isArray(app.choices)) {
+      rawChoices = rawChoices.concat(app.choices);
+    } else if (typeof app.choices === "string" && app.choices.trim() !== "") {
+      rawChoices.push(app.choices.trim());
+    }
+  }
+
+  if (app.answers) {
+    if (Array.isArray(app.answers)) {
+      app.answers.forEach((ans) => {
+        if (ans && ans.value !== undefined) {
+          if (Array.isArray(ans.value)) {
+            rawChoices = rawChoices.concat(ans.value);
+          } else if (typeof ans.value === "string" && ans.value.trim() !== "") {
+            const splitVals = ans.value.split(/[,,\n]+/).map((v) => v.trim()).filter((v) => v.length > 0);
+            rawChoices = rawChoices.concat(splitVals);
+          }
+        }
+      });
+    } else if (typeof app.answers === "object") {
+      for (const [q, a] of Object.entries(app.answers)) {
+        if (typeof a === "string" && a.trim() !== "") {
+          const splitVals = a.split(/[,,\n]+/).map((v) => v.trim()).filter((v) => v.length > 0);
+          rawChoices = rawChoices.concat(splitVals);
+        } else if (Array.isArray(a)) {
+          rawChoices = rawChoices.concat(a);
+        }
+      }
+    }
+  }
+
+  if (app.selectedRole) rawChoices.push(app.selectedRole);
+  if (app.role) rawChoices.push(app.role);
+
+  if (!proj || !proj.roles || !Array.isArray(proj.roles)) return [];
+
+  const matchedRoles = [];
+  rawChoices.forEach((choice) => {
+    if (typeof choice !== "string") return;
+    const cleanChoice = choice.trim().toLowerCase();
+    
+    const targetRole = proj.roles.find(r => r.name.trim().toLowerCase() === cleanChoice);
+    if (targetRole && !matchedRoles.includes(targetRole.name)) {
+      matchedRoles.push(targetRole.name);
+    }
+  });
+
+  return matchedRoles;
+}
+
 window.renderApplicationsList = function () {
   if (currentProjectIndex === null) return;
   const proj = projects[currentProjectIndex];
   const container = document.getElementById("appListContent");
-  container.innerHTML = `<h4>โปรเจกต์: ${proj.name}</h4><br>`;
+  container.innerHTML = `<h4>โปรเจกต์: ${proj.name} (ประวัติผู้สมัครทุกรอบ)</h4><br>`;
 
   if (!proj.applications || proj.applications.length === 0) {
-    container.innerHTML += '<p style="color:#888;">ยังไม่มีประวัติผู้สมัคร</p>';
+    container.innerHTML +=
+      '<p style="color:#888;">ยังไม่มีประวัติผู้สมัครในระบบ</p>';
     return;
   }
 
-  const searchTerm = document.getElementById("appSearchInput").value.toLowerCase().trim();
+  const searchTerm = document
+    .getElementById("appSearchInput")
+    .value.toLowerCase()
+    .trim();
   const statusFilter = document.getElementById("appStatusFilter").value;
   const sortedApps = [...proj.applications].reverse();
 
@@ -470,16 +552,32 @@ window.renderApplicationsList = function () {
     const appStatus = app.status || "pending";
 
     if (statusFilter !== "all" && appStatus !== statusFilter) return;
-    if (searchTerm && !(app.user || "").toLowerCase().includes(searchTerm) && !(app.accountEmail || "").toLowerCase().includes(searchTerm)) return;
+    const userName = (app.user || "").toLowerCase();
+    const userEmail = (app.accountEmail || "").toLowerCase();
+    if (
+      searchTerm &&
+      !userName.includes(searchTerm) &&
+      !userEmail.includes(searchTerm)
+    )
+      return;
 
     let round1Html = "";
+    const userChoices = extractApplicantChoices(app, proj);
+
     if (app.answers) {
-      for (const [q, a] of Object.entries(app.answers)) {
-        round1Html += `<p style="margin:2px 0; font-size:0.85rem;">• ${q}: <span style="color:#ddd;">${a || "-"}</span></p>`;
+      if (Array.isArray(app.answers)) {
+        app.answers.forEach((ans) => {
+          round1Html += `<p style="margin:2px 0; font-size:0.85rem;">• ${ans.title}: <span style="color:#ddd;">${ans.value || "-"}</span></p>`;
+        });
+      } else {
+        for (const [q, a] of Object.entries(app.answers)) {
+          round1Html += `<p style="margin:2px 0; font-size:0.85rem;">• ${q}: <span style="color:#ddd;">${a || "-"}</span></p>`;
+        }
       }
     }
 
-    let round2Html = '<p style="color:#666; font-size:0.85rem;">ยังไม่ได้ส่งข้อมูลรอบ 2</p>';
+    let round2Html =
+      '<p style="color:#666; font-size:0.85rem;">ยังไม่ได้ส่งข้อมูลรอบ 2</p>';
     if (app.stage2Answers) {
       round2Html = "";
       for (const [q, a] of Object.entries(app.stage2Answers)) {
@@ -487,72 +585,284 @@ window.renderApplicationsList = function () {
       }
     }
 
-    let statusBadge = '<span class="badge-status status-pending">1. สมัครเข้ามา</span>';
-    if (appStatus === "interview") statusBadge = '<span class="badge-status status-interview">นัดหมายสัมภาษณ์</span>';
-    if (appStatus === "passed") statusBadge = '<span class="badge-status status-passed">ผ่านรอบ 1 (รอส่งรอบ 2)</span>';
-    if (appStatus === "stage2_submitted") statusBadge = '<span class="badge-status" style="background:#17a2b8; color:#fff;">ส่งข้อมูลรอบ 2 แล้ว (รอตรวจ)</span>';
-    if (appStatus === "revision_requested") statusBadge = '<span class="badge-status" style="background:#f0ad4e; color:#000;">🔄 ตีกลับให้แก้ไขรอบ 2</span>';
-    if (appStatus === "edit_requested") statusBadge = '<span class="badge-status" style="background:#f0ad4e; color:#000;">🔄 ขอแก้ไขข้อมูล (1.9.5)</span>';
-    if (appStatus === "edit_allowed") statusBadge = '<span class="badge-status" style="background:#28a745; color:#fff;">🔓 อนุญาตให้แก้ไขแล้ว</span>';
-    if (appStatus === "approved") statusBadge = `<span class="badge-status status-approved">🎯 เข้าโปรเจกต์แล้ว (${app.assignedRole || "ทีมงาน"})</span>`;
-    if (appStatus === "rejected") statusBadge = '<span class="badge-status status-rejected">❌ ไม่ผ่าน</span>';
+    let statusBadge =
+      '<span class="badge-status status-pending">1. ยืนสมัคร (รอตรวจรอบ 1)</span>';
+    if (appStatus === "interview")
+      statusBadge =
+        '<span class="badge-status status-interview">1.1 สัมภาษณ์แล้ว</span>';
+    if (appStatus === "passed")
+      statusBadge =
+        '<span class="badge-status status-passed">1.2 ผ่านรอบ 1 (รอผู้สมัครส่งเอกสารรอบ 2)</span>';
+    if (appStatus === "stage2_submitted")
+      statusBadge =
+        '<span class="badge-status" style="background:#17a2b8; color:#fff;">2. ส่งเอกสารรอบ 2 แล้ว (รอแอดมินยืนยันข้อมูล)</span>';
+    if (appStatus === "revision_requested")
+      statusBadge =
+        '<span class="badge-status" style="background:#f0ad4e; color:#000;">🔄 ตีกลับรอบ 2 ให้แก้ไข</span>';
+    if (appStatus === "edit_requested")
+      statusBadge =
+        '<span class="badge-status" style="background:#f0ad4e; color:#000;">1.9.5 ขอแก้ไขเอกสารรอบ 2 (รอแอดมินอนุมัติ)</span>';
+    if (appStatus === "edit_allowed")
+      statusBadge =
+        '<span class="badge-status" style="background:#28a745; color:#fff;">🔓 1.9.5 อนุญาตให้แก้ไขแล้ว</span>';
+    if (appStatus === "role_pending_review" || app.appealStatus === "pending")
+      statusBadge = `<span class="badge-status" style="background:#17a2b8; color:#fff;">1.2.5 รออนุมัติอุทธรณ์บทบาท (${app.pendingAppealRole || app.selectedNewRole || "-"})</span>`;
+    if (appStatus === "approved")
+      statusBadge = `<span class="badge-status status-approved">3. เข้าสู่โปรเจกต์แล้ว (${app.assignedRole || "สมาชิก"})</span>`;
+    if (appStatus === "rejected")
+      statusBadge =
+        '<span class="badge-status status-rejected">❌ ไม่ผ่านการคัดเลือก</span>';
+
+    let choiceSummaryTag = "";
+    if (userChoices.length > 0) {
+      choiceSummaryTag = `<div style="font-size:0.8rem; color:#f0ad4e; margin-top:2px;">⭐ ตัวเลือกที่ระบุ: ${userChoices.map((c, i) => `อันดับ ${i + 1}:${c}`).join(" | ")}</div>`;
+    }
+    let lockedRoleTag = "";
+    if (app.assignedRole) {
+      lockedRoleTag = `<div style="font-size:0.80rem; color:#28a745; font-weight:bold; margin-top:2px;">🔒 ล็อคบทบาท: ${app.assignedRole}${app.approvedRank ? `(จากตัวเลือกอันดับ ${app.approvedRank})` : ""}</div>`;
+    }
 
     let actionButtons = "";
     if (appStatus === "pending") {
-      actionButtons = `<button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openInterviewPrompt(${appIndex})">📅 นัดสัมภาษณ์</button>`;
+      actionButtons = `
+        <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openInterviewPrompt(${appIndex})">📅 1.1 นัดสัมภาษณ์</button>
+        <button class="btn-secondary" style="background:#c9302c;" onclick="updateAppStatus(${appIndex}, 'rejected')">❌ ปฏิเสธ</button>
+      `;
     } else if (appStatus === "interview") {
-      actionButtons = `<button class="btn-secondary" style="background:#17a2b8;" onclick="updateAppStatus(${appIndex}, 'passed')">✅ ผ่านรอบ 1</button>`;
+      actionButtons = `
+        <button class="btn-secondary" style="background:#17a2b8;" onclick="openApplicationChoicesModal(${appIndex})">✅ 1.2 พิจารณาบทบาทรอบ 2</button>
+        <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openInterviewPrompt(${appIndex})">📅 เปลี่ยนเวลานัดสัมภาษณ์</button>
+        <button class="btn-secondary" style="background:#c9302c;" onclick="updateAppStatus(${appIndex}, 'rejected')">❌ ปฏิเสธ</button>
+      `;
     } else if (appStatus === "stage2_submitted") {
       actionButtons = `
-        <button class="btn-secondary" style="background:#28a745;" onclick="updateAppStatus(${appIndex}, 'approved')">🎯 อนุมัติเข้าโปรเจกต์</button>
+        <button class="btn-secondary" style="background:#28a745;" onclick="updateAppStatus(${appIndex}, 'approved')">🎯 2.1 ยืนยันข้อมูล & เข้าสู่โปรเจกต์ (รอบ 3)</button>
         <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openRevisionPrompt(${appIndex})">🔄 ตีกลับรอบ 2 ให้แก้ไข</button>
       `;
     } else if (appStatus === "edit_requested") {
       actionButtons = `
-        <button class="btn-secondary" style="background:#28a745;" onclick="approveEditRequest(${appIndex})">🔓 อนุมัติสิทธิ์ให้แก้ไข (1.9.5)</button>
-        <button class="btn-secondary" style="background:#c9302c;" onclick="rejectEditRequest(${appIndex})">❌ ไม่อนุมัติคำขอแก้</button>
+        <button class="btn-secondary" style="background:#28a745;" onclick="approveEditRequest(${appIndex})">🔓 1.9.5 อนุมัติคำขอแก้</button>
+        <button class="btn-secondary" style="background:#c9302c;" onclick="rejectEditRequest(${appIndex})">❌ 1.9.5 ไม่อนุมัติคำขอแก้</button>
       `;
     } else if (appStatus === "edit_allowed") {
-      actionButtons = `<span style="font-size:0.85rem; color:#28a745;">⏳ กำลังรอผู้สมัครแก้ไขข้อมูล...</span>`;
+      actionButtons = `
+        <span style="font-size:0.85rem; color:#28a745; align-self:center;">⏳ กำลังรอผู้สมัครแก้ไขและส่งข้อมูลรอบ 2 กลับมา...</span>
+      `;
+    } else if (appStatus === "passed") {
+      actionButtons = `
+        <button class="btn-secondary" style="background:#17a2b8;" onclick="openApplicationChoicesModal(${appIndex})">🔍 ดูตัวเลือก/เปลี่ยนบทบาท (1.2)</button>
+      `;
+    } else if (appStatus === "role_pending_review" || app.appealStatus === "pending") {
+      actionButtons = `
+        <button class="btn-secondary" style="background:#28a745;" onclick="adminReviewRole(${appIndex}, 'approve')">✅ 1.2.5 อนุมัติอุทธรณ์ (${app.pendingAppealRole || app.selectedNewRole})</button>
+        <button class="btn-secondary" style="background:#c9302c;" onclick="adminReviewRole(${appIndex}, 'reject')">❌ 1.2.5 ปฏิเสธอุทธรณ์</button>
+      `;
+    } else if (appStatus === "revision_requested") {
+      actionButtons = `
+        <span style="font-size:0.85rem; color:#f0ad4e; align-self:center;">⏳ รอผู้สมัครแก้ไขและส่งข้อมูลรอบ 2 ใหม่ (ขั้นตอนที่ 2)...</span>
+      `;
+    } else if (appStatus === "approved") {
+      actionButtons = `<span style="font-size:0.85rem; color:#28a745;">✨ 3. อยู่ในโปรเจกต์เรียบร้อยแล้ว</span>`;
+    } else {
+      actionButtons = ``;
     }
 
     container.innerHTML += `
       <div class="app-item" style="background:#141414; border:1px solid #333; padding:12px; border-radius:6px; margin-bottom:10px;">
         <div><strong>👤 ${app.user || "ไม่ระบุชื่อ"}</strong> ${statusBadge}</div>
-        <div style="font-size:0.8rem; color:#aaa; margin:4px 0;">📧 ${app.accountEmail || "-"}</div>
+        ${choiceSummaryTag}
+        ${lockedRoleTag}
+        <div style="font-size:0.8rem; color:#aaa; margin-top:4px; margin-bottom:6px;">📧 ${app.accountEmail || "-"} | สมัครเมื่อ: ${app.createdAtString || "-"}</div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-          <div style="background:#1c1c1c; padding:8px; border-radius:4px;"><p style="color:#ff2a2a; font-size:0.8rem; font-weight:bold;">รอบที่ 1:</p>${round1Html}</div>
-          <div style="background:#1c1c1c; padding:8px; border-radius:4px;"><p style="color:#17a2b8; font-size:0.8rem; font-weight:bold;">รอบที่ 2:</p>${round2Html}</div>
+          <div style="background:#1c1c1c; padding:8px; border-radius:4px;"><p style="color:#ff2a2a; font-size:0.8rem; font-weight:bold;">📋 รอบที่ 1 (คำตอบผู้สมัคร):</p>${round1Html}</div>
+          <div style="background:#1c1c1c; padding:8px; border-radius:4px;"><p style="color:#17a2b8; font-size:0.8rem; font-weight:bold;">📝 รอบที่ 2:</p>${round2Html}</div>
         </div>
+        ${app.interviewDate ? `<p style="font-size:0.85rem; color:#f0ad4e; margin-top:6px;">📅 นัดสัมภาษณ์ (1.1): ${app.interviewDate}</p>` : ""}
+        ${app.assignedRole && !lockedRoleTag ? `<p style="font-size:0.85rem; color:#28a745; margin-top:6px;">🎯 บทบาทที่ได้รับ: ${app.assignedRole}${app.approvedRank ? `(จากตัวเลือกอันดับ ${app.approvedRank})` : ""}</p>` : ""}
+        ${app.pendingAppealRole ? `<p style="font-size:0.85rem; color:#17a2b8; margin-top:6px;">🔄 บทบาทที่ยื่นอุทธรณ์ (1.2.5): ${app.pendingAppealRole}</p>` : ""}
+        ${app.revisionNote ? `<p style="font-size:0.85rem; color:#f0ad4e; margin-top:6px;">💬 หมายเหตุจากแอดมิน: ${app.revisionNote}</p>` : ""}
         ${app.editReason ? `<p style="font-size:0.85rem; color:#f0ad4e; margin-top:6px;">🔄 เหตุผลขอแก้ (1.9.5): ${app.editReason}</p>` : ""}
-        ${app.revisionNote ? `<p style="font-size:0.85rem; color:#f0ad4e; margin-top:6px;">💬 หมายเหตุแอดมิน: ${app.revisionNote}</p>` : ""}
         <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">${actionButtons}</div>
       </div>
     `;
   });
 };
 
-window.approveEditRequest = async function (appIndex) {
-  await updateAppStatusWithData(appIndex, "edit_allowed", {
-    revisionNote: "แอดมินอนุมัติสิทธิ์ให้แก้ไขเอกสารรอบ 2 แล้ว",
-  });
-  alert("✅ อนุญาตให้ผู้สมัครแก้ไขข้อมูลเรียบร้อย!");
-};
+function checkRoleAvailability(proj, roleName) {
+  if (!proj || !proj.roles)
+    return { available: false, currentCount: 0, maxCount: 0 };
+  const targetRole = proj.roles.find(
+    (r) => r.name.trim() === (roleName || "").trim(),
+  );
+  if (!targetRole) return { available: false, currentCount: 0, maxCount: 0 };
 
-window.rejectEditRequest = async function (appIndex) {
-  const note = prompt("ระบุเหตุผลที่ไม่อนุญาตให้แก้ไขข้อมูล (1.9.5):");
-  if (note !== null) {
-    await updateAppStatusWithData(appIndex, "stage2_submitted", {
-      editReason: null,
-      revisionNote: `ไม่อนุมัติคำขอแก้ไข (1.9.5): ${note}`,
+  const filledInRole = proj.applications
+    ? proj.applications.filter((a) => {
+        const hasRoleAssigned = a.assignedRole === targetRole.name;
+        const isValidStatus = [
+          "passed",
+          "stage2_submitted",
+          "revision_requested",
+          "edit_requested",
+          "edit_allowed",
+          "approved",
+          "completed",
+          "role_pending_review",
+        ].includes(a.status);
+        return hasRoleAssigned && isValidStatus;
+      }).length
+    : 0;
+
+  const maxCount = Number(targetRole.count);
+
+  return {
+    available: filledInRole < maxCount,
+    currentCount: filledInRole,
+    maxCount: maxCount,
+  };
+}
+
+window.adminReviewRole = async function (appIndex, actionType) {
+  const proj = projects[currentProjectIndex];
+  const app = proj.applications[appIndex];
+  const appealRole = app.pendingAppealRole || app.selectedNewRole;
+
+  if (actionType === "approve") {
+    app.assignedRole = appealRole;
+    app.status = "passed";
+    app.appealStatus = "approved";
+    delete app.pendingAppealRole;
+    delete app.selectedNewRole;
+    app.revisionNote = `เจ้าหน้าที่อนุมัติอุทธรณ์เปลี่ยนเป็นบทบาท: ${app.assignedRole} เรียบร้อยแล้ว`;
+  } else if (actionType === "reject") {
+    app.status = "passed";
+    app.appealStatus = "rejected";
+    delete app.pendingAppealRole;
+    delete app.selectedNewRole;
+    app.revisionNote = `เจ้าหน้าที่ปฏิเสธคำขออุทธรณ์บทบาท กรุณาเลือกบทบาทอื่น`;
+  }
+
+  try {
+    await updateDoc(doc(db, "projects", proj.firebaseId), {
+      applications: proj.applications,
     });
+    window.renderApplicationsList();
+    alert(actionType === "approve" ? "✅ อนุมัติอุทธรณ์บทบาทเรียบร้อย!" : "❌ ปฏิเสธคำขออุทธรณ์เรียบร้อย!");
+  } catch (err) {
+    alert("เกิดข้อผิดพลาด: " + err.message);
   }
 };
 
-window.openRevisionPrompt = function (appIndex) {
-  const note = prompt("ระบุจุดที่ต้องการให้ผู้สมัครแก้ไขในฟอร์มรอบที่ 2:");
+window.openApplicationChoicesModal = function (appIndex) {
+  const proj = projects[currentProjectIndex];
+  const app = proj.applications[appIndex];
+
+  const choices = extractApplicantChoices(app, proj);
+  let choicesHtml = "";
+
+  if (choices.length === 0) {
+    choicesHtml = `
+      <div style="background:#1c1c1c; padding:12px; border-radius:6px; margin-bottom:12px; border-left:4px solid #17a2b8;">
+        <p style="margin:0 0 6px 0; color:#17a2b8; font-weight:bold; font-size:0.9rem;">ℹ️ ผู้สมัครไม่ได้ระบุอันดับบทบาทไว้</p>
+      </div>
+    `;
+  } else {
+    choices.forEach((choiceRole, idx) => {
+      const rankNumber = idx + 1;
+      const roleCheck = checkRoleAvailability(proj, choiceRole);
+
+      let statusColor = "#28a745";
+      let statusBadgeText = "ว่าง";
+      let statusText = `🟢 ยังว่าง (จับจองแล้ว ${roleCheck.currentCount}/${roleCheck.maxCount} คน)`;
+      let actionHtml = `<button class="btn-secondary" style="background:#28a745; padding:6px 12px; font-size:0.85rem; font-weight:bold;" onclick="approveAppWithChoice(${appIndex}, '${choiceRole}', ${rankNumber})">✅ ล็อคบทบาทนี้ (อันดับ ${rankNumber}) - เข้าสู่รอบ 2</button>`;
+
+      if (!roleCheck.available) {
+        statusColor = "#ff2a2a";
+        statusBadgeText = "เต็ม";
+        statusText = `🔴 เต็มแล้ว! (${roleCheck.currentCount}/${roleCheck.maxCount} คน เต็มโควตา)`;
+        actionHtml = `<p style="margin:0; font-size:0.75rem; color:#aaa; font-style:italic;">*บทบาทนี้เต็มโควตาตามเงื่อนไขข้อ 1.2 (ลองพิจารณาอันดับถัดไป)</p>`;
+      }
+
+      choicesHtml += `
+        <div style="background:#1c1c1c; padding:12px; border-radius:6px; margin-bottom:10px; border-left:5px solid ${statusColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-weight:bold; font-size:0.95rem; color:#fff;">อันดับที่ ${rankNumber}: ${choiceRole}</span>
+            <span style="font-size:0.8rem; font-weight:bold; padding:2px 6px; background:${statusColor}33; color:${statusColor}; border-radius:4px;">${statusBadgeText}</span>
+          </div>
+          <p style="margin:0 0 8px 0; font-size:0.85rem; color:${statusColor}; font-weight:bold;">${statusText}</p>
+          ${actionHtml}
+        </div>
+      `;
+    });
+  }
+
+  let modal = document.getElementById("appChoicesModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "appChoicesModal";
+    modal.style.cssText =
+      "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 99999; display: none; align-items: center; justify-content: center;";
+    modal.innerHTML = `
+      <div class="modal-content" style="background:#181818; border:1px solid #333; max-width:550px; width: 90%; max-height: 90vh; overflow-y: auto; padding:20px; border-radius:8px; color:#fff; box-shadow: 0 10px 25px rgba(0,0,0,0.8);">
+        <div id="appChoicesContent"></div>
+        <div style="text-align:right; margin-top:15px;">
+          <button class="btn-secondary" style="background:#444;" onclick="document.getElementById('appChoicesModal').style.display='none'">ปิดหน้าต่าง</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  document.getElementById("appChoicesContent").innerHTML = `
+    <h4 style="margin-top:0; color:#fff; border-bottom:1px solid #333; padding-bottom:8px;">1.2 พิจารณาบทบาท: <span style="color:#f0ad4e;">${app.user || "ไม่ระบุชื่อ"}</span></h4>
+    <p style="font-size:0.85rem; color:#aaa; margin-bottom:10px;">นับจากอันดับ 1 หากเต็มให้ดูอันดับ 2, 3 ตามลำดับ</p>
+    ${choicesHtml}
+    <hr style="border-color:#333; margin:15px 0;">
+    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:space-between;">
+      <button class="btn-secondary" style="background:#f0ad4e; color:#000; font-weight:bold;" onclick="requestNewChoices(${appIndex})">🔄 1.2.5 แจ้งยื่นอุทธรณ์บทบาทใหม่</button>
+      <button class="btn-secondary" style="background:#c9302c; font-weight:bold;" onclick="rejectApplicationCompletely(${appIndex})">❌ ปฏิเสธการสมัคร</button>
+    </div>
+  `;
+
+  modal.style.display = "flex";
+  modal.classList.add("open");
+};
+
+window.approveAppWithChoice = async function (appIndex, chosenRole, rankNumber) {
+  if (!confirm(`ยืนยันล็อคบทบาท "${chosenRole}" (จากอันดับ ${rankNumber}) และนำเข้าสู่รอบ 2?`)) return;
+
+  await updateAppStatusWithData(appIndex, "passed", {
+    assignedRole: chosenRole,
+    approvedRank: rankNumber,
+    approvalNote: `ล็อคบทบาท ${chosenRole} (อันดับ ${rankNumber}) เรียบร้อย เข้าสู่รอบ 2`,
+  });
+
+  const modal = document.getElementById("appChoicesModal");
+  if (modal) modal.style.display = "none";
+  alert("✅ ล็อคบทบาทและนำเข้าสู่รอบที่ 2 สำเร็จ!");
+};
+
+window.requestNewChoices = async function (appIndex) {
+  const note = prompt("ระบุข้อความแจ้งเตือนให้ผู้สมัครยื่นอุทธรณ์เปลี่ยนบทบาทใหม่ (1.2.5):");
   if (note !== null) {
-    updateAppStatusWithData(appIndex, "revision_requested", { revisionNote: note || "กรุณาแก้ไขข้อมูล" });
+    await updateAppStatusWithData(appIndex, "revision_requested", {
+      revisionNote: note || "กรุณายื่นอุทธรณ์เลือกบทบาทใหม่อีกครั้ง (1.2.5)",
+      requiresNewChoices: true,
+    });
+    alert("✅ ส่งคำขอให้ผู้สมัครเรียบร้อยแล้ว!");
+    const modal = document.getElementById("appChoicesModal");
+    if (modal) modal.style.display = "none";
+  }
+};
+
+window.rejectApplicationCompletely = async function (appIndex) {
+  if (confirm("⚠️ ต้องการปฏิเสธการสมัครของผู้สมัครรายนี้?")) {
+    await updateAppStatusWithData(appIndex, "rejected", {
+      approvalNote: "ปฏิเสธการสมัครเนื่องจากโควตาเต็มหรือคุณสมบัติไม่ผ่าน",
+    });
+    const modal = document.getElementById("appChoicesModal");
+    if (modal) modal.style.display = "none";
+    alert("❌ ปฏิเสธการสมัครเรียบร้อย");
   }
 };
 
@@ -582,6 +892,34 @@ window.confirmInterviewSchedule = async function () {
   }
 };
 
+window.openRevisionPrompt = function (appIndex) {
+  const note = prompt("ระบุจุดที่ต้องการให้ผู้สมัครแก้ไขในฟอร์มรอบที่ 2:");
+  if (note !== null) {
+    updateAppStatusWithData(appIndex, "revision_requested", {
+      revisionNote: note || "กรุณาแก้ไขข้อมูลในรอบที่ 2",
+    });
+  }
+};
+
+window.approveEditRequest = async function (appIndex) {
+  if (!confirm("🔓 ต้องการอนุมัติคำขอแก้ไขเอกสารรอบ 2 ให้ผู้สมัครหรือไม่?")) return;
+  await updateAppStatusWithData(appIndex, "edit_allowed", {
+    revisionNote: "แอดมินอนุมัติคำขอแก้ไขเอกสารรอบ 2 แล้ว กรุณาส่งข้อมูลกลับมาใหม่",
+  });
+  alert("✅ อนุมัติสิทธิ์ให้ผู้สมัครแก้ไขเรียบร้อย!");
+};
+
+window.rejectEditRequest = async function (appIndex) {
+  const note = prompt("ระบุเหตุผลที่ไม่อนุมัติคำขอแก้ไข (1.9.5):");
+  if (note !== null) {
+    await updateAppStatusWithData(appIndex, "stage2_submitted", {
+      editReason: null,
+      revisionNote: `ไม่อนุมัติคำขอแก้ไขรอบ 2 (1.9.5): ${note}`,
+    });
+    alert("❌ ปฏิเสธคำขอแก้ไขเรียบร้อย");
+  }
+};
+
 window.updateAppStatus = async function (appIndex, newStatus) {
   await updateAppStatusWithData(appIndex, newStatus, {});
 };
@@ -599,6 +937,7 @@ async function updateAppStatusWithData(appIndex, newStatus, additionalData) {
     await updateDoc(doc(db, "projects", proj.firebaseId), {
       applications: proj.applications,
       updatedAt: serverTimestamp(),
+      updatedAtString: currentDateTime,
     });
     window.renderApplicationsList();
   } catch (err) {
@@ -615,6 +954,10 @@ window.closeAppModal = function () {
 // ==========================================
 window.openProjectWindow3 = function (index) {
   currentProjectIndexForWindow3 = index;
+  const proj = projects[index];
+  document.getElementById("w3ProjTitle").innerText = `ประกาศ & สมาชิก (ขั้นตอนที่ 3): ${proj.name}`;
+  document.getElementById("pNewsTitle").value = "";
+  document.getElementById("pNewsContent").value = "";
   renderProjectNewsList();
   renderProjectMembersList();
   document.getElementById("projectWindow3Modal").classList.add("open");
@@ -629,12 +972,20 @@ function renderProjectNewsList() {
   const proj = projects[currentProjectIndexForWindow3];
   const container = document.getElementById("projectNewsListContainer");
   container.innerHTML = "";
-  (proj.projectNews || []).forEach((n, nIdx) => {
+  const pNews = proj.projectNews || [];
+
+  if (pNews.length === 0) {
+    container.innerHTML = '<p style="color:#888; font-size:0.85rem;">ยังไม่มีประกาศเฉพาะกลุ่ม</p>';
+    return;
+  }
+
+  pNews.forEach((n, nIdx) => {
     container.innerHTML += `
-      <div style="background:#181818; padding:8px; border-radius:4px; margin-bottom:6px;">
+      <div style="background:#181818; padding:8px; border-radius:4px; border-left:3px solid #ff2a2a; margin-bottom:6px;">
         <strong>${n.title}</strong>
         <p style="font-size:0.85rem; color:#aaa;">${n.content}</p>
-        <button class="btn-secondary" style="background:#c9302c; padding:2px 6px; font-size:0.75rem;" onclick="deleteProjectNews(${nIdx})">ลบข่าว</button>
+        <div style="font-size:0.7rem; color:#777; margin-top:2px;">🕒 ${n.date || "-"}</div>
+        <button class="btn-secondary" style="background:#c9302c; padding:2px 6px; font-size:0.75rem; margin-top:4px;" onclick="deleteProjectNews(${nIdx})">ลบข่าว</button>
       </div>
     `;
   });
@@ -649,13 +1000,19 @@ window.handleSaveProjectNews = async function (e) {
   if (!title || !content) return;
 
   const pNews = proj.projectNews || [];
-  pNews.unshift({ title, content, date: new Date().toLocaleString("th-TH") });
+  const currentDateTime = new Date().toLocaleString("th-TH");
+  pNews.unshift({ title, content, date: currentDateTime });
+
   try {
-    await updateDoc(doc(db, "projects", proj.firebaseId), { projectNews: pNews });
+    await updateDoc(doc(db, "projects", proj.firebaseId), {
+      projectNews: pNews,
+      updatedAt: serverTimestamp(),
+      updatedAtString: currentDateTime,
+    });
     document.getElementById("pNewsTitle").value = "";
     document.getElementById("pNewsContent").value = "";
     renderProjectNewsList();
-    alert("✅ ส่งประกาศสำเร็จ!");
+    alert("✅ ส่งข่าวเฉพาะกลุ่มสำเร็จ!");
   } catch (err) {
     alert("❌ เกิดข้อผิดพลาด: " + err.message);
   }
@@ -664,19 +1021,38 @@ window.handleSaveProjectNews = async function (e) {
 window.deleteProjectNews = async function (newsIdx) {
   const proj = projects[currentProjectIndexForWindow3];
   proj.projectNews.splice(newsIdx, 1);
-  await updateDoc(doc(db, "projects", proj.firebaseId), { projectNews: proj.projectNews });
-  renderProjectNewsList();
+  const currentDateTime = new Date().toLocaleString("th-TH");
+  try {
+    await updateDoc(doc(db, "projects", proj.firebaseId), {
+      projectNews: proj.projectNews,
+      updatedAt: serverTimestamp(),
+      updatedAtString: currentDateTime,
+    });
+    renderProjectNewsList();
+  } catch (err) {
+    alert("❌ เกิดข้อผิดพลาด: " + err.message);
+  }
 };
 
 function renderProjectMembersList() {
   const proj = projects[currentProjectIndexForWindow3];
   const container = document.getElementById("projectMembersListContainer");
   container.innerHTML = "";
-  (proj.applications ? proj.applications.filter((a) => isCountedAsPassed(a.status)) : []).forEach((m) => {
-    const realIndex = proj.applications.findIndex((item) => item.uid === m.uid && item.accountEmail === m.accountEmail);
+
+  const members = proj.applications ? proj.applications.filter((a) => isCountedAsPassed(a.status)) : [];
+
+  if (members.length === 0) {
+    container.innerHTML = '<p style="color:#888; font-size:0.85rem;">ยังไม่มีสมาชิกในโปรเจกต์</p>';
+    return;
+  }
+
+  members.forEach((m) => {
+    const realIndex = proj.applications.findIndex(
+      (item) => item.uid === m.uid && item.accountEmail === m.accountEmail,
+    );
     container.innerHTML += `
       <div style="background:#181818; padding:8px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <div><strong>${m.user || "ไม่ระบุ"}</strong> <span style="color:#28a745; font-size:0.8rem;">(${m.assignedRole || "สมาชิก"})</span></div>
+        <div><strong>${m.user || "ไม่ระบุ"}</strong> <span style="color:#28a745; font-size:0.8rem;">(${m.assignedRole || "สมาชิก"})</span><div style="font-size:0.75rem; color:#aaa;">${m.accountEmail}</div></div>
         <button class="btn-secondary" style="background:#c9302c; padding:3px 8px; font-size:0.75rem;" onclick="removeMemberFromProject(${realIndex})">ปลดออก</button>
       </div>
     `;
@@ -684,16 +1060,26 @@ function renderProjectMembersList() {
 }
 
 window.removeMemberFromProject = async function (appIndex) {
-  if (!confirm("⚠️ ต้องการปลดสมาชิกออกใช่หรือไม่?")) return;
+  if (!confirm("⚠️ ต้องการปลดสมาชิกออกและคืนโควตาใช่หรือไม่?")) return;
   const proj = projects[currentProjectIndexForWindow3];
+  const currentDateTime = new Date().toLocaleString("th-TH");
   proj.applications[appIndex].status = "rejected";
-  await updateDoc(doc(db, "projects", proj.firebaseId), { applications: proj.applications });
-  renderProjectMembersList();
-  alert("✅ ปลดสมาชิกสำเร็จ!");
+  proj.applications[appIndex].updatedAtString = currentDateTime;
+  try {
+    await updateDoc(doc(db, "projects", proj.firebaseId), {
+      applications: proj.applications,
+      updatedAt: serverTimestamp(),
+      updatedAtString: currentDateTime,
+    });
+    renderProjectMembersList();
+    alert("✅ ปลดสมาชิกสำเร็จ!");
+  } catch (err) {
+    alert("❌ เกิดข้อผิดพลาด: " + err.message);
+  }
 };
 
 // ==========================================
-// 5. GLOBAL NEWS SYSTEM (จัดการข่าวสารส่วนกลาง)
+// 5. GLOBAL NEWS & USERS
 // ==========================================
 function renderNews() {
   const container = document.getElementById("newsList");
@@ -712,9 +1098,9 @@ function renderNews() {
       if (urls.length > 0) {
         let imgsGrid = "";
         urls.forEach(url => {
-          imgsGrid += `<div style="flex: 0 0 100px; height: 75px; border-radius: 4px; overflow: hidden; background: #000; border: 1px solid #333;"><img src="${url}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"/></div>`;
+          imgsGrid += `<div style="flex: 0 0 120px; height: 90px; border-radius: 4px; overflow: hidden; background: #000; border: 1px solid #333;"><img src="${url}" alt="News Image" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"/></div>`;
         });
-        imagesHtml = `<div style="display: flex; gap: 6px; overflow-x: auto; margin-top: 6px; margin-bottom: 6px;">${imgsGrid}</div>`;
+        imagesHtml = `<div style="display: flex; gap: 8px; overflow-x: auto; margin-top: 8px; margin-bottom: 8px; padding-bottom: 4px;">${imgsGrid}</div>`;
       }
     }
 
@@ -723,7 +1109,9 @@ function renderNews() {
         <h4>${n.title}</h4>
         <p style="color:#aaa; font-size:0.85rem; margin:4px 0;">${n.content}</p>
         ${imagesHtml}
-        <div style="font-size:0.75rem; color:#777; margin-top:6px;">📅 ${n.date || "-"}</div>
+        <div style="font-size:0.75rem; color:#777; margin-top:6px;">
+          📅 วันที่ประกาศ: ${n.date || "-"} 
+        </div>
         <div style="display: flex; gap: 6px; margin-top: 8px;">
           <button class="btn-secondary" style="background:#f0ad4e; color:#000; padding:4px 8px; font-size:0.8rem;" onclick="editNews(${index})">✏️ แก้ไข</button>
           <button class="btn-secondary" style="background:#c9302c; padding:4px 8px; font-size:0.8rem;" onclick="deleteNews(${index})">🗑️ ลบ</button>
@@ -734,7 +1122,7 @@ function renderNews() {
 }
 
 window.openNewsModal = function () {
-  document.getElementById("newsModalTitle").innerText = "สร้างข่าวสารส่วนกลาง";
+  document.getElementById("newsModalTitle").innerText = "สร้างข่าวสารใหม่";
   document.getElementById("newsId").value = "";
   document.getElementById("newsTitle").value = "";
   document.getElementById("newsContent").value = "";
@@ -745,7 +1133,7 @@ window.openNewsModal = function () {
 
 window.editNews = function (index) {
   const n = news[index];
-  document.getElementById("newsModalTitle").innerText = "แก้ไขข่าวสารส่วนกลาง";
+  document.getElementById("newsModalTitle").innerText = "แก้ไขข่าวสาร";
   document.getElementById("newsId").value = index;
   document.getElementById("newsTitle").value = n.title || "";
   document.getElementById("newsContent").value = n.content || "";
@@ -770,17 +1158,11 @@ window.handleSaveNews = async function (e) {
   try {
     if (index !== "") {
       await updateDoc(doc(db, "news", news[index].firebaseId), {
-        title,
-        content,
-        imageUrl,
-        updatedAtString: currentDateTime,
+        title, content, imageUrl, updatedAtString: currentDateTime,
       });
     } else {
       await addDoc(collection(db, "news"), {
-        title,
-        content,
-        imageUrl,
-        date: currentDateTime,
+        title, content, imageUrl, date: currentDateTime, createdAt: serverTimestamp(),
       });
     }
     window.closeNewsModal();
@@ -801,11 +1183,8 @@ window.deleteNews = async function (index) {
   }
 };
 
-// ==========================================
-// 6. USER MANAGEMENT & BAN SYSTEM (ระบบจัดการผู้ใช้และการแบน)
-// ==========================================
 function renderUsers() {
-  const tbody = document.getElementById("userTableBody");
+  const tbody = document.getElementById("userTable") || document.getElementById("userTableBody");
   if (!tbody) return;
   tbody.innerHTML = "";
 
@@ -815,12 +1194,12 @@ function renderUsers() {
   }
 
   users.forEach((u, index) => {
-    const isBanned = u.isBanned === true || u.status === "banned" || u.status === "Banned";
+    const isBanned = u.status === "Banned";
     tbody.innerHTML += `
       <tr>
         <td>${u.nickname || u.name || "-"}</td>
         <td>${u.email || "-"}</td>
-        <td><span style="color:${isBanned ? "#ff2a2a" : "#28a745"}">${isBanned ? "Banned" : (u.RoleUser || u.role || "Member")}</span></td>
+        <td><span style="color:${isBanned ? "#ff2a2a" : "#28a745"}">${u.status || "Active"}</span></td>
         <td>
           <button class="btn-secondary" style="background:${isBanned ? "#28a745" : "#f0ad4e"}; color:${isBanned ? "#fff" : "#000"}; padding:3px 8px; font-size:0.8rem;" onclick="toggleBanUser(${index})">${isBanned ? "ปลดแบน" : "แบน"}</button>
           <button class="btn-secondary" style="background:#c9302c; padding:3px 8px; font-size:0.8rem;" onclick="deleteUser(${index})">ลบ</button>
@@ -832,17 +1211,11 @@ function renderUsers() {
 
 window.toggleBanUser = async function (index) {
   const u = users[index];
-  const isCurrentlyBanned = u.isBanned === true || u.status === "banned" || u.status === "Banned";
-  const newBanStatus = !isCurrentlyBanned;
-  const statusText = newBanStatus ? "Banned" : "Active";
-
-  if (confirm(`ยืนยันเปลี่ยนสถานะผู้ใช้นี้เป็น "${statusText}"?`)) {
+  const newStatus = u.status === "Banned" ? "Active" : "Banned";
+  if (confirm(`ยืนยันเปลี่ยนสถานะผู้ใช้เป็น "${newStatus}"?`)) {
     try {
-      await updateDoc(doc(db, "users", u.firebaseId), {
-        isBanned: newBanStatus,
-        status: statusText,
-      });
-      alert("✅ อัปเดตสถานะการแบนสำเร็จ!");
+      await updateDoc(doc(db, "users", u.firebaseId), { status: newStatus });
+      alert("✅ อัปเดตสถานะผู้ใช้สำเร็จ!");
     } catch (err) {
       alert("❌ เกิดข้อผิดพลาด: " + err.message);
     }
@@ -850,10 +1223,10 @@ window.toggleBanUser = async function (index) {
 };
 
 window.deleteUser = async function (index) {
-  if (confirm("⚠️ ยืนยันการลบบัญชีผู้ใช้นี้ออกจากระบบฐานข้อมูล?")) {
+  if (confirm("ยืนยันลบผู้ใช้?")) {
     try {
       await deleteDoc(doc(db, "users", users[index].firebaseId));
-      alert("✅ ลบบัญชีผู้ใช้สำเร็จ!");
+      alert("✅ ลบผู้ใช้สำเร็จ!");
     } catch (err) {
       alert("❌ เกิดข้อผิดพลาด: " + err.message);
     }
