@@ -16,17 +16,14 @@ html, body {
   min-height: 100vh;
   background-color: #0d0d0d;
   color: #ffffff;
-  /* กำหนดฟอนต์หลักของทั้งเว็บไซต์เป็น Libre Caslon Condensed */
   font-family: 'Libre Caslon Condensed', serif, 'Segoe UI';
   overflow-x: hidden;
 }
 
-/* คลาสเสริมสำหรับจุดที่ต้องการเน้นฟอนต์ Srisakdi (ฟอนต์ลายมือ/ไทย) */
 .font-srisakdi {
   font-family: 'Srisakdi', cursive;
 }
 
-/* คลาสเสริมสำหรับจุดที่ต้องการเน้น Libre Caslon Condensed */
 .font-libre {
   font-family: 'Libre Caslon Condensed', serif;
 }
@@ -42,24 +39,23 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 30px;
+  padding: 15px 20px;
   z-index: 100;
 }
 
 .top-nav-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
-/* ปุ่มเมนู 3 ขีด (Hamburger) */
 .hamburger-btn {
   background: rgba(20, 20, 20, 0.7);
   color: #ffffff;
   border: 1px solid #ff2a2a;
-  font-size: 1.5rem;
-  width: 45px;
-  height: 45px;
+  font-size: 1.3rem;
+  width: 40px;
+  height: 40px;
   border-radius: 6px;
   cursor: pointer;
   display: flex;
@@ -75,19 +71,23 @@ html, body {
   box-shadow: 0 0 12px rgba(255, 26, 26, 0.8);
 }
 
-/* ปุ่มทั่วไป */
 .nav-btn {
   background: rgba(20, 20, 20, 0.7);
   color: #ffffff;
   border: 1px solid #ff2a2a;
-  padding: 8px 18px;
+  padding: 6px 14px;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 700;
   letter-spacing: 1px;
+  font-size: 0.9rem;
   transition: all 0.3s ease;
   backdrop-filter: blur(5px);
   font-family: inherit;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nav-btn:hover {
@@ -95,14 +95,13 @@ html, body {
   box-shadow: 0 0 12px rgba(255, 26, 26, 0.8);
 }
 
-/* ปุ่มฟันเฟือง Setting */
 .icon-btn {
   background: rgba(20, 20, 20, 0.7);
   color: #ffffff;
   border: 1px solid #ff2a2a;
-  font-size: 1.3rem;
-  width: 40px;
-  height: 40px;
+  font-size: 1.1rem;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
@@ -111,6 +110,7 @@ html, body {
   transition: all 0.3s ease;
   backdrop-filter: blur(5px);
   font-family: inherit;
+  flex-shrink: 0;
 }
 
 .icon-btn:hover {
@@ -120,13 +120,13 @@ html, body {
 }
 
 /* ==========================================
-   3. SIDE DRAWER MENU (NEWS / STORE / PROJECT)
+   3. SIDE DRAWER MENU
    ========================================== */
 .side-drawer {
   position: fixed;
   top: 0;
   left: -280px;
-  width: 280px;
+  width: 260px;
   height: 100vh;
   background: linear-gradient(180deg, #180505 0%, #0d0d0d 100%);
   border-right: 2px solid #ff2a2a;
@@ -149,7 +149,7 @@ html, body {
   background: transparent;
   border: none;
   color: #ff2a2a;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   cursor: pointer;
   transition: transform 0.2s;
   font-family: inherit;
@@ -163,17 +163,17 @@ html, body {
 .drawer-nav {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
   margin-top: 20px;
 }
 
 .drawer-item {
   color: #ffffff;
   text-decoration: none;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: 2px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-radius: 6px;
   border-left: 3px solid transparent;
   background: rgba(255, 255, 255, 0.03);
@@ -184,7 +184,7 @@ html, body {
 .drawer-item:hover {
   background: rgba(255, 26, 26, 0.2);
   border-left-color: #ff1a1a;
-  padding-left: 22px;
+  padding-left: 18px;
   color: #ff4d4d;
   box-shadow: 0 0 10px rgba(255, 26, 26, 0.3);
 }
@@ -230,13 +230,12 @@ html, body {
 }
 
 .HOMEH1 {
-  font-size: 4.5rem;
-  letter-spacing: 6px;
+  font-size: 3.5rem;
+  letter-spacing: 4px;
   color: #ffffff;
-  text-shadow: 0 0 20px rgba(255, 26, 26, 0.8), 0 0 40px rgba(255, 0, 0, 0.4);
-  margin-bottom: 30px;
-  /* หากต้องการใช้ Srisakdi สำหรับหัวข้อใหญ่ สามารถ uncomment บรรทัดด้านล่างได้ครับ */
-  /* font-family: 'Srisakdi', cursive; */
+  text-shadow: 0 0 15px rgba(255, 26, 26, 0.8), 0 0 30px rgba(255, 0, 0, 0.4);
+  margin-bottom: 20px;
+  padding: 0 10px;
 }
 
 .search-Lobby {
@@ -245,9 +244,9 @@ html, body {
   background: rgba(0, 0, 0, 0.6);
   border: 2px solid #ff2a2a;
   border-radius: 30px;
-  padding: 5px 10px 5px 20px;
+  padding: 4px 8px 4px 16px;
   width: 90%;
-  max-width: 500px;
+  max-width: 480px;
   box-shadow: 0 0 15px rgba(255, 0, 0, 0.2);
 }
 
@@ -256,7 +255,7 @@ html, body {
   border: none;
   outline: none;
   color: #ffffff;
-  font-size: 1.1rem;
+  font-size: 1rem;
   width: 100%;
   font-family: inherit;
 }
@@ -269,13 +268,14 @@ html, body {
   background: #ff1a1a;
   border: none;
   color: #ffffff;
-  font-size: 1.2rem;
-  width: 40px;
-  height: 40px;
+  font-size: 1.1rem;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   cursor: pointer;
   transition: transform 0.2s ease, background-color 0.2s ease;
   font-family: inherit;
+  flex-shrink: 0;
 }
 
 .search-button:hover {
@@ -291,7 +291,7 @@ html, body {
   width: 100vw;
   overflow: hidden;
   background: #000000;
-  padding-bottom: 40px;
+  padding-bottom: 30px;
 }
 
 .slide-ALL {
@@ -302,7 +302,7 @@ html, body {
 
 .slide-page {
   min-width: 100vw;
-  height: 75vh;
+  height: 65vh;
 }
 
 .slide-page a {
@@ -331,7 +331,7 @@ html, body {
   display: flex;
   justify-content: space-between;
   transform: translateY(-50%);
-  padding: 0 20px;
+  padding: 0 15px;
   pointer-events: none;
 }
 
@@ -340,14 +340,17 @@ html, body {
   background: rgba(20, 0, 0, 0.6);
   color: #ff4d4d;
   border: 1px solid #ff1a1a;
-  width: 50px;
-  height: 50px;
-  font-size: 1.5rem;
+  width: 42px;
+  height: 42px;
+  font-size: 1.2rem;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(4px);
   font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .slider-controls button:hover {
@@ -374,6 +377,7 @@ html, body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
+  padding: 15px;
 }
 
 .profile-modal-overlay.active {
@@ -386,8 +390,9 @@ html, body {
   border: 2px solid #ff1e27;
   box-shadow: 0 0 20px rgba(255, 30, 39, 0.4);
   border-radius: 12px;
-  width: 320px;
-  padding: 24px;
+  width: 100%;
+  max-width: 320px;
+  padding: 22px;
   color: #ffffff;
   position: relative;
   text-align: center;
@@ -398,14 +403,14 @@ html, body {
   color: #ff1e27;
   border-bottom: 1px solid #ff1e27;
   padding-bottom: 10px;
-  font-size: 20px;
+  font-size: 1.2rem;
 }
 
 .profile-info {
   text-align: left;
-  margin: 15px 0;
-  line-height: 1.8;
-  font-size: 14px;
+  margin: 12px 0;
+  line-height: 1.7;
+  font-size: 0.9rem;
 }
 
 .profile-info span {
@@ -416,7 +421,7 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 18px;
 }
 
 .btn-admin {
@@ -429,6 +434,7 @@ html, body {
   cursor: pointer;
   transition: 0.2s;
   font-family: inherit;
+  font-size: 0.9rem;
 }
 
 .btn-admin:hover { 
@@ -445,6 +451,7 @@ html, body {
   cursor: pointer;
   transition: 0.2s;
   font-family: inherit;
+  font-size: 0.9rem;
 }
 
 .btn-logout:hover { 
@@ -458,11 +465,41 @@ html, body {
   background: transparent;
   border: none;
   color: #aaa;
-  font-size: 20px;
+  font-size: 1.2rem;
   cursor: pointer;
   font-family: inherit;
 }
 
 .btn-close:hover { 
   color: #fff; 
-} 
+}
+
+/* ==========================================
+   📱 RESPONSIVE MEDIA QUERIES (สำหรับมือถือและจอขนาดเล็ก)
+   ========================================== */
+@media (max-width: 768px) {
+  .top-nav {
+    padding: 12px 15px;
+  }
+
+  .HOMEH1 {
+    font-size: 2.4rem;
+    letter-spacing: 2px;
+  }
+
+  .slide-page {
+    height: 50vh;
+  }
+
+  .slider-controls button {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .nav-btn {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    max-width: 110px;
+  }
+}
