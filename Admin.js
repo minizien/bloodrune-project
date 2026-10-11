@@ -78,7 +78,8 @@ function isCountedAsPassed(status) {
     "edit_requested",
     "edit_allowed",
     "approved",
-    "completed"
+    "completed",
+    "role_pending_review" // เพิ่มสถานะรออุทธรณ์เพื่อให้ระบบนับโควตาต่อเนื่อง
   ];
   return countedStatuses.includes(status);
 }
@@ -606,7 +607,7 @@ window.renderApplicationsList = function () {
       statusBadge =
         '<span class="badge-status" style="background:#28a745; color:#fff;">🔓 1.9.5 อนุญาตให้แก้ไขแล้ว</span>';
     if (appStatus === "role_pending_review" || app.appealStatus === "pending")
-      statusBadge = `<span class="badge-status" style="background:#17a2b8; color:#fff;">1.2.5 รออนุมัติอุทธรณ์บทบาท (${app.pendingAppealRole || app.selectedNewRole || "-"})</span>`;
+      statusBadge = `<span class="badge-status" style="background:#17a2b8; color:#fff;">⏳ 1.2.5 รออนุมัติอุทธรณ์บทบาท (${app.pendingAppealRole || app.selectedNewRole || "-"})</span>`;
     if (appStatus === "approved")
       statusBadge = `<span class="badge-status status-approved">3. เข้าสู่โปรเจกต์แล้ว (${app.assignedRole || "สมาชิก"})</span>`;
     if (appStatus === "rejected")
@@ -735,7 +736,7 @@ window.adminReviewRole = async function (appIndex, actionType) {
     delete app.selectedNewRole;
     app.revisionNote = `เจ้าหน้าที่อนุมัติอุทธรณ์เปลี่ยนเป็นบทบาท: ${app.assignedRole} เรียบร้อยแล้ว`;
   } else if (actionType === "reject") {
-    app.status = "passed";
+    app.status = "revision_requested";
     app.appealStatus = "rejected";
     delete app.pendingAppealRole;
     delete app.selectedNewRole;
