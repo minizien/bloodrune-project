@@ -129,9 +129,9 @@
             : '';
 
           // แสดงวันที่สร้าง และวันที่แก้ไขล่าสุด (ถ้ามี)
-          let dateInfo = `📅 วันที่ประกาศ: ${item.date || '-'}`;
+          let dateInfo = `วันที่ประกาศ: ${item.date || '-'}`;
           if (item.updatedAtString) {
-            dateInfo += `<br>✏️ แก้ไขล่าสุด: ${item.updatedAtString}`;
+            dateInfo += `<br>แก้ไขล่าสุด: ${item.updatedAtString}`;
           }
 
           card.innerHTML = `
@@ -152,9 +152,9 @@
       window.openNewsDetail = function(item, precomputedImages = null) {
         document.getElementById('modalNewsTitle').innerText = item.title || 'ข่าวสาร';
         
-        let modalDateText = '📅 วันที่ประกาศ: ' + (item.date || '-');
+        let modalDateText = 'วันที่ประกาศ: ' + (item.date || '-');
         if (item.updatedAtString) {
-          modalDateText += ' | ✏️ แก้ไขล่าสุด: ' + item.updatedAtString;
+          modalDateText += ' | แก้ไขล่าสุด: ' + item.updatedAtString;
         }
         document.getElementById('modalNewsDate').innerHTML = modalDateText;
         document.getElementById('modalNewsContent').innerText = item.content || '';
