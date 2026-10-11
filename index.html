@@ -15,8 +15,6 @@
       <!-- เมนูด้านขวาบน -->
       <div class="top-nav-right">
         <button class="nav-btn" id="auth-btn">Login / Sign In</button>
-        <!-- ปุ่ม Setting เปลี่ยนเป็นไอคอนฟันเฟือง -->
-        <button class="icon-btn" onclick="location.href='settings.html'" title="Settings">⚙</button>
       </div>
     </header>
 
@@ -48,12 +46,12 @@
         <div class="slide-ALL" id="slider">
           <div class="slide-page">
             <a>
-              <img src="https://lh3.googleusercontent.com/d/1TBHjj9cQz0g9Hp6nWB9IQFx6kFIby_hh" alt="Slide 1" />
+              <img src="https://lh3.googleusercontent.com/d/1apdsts0OV5-ZWMCDkTmEWoUEfF069Z15" alt="Slide 1" />
             </a>
           </div>
           <div class="slide-page">
             <a>
-              <img src="https://lh3.googleusercontent.com/d/1n6gi6gNaO5WPDM-ebwXmr4RSByTVGpyN" alt="Slide 2" />
+              <img src="https://lh3.googleusercontent.com/d/1wEIVvFUtexLRz9-lQOtl43SKK8oCjkBS" alt="Slide 2" />
             </a>
           </div>
           <div class="slide-page">
@@ -80,18 +78,18 @@
     <div id="profileModal" class="profile-modal-overlay">
       <div class="profile-card">
         <button class="btn-close" onclick="closeProfile()">✕</button>
-        <h2>👤 ข้อมูลโปรไฟล์</h2>
+        <h2>ข้อมูลโปรไฟล์</h2>
         <div class="profile-info">
-          <p><span>ชื่อเล่น:</span> <strong id="prof-nickname">-</strong></p>
-          <p><span>อายุ:</span> <strong id="prof-age">-</strong> ปี</p>
-          <p><span>วันเกิด:</span> <strong id="prof-dob">-</strong></p>
-          <p><span>Gmail:</span> <strong id="prof-email">-</strong></p>
-          <p><span>ระดับบัญชี:</span> <strong id="prof-role" style="color: #ff1e27;">-</strong></p>
+          <p><span>ชื่อเล่น :</span> <strong id="prof-nickname">-</strong></p>
+          <p><span>อายุ :</span> <strong id="prof-age">-</strong> ปี</p>
+          <p><span>วันเกิด :</span> <strong id="prof-dob">-</strong></p>
+          <p><span>Gmail :</span> <strong id="prof-email">-</strong></p>
+          <p><span>ระดับบัญชี :</span> <strong id="prof-role" style="color: #ff1e27;">-</strong></p>
         </div>
         <div class="profile-actions">
           <!-- ปุ่มสำหรับ Admin เท่านั้น (ซ่อนไว้เป็นค่าเริ่มต้นเพื่อความปลอดภัย) -->
           <button id="adminBtn" class="btn-admin" style="display: none;" onclick="location.href='Admin.html'">
-            🔑 เข้าสู่ระบบพนักงาน (Admin Panel)
+            Admin Zone
           </button>
           <button class="btn-logout" onclick="handleLogout()">ออกจากระบบ</button>
         </div>
