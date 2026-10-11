@@ -93,6 +93,7 @@ body {
   align-items: center;
   transition: all 0.2s;
   gap: 15px;
+  flex-wrap: wrap; /* ป้องกันการบีบอัดจนล้นจอและทะลุกรอบ */
 }
 
 .project-banner.locked {
@@ -117,6 +118,8 @@ body {
 
 .banner-info {
   flex: 1;
+  min-width: 200px; /* ป้องกันข้อความถูกบีบจนตัวหนังสือแตกหรือทะลุ */
+  word-break: break-word;
 }
 
 .banner-info h3 {
@@ -176,6 +179,7 @@ body {
   border-bottom: 2px solid #2a1b1b;
   margin-bottom: 20px;
   padding-bottom: 10px;
+  flex-wrap: wrap;
 }
 
 .tab-btn {
@@ -217,6 +221,8 @@ body {
   margin-bottom: 12px;
   cursor: pointer;
   transition: transform 0.1s, border-color 0.2s;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .new-user-card:hover {
@@ -237,6 +243,7 @@ body {
   justify-content: center;
   align-items: center;
   z-index: 999999;
+  padding: 15px;
 }
 
 .modal-card {
@@ -249,6 +256,8 @@ body {
   box-shadow: 0 20px 50px rgba(220, 38, 38, 0.5);
   position: relative;
   z-index: 1000000;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .roles-box {
@@ -276,6 +285,7 @@ body {
   color: #ccc;
   padding: 4px 0;
   border-bottom: 1px dashed #222;
+  gap: 10px;
 }
 
 .roles-box li:last-child {
