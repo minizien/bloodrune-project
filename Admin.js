@@ -79,7 +79,7 @@ function isCountedAsPassed(status) {
     "edit_allowed",
     "approved",
     "completed",
-    "role_pending_review" // เพิ่มสถานะรออุทธรณ์เพื่อให้ระบบนับโควตาต่อเนื่อง
+    "role_pending_review"
   ];
   return countedStatuses.includes(status);
 }
@@ -104,6 +104,18 @@ function initAdminPanel() {
     snapshot.forEach((docSnap) => {
       projects.push({ firebaseId: docSnap.id, ...docSnap.data() });
     });
+
+    // 🔄 เรียงลำดับโปรเจกต์: สร้างทีหลัง (ใหม่กว่า) ขึ้นแสดงผลก่อนเสมอ
+    projects.sort((a, b) => {
+      const getTime = (val) => {
+        if (!val) return 0;
+        if (typeof val.toDate === 'function') return val.toDate().getTime();
+        const parsed = new Date(val).getTime();
+        return isNaN(parsed) ? 0 : parsed;
+      };
+      return getTime(b.createdAt) - getTime(a.createdAt);
+    });
+
     renderProjects();
   });
 
@@ -126,20 +138,32 @@ function initAdminPanel() {
 }
 
 // ==========================================
-// 1. PROJECT SYSTEM
+// 1. PROJECT SYSTEM & SEARCH
 // ==========================================
-function renderProjects() {
+window.renderProjects = function() {
   const container = document.getElementById("projectList");
   if (!container) return;
+
+  const searchInputElem = document.getElementById("adminProjSearch");
+  const keyword = searchInputElem ? searchInputElem.value.toLowerCase().trim() : "";
   container.innerHTML = "";
 
   if (projects.length === 0) {
-    container.innerHTML =
-      '<p style="color:#888; grid-column: 1/-1; text-align:center;">ยังไม่มีโปรเจกต์ในระบบ Firebase</p>';
+    container.innerHTML = '<p style="color:#888; grid-column: 1/-1; text-align:center;">ยังไม่มีโปรเจกต์ในระบบ Firebase</p>';
     return;
   }
 
-  projects.forEach((proj, index) => {
+  const filteredProjects = projects.filter(proj => 
+    proj.name && proj.name.toLowerCase().includes(keyword)
+  );
+
+  if (filteredProjects.length === 0) {
+    container.innerHTML = '<p style="color:#888; grid-column: 1/-1; text-align:center;">ไม่พบโปรเจกต์ที่ค้นหา</p>';
+    return;
+  }
+
+  filteredProjects.forEach((proj) => {
+    const index = projects.indexOf(proj);
     const isHidden = proj.hidden === true || proj.hidden === "true";
 
     const approvedCount = proj.applications
@@ -202,7 +226,7 @@ function renderProjects() {
     `;
     container.appendChild(card);
   });
-}
+};
 
 window.openProjectModal = function () {
   document.getElementById("projectModalTitle").innerText = "สร้างโปรเจกต์ใหม่";
@@ -546,10 +570,19 @@ window.renderApplicationsList = function () {
     .value.toLowerCase()
     .trim();
   const statusFilter = document.getElementById("appStatusFilter").value;
-  const sortedApps = [...proj.applications].reverse();
 
-  sortedApps.forEach((app, originalReverseIndex) => {
-    const appIndex = proj.applications.length - 1 - originalReverseIndex;
+  const sortedApps = [...proj.applications].sort((a, b) => {
+    const getTime = (val) => {
+      if (!val) return 0;
+      if (typeof val.toDate === 'function') return val.toDate().getTime();
+      const parsed = new Date(val).getTime();
+      return isNaN(parsed) ? 0 : parsed;
+    };
+    return getTime(b.createdAt) - getTime(a.createdAt);
+  });
+
+  sortedApps.forEach((app) => {
+    const appIndex = proj.applications.indexOf(app);
     const appStatus = app.status || "pending";
 
     if (statusFilter !== "all" && appStatus !== statusFilter) return;
@@ -1080,11 +1113,14 @@ window.removeMemberFromProject = async function (appIndex) {
 };
 
 // ==========================================
-// 5. GLOBAL NEWS & USERS
+// 5. GLOBAL NEWS & SEARCH
 // ==========================================
-function renderNews() {
+window.renderNews = function() {
   const container = document.getElementById("newsList");
   if (!container) return;
+
+  const searchNewsInput = document.getElementById("adminNewsSearch");
+  const keyword = searchNewsInput ? searchNewsInput.value.toLowerCase().trim() : "";
   container.innerHTML = "";
 
   if (news.length === 0) {
@@ -1092,7 +1128,19 @@ function renderNews() {
     return;
   }
 
-  news.forEach((n, index) => {
+  const filteredNews = news.filter(n => {
+    const title = (n.title || "").toLowerCase();
+    const content = (n.content || "").toLowerCase();
+    return title.includes(keyword) || content.includes(keyword);
+  });
+
+  if (filteredNews.length === 0) {
+    container.innerHTML = '<p style="color:#888; text-align:center;">ไม่พบข่าวสารที่ค้นหา</p>';
+    return;
+  }
+
+  filteredNews.forEach((n) => {
+    const index = news.indexOf(n);
     let imagesHtml = "";
     if (n.imageUrl) {
       const urls = n.imageUrl.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0);
@@ -1120,7 +1168,7 @@ function renderNews() {
       </div>
     `;
   });
-}
+};
 
 window.openNewsModal = function () {
   document.getElementById("newsModalTitle").innerText = "สร้างข่าวสารใหม่";
@@ -1184,9 +1232,15 @@ window.deleteNews = async function (index) {
   }
 };
 
-function renderUsers() {
+// ==========================================
+// 6. USERS MANAGEMENT & SEARCH
+// ==========================================
+window.renderUsers = function() {
   const tbody = document.getElementById("userTable") || document.getElementById("userTableBody");
   if (!tbody) return;
+
+  const searchUserInput = document.getElementById("adminUserSearch");
+  const keyword = searchUserInput ? searchUserInput.value.toLowerCase().trim() : "";
   tbody.innerHTML = "";
 
   if (users.length === 0) {
@@ -1194,7 +1248,19 @@ function renderUsers() {
     return;
   }
 
-  users.forEach((u, index) => {
+  const filteredUsers = users.filter(u => {
+    const name = (u.nickname || u.name || "").toLowerCase();
+    const email = (u.email || "").toLowerCase();
+    return name.includes(keyword) || email.includes(keyword);
+  });
+
+  if (filteredUsers.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">ไม่พบข้อมูลผู้ใช้ที่ค้นหา</td></tr>';
+    return;
+  }
+
+  filteredUsers.forEach((u) => {
+    const index = users.indexOf(u);
     const isBanned = u.status === "Banned";
     tbody.innerHTML += `
       <tr>
@@ -1208,7 +1274,7 @@ function renderUsers() {
       </tr>
     `;
   });
-}
+};
 
 window.toggleBanUser = async function (index) {
   const u = users[index];
