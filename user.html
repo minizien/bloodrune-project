@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BR.PJ - User Status & Portal</title>
+    <title>BR.PJ - User</title>
     <link rel="stylesheet" href="user.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap"
@@ -199,8 +199,8 @@
           currentName = currentEmail.split("@")[0];
         }
 
-        document.getElementById("userWelcomeName").innerText = `👋 สวัสดีคุณ: ${currentName}`;
-        document.getElementById("userEmailText").innerText = `UID: ${currentUid} | Email: ${currentEmail}`;
+        document.getElementById("userWelcomeName").innerText = `Name : ${currentName}`;
+        document.getElementById("userEmailText").innerText = `Email: ${currentEmail}`;
 
         initUserPortal();
       });
@@ -288,6 +288,20 @@
               });
             }
           });
+
+          // 🔄 เรียงลำดับให้รายการที่มาทีหลัง (ใหม่กว่า) ขึ้นแสดงผลก่อนเสมอ
+          const sortByNewest = (a, b) => {
+            const getTime = (val) => {
+              if (!val) return 0;
+              if (typeof val.toDate === 'function') return val.toDate().getTime();
+              const parsed = new Date(val).getTime();
+              return isNaN(parsed) ? 0 : parsed;
+            };
+            return getTime(b.appDetails.createdAt) - getTime(a.appDetails.createdAt);
+          };
+
+          userAppsList.sort(sortByNewest);
+          acceptedAppsList.sort(sortByNewest);
 
           if (userAppsList.length === 0) {
             containerApps.innerHTML = `<div style="padding: 40px; text-align: center;"><p style="color: #aaa;">📭 ไม่พบประวัติการสมัครเข้าร่วมโปรเจกต์</p></div>`;
@@ -604,4 +618,4 @@
       };
     </script>
   </body>
-</html>
+</html>  
