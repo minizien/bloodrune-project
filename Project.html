@@ -61,7 +61,7 @@
           <div style="background: #121216; padding: 20px; border-radius: 8px; border: 1px solid #2a1b1b;">
             <h3 style="color: #fff; margin-bottom: 12px;">รายละเอียดและตำแหน่งที่เปิดรับ</h3>
             
-            <!-- รายละเอียดโปรเจกต์เพิ่มเติม (ย้ายมาไว้ก่อนบทบาท) -->
+            <!-- รายละเอียดโปรเจกต์เพิ่มเติม -->
             <div id="innerProjDescBox" style="background: #0a0a0d; padding: 14px 16px; border-radius: 6px; border: 1px solid #222; margin-bottom: 15px;">
               <p style="color: #ef4444; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;">📌 รายละเอียดโปรเจกต์:</p>
               <p id="innerProjDesc" style="color: #ddd; font-size: 0.95rem; line-height: 1.5; white-space: pre-line;"></p>
@@ -108,9 +108,9 @@
               <!-- ส่วนฟิลด์คำถามตามประเภทที่แอดมินตั้งค่า -->
               <div id="dynamicQuestionsContainer" style="margin-top: 15px;"></div>
 
-              <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <button type="submit" id="submitAppBtn" class="banner-action-btn" style="flex: 1; padding: 10px;">ยื่นใบสมัคร</button>
-                <button type="button" id="withdrawAppBtn" class="banner-action-btn" style="background: #c9302c; display: none;" onclick="withdrawApplication()">ถอนตัวออกจากโปรเจกต์</button>
+              <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <button type="submit" id="submitAppBtn" class="banner-action-btn" style="width: 100%; padding: 10px;">ยื่นใบสมัคร</button>
+                <button type="button" id="withdrawAppBtn" class="banner-action-btn" style="background: #c9302c; display: none; width: 100%; padding: 10px;" onclick="withdrawApplication()">ถอนตัวจากการสมัคร</button>
               </div>
             </form>
           </div>
@@ -191,7 +191,7 @@
           loadedProjects.push({ docId: docSnap.id, ...docSnap.data() });
         });
 
-        // 🔄 เรียงลำดับให้โปรเจกต์ที่สร้างขึ้นทีหลัง (ใหม่กว่า) ขึ้นแสดงผลก่อนเสมอ
+        // 🔄 เรียงลำดับให้โปรเจกต์ที่สร้างขึ้นทีหลัง (ใหม่กว่า) ขึ้นแสดงผลก่อนเสมอ[cite: 15]
         loadedProjects.sort((a, b) => {
           const getTime = (val) => {
             if (!val) return 0;
@@ -262,7 +262,6 @@
 
         document.getElementById('innerProjName').innerText = proj.name || 'โปรเจกต์ไม่มีชื่อ';
         
-        // แสดงข้อความรายละเอียดโปรเจกต์ในแท็บ 1
         const descText = proj.description || 'ไม่มีรายละเอียดเพิ่มเติม';
         document.getElementById('innerProjDesc').innerText = descText;
 
@@ -390,7 +389,7 @@
           submitBtn.disabled = true;
           submitBtn.style.background = '#555';
           submitBtn.style.cursor = 'not-allowed';
-          withdrawBtn.style.display = 'none';
+          if (withdrawBtn) withdrawBtn.style.display = 'none';
           setFormInputsEditable(false);
         } else if (alreadyApplied) {
           statusNotice.innerHTML = `✨ <span style="color:#10b981;">สถานะการสมัคร: [${userApp.status || 'pending'}] / บันทึกข้อมูลเรียบร้อยแล้ว</span>`;
@@ -398,7 +397,7 @@
           submitBtn.disabled = true;
           submitBtn.style.background = '#555';
           submitBtn.style.cursor = 'not-allowed';
-          withdrawBtn.style.display = 'block'; 
+          if (withdrawBtn) withdrawBtn.style.display = 'block'; 
           setFormInputsEditable(false);
         } else {
           statusNotice.innerHTML = 'กรอกข้อมูลบทบาทและตอบคำถามด้านล่างเพื่อยื่นใบสมัคร';
@@ -406,7 +405,7 @@
           submitBtn.disabled = false;
           submitBtn.style.background = '#dc2626';
           submitBtn.style.cursor = 'pointer';
-          withdrawBtn.style.display = 'none'; 
+          if (withdrawBtn) withdrawBtn.style.display = 'none'; 
           setFormInputsEditable(true);
         }
       };
