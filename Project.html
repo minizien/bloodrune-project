@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BR.PJ - Projects Hub</title>
+    <title>BR.PJ - Projects</title>
     <!-- เรียกใช้งานไฟล์ CSS ที่แยกออกมา -->
     <link rel="stylesheet" href="Project.css" />
     <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -44,23 +44,29 @@
 
       <!-- หน้าที่ 2: หน้าภายในโปรเจกต์ -->
       <div id="projectInnerView">
-        <button class="back-to-list-btn" onclick="backToList()">⬅ กลับสู่หน้าแบนเนอร์โปรเจกต์</button>
+        <button class="back-to-list-btn" onclick="backToList()">⬅ Return</button>
         
         <div class="project-header" style="margin-bottom: 15px;">
           <div id="innerImageGallery" style="display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px;"></div>
           <h2 id="innerProjName" style="color: #ef4444;">ชื่อโปรเจกต์</h2>
-          <p id="innerProjDesc" style="color: #9ca3af;">รายละเอียดโปรเจกต์</p>
         </div>
 
         <div class="project-tabs">
-          <button class="tab-btn active" onclick="switchTab('info', event)">📌 1. ข้อมูลโปรเจกต์</button>
-          <button class="tab-btn" onclick="switchTab('passed', event)">🎉 2. ผู้ผ่านการคัดเลือก</button>
-          <button class="tab-btn" onclick="switchTab('apply', event)">📝 3. สมัครเข้าร่วม</button>
+          <button class="tab-btn active" onclick="switchTab('info', event)">1. ข้อมูลโปรเจกต์</button>
+          <button class="tab-btn" onclick="switchTab('passed', event)">2. ผู้ผ่านการคัดเลือก</button>
+          <button class="tab-btn" onclick="switchTab('apply', event)">3. สมัครเข้าร่วม</button>
         </div>
 
         <div id="tab-info" class="tab-pane active">
           <div style="background: #121216; padding: 20px; border-radius: 8px; border: 1px solid #2a1b1b;">
-            <h3 style="color: #fff; margin-bottom: 10px;">📋 รายละเอียดและตำแหน่งที่เปิดรับ</h3>
+            <h3 style="color: #fff; margin-bottom: 12px;">รายละเอียดและตำแหน่งที่เปิดรับ</h3>
+            
+            <!-- รายละเอียดโปรเจกต์เพิ่มเติม (ย้ายมาไว้ก่อนบทบาท) -->
+            <div id="innerProjDescBox" style="background: #0a0a0d; padding: 14px 16px; border-radius: 6px; border: 1px solid #222; margin-bottom: 15px;">
+              <p style="color: #ef4444; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;">📌 รายละเอียดโปรเจกต์:</p>
+              <p id="innerProjDesc" style="color: #ddd; font-size: 0.95rem; line-height: 1.5; white-space: pre-line;"></p>
+            </div>
+
             <p id="infoMaxMember" style="color: #9ca3af; margin-bottom: 15px;"></p>
             <div id="infoRolesList" class="roles-box"></div>
           </div>
@@ -69,15 +75,16 @@
         <!-- แท็บที่ 2: รายชื่อผู้ผ่านการคัดเลือก -->
         <div id="tab-passed" class="tab-pane">
           <div style="background: #121216; padding: 20px; border-radius: 8px; border: 1px solid #2a1b1b;">
-            <h3 style="color: #ef4444; margin-bottom: 10px;">🎉 รายชื่อผู้ผ่านการคัดเลือก</h3>
+            <h3 style="color: #ef4444; margin-bottom: 10px;">รายชื่อผู้ผ่านการคัดเลือก</h3>
             <p style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 15px;">คลิกที่ปุ่มเพื่อเปิดดูข้อมูลและคำถาม-คำตอบ</p>
             <div id="passedUsersContainer"></div>
           </div>
         </div>
 
+        <!-- แท็บที่ 3: สมัครเข้าร่วม -->
         <div id="tab-apply" class="tab-pane">
           <div style="background: #121216; padding: 20px; border-radius: 8px; border: 1px solid #2a1b1b; max-width: 650px;">
-            <h3 style="color: #ef4444; margin-bottom: 10px;">🎯 ยื่นใบสมัครเข้าร่วมโปรเจกต์</h3>
+            <h3 style="color: #ef4444; margin-bottom: 10px;">ยื่นใบสมัครเข้าร่วมโปรเจกต์</h3>
             <p id="applyStatusNotice" style="font-size: 0.9rem; color: #ccc; margin-bottom: 15px;"></p>
 
             <form id="applyForm" onsubmit="submitApplication(event)">
@@ -85,15 +92,15 @@
                 <label style="color:#ef4444; font-weight:bold; margin-bottom:8px; display:block;">เลือกลำดับบทบาทที่ต้องการสมัคร</label>
                 
                 <div style="margin-bottom:10px;">
-                  <label style="font-size:0.85rem; color:#aaa;">🥇 อันดับที่ 1 (หลัก):</label>
+                  <label style="font-size:0.85rem; color:#aaa;">อยากเล่นเป็น อันดับที่ 1 (หลัก):</label>
                   <select id="roleRank1" required onchange="validateRoleSelection()"></select>
                 </div>
                 <div style="margin-bottom:10px;">
-                  <label style="font-size:0.85rem; color:#aaa;">🥈 อันดับที่ 2 (สำรอง):</label>
+                  <label style="font-size:0.85rem; color:#aaa;">อยากเล่นเป็น อันดับที่ 2 (สำรอง):</label>
                   <select id="roleRank2" onchange="validateRoleSelection()"></select>
                 </div>
                 <div>
-                  <label style="font-size:0.85rem; color:#aaa;">🥉 อันดับที่ 3 (สำรอง):</label>
+                  <label style="font-size:0.85rem; color:#aaa;">อยากเล่นเป็น อันดับที่ 3 (สำรอง):</label>
                   <select id="roleRank3" onchange="validateRoleSelection()"></select>
                 </div>
               </div>
@@ -103,6 +110,7 @@
 
               <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
                 <button type="submit" id="submitAppBtn" class="banner-action-btn" style="flex: 1; padding: 10px;">ยื่นใบสมัคร</button>
+                <button type="button" id="withdrawAppBtn" class="banner-action-btn" style="background: #c9302c; display: none;" onclick="withdrawApplication()">ถอนตัวออกจากโปรเจกต์</button>
               </div>
             </form>
           </div>
@@ -219,7 +227,7 @@
           banner.innerHTML = `
             ${thumbHtml}
             <div class="banner-info">
-              <h3>🚀 ${proj.name || 'โปรเจกต์ไม่มีชื่อ'} ${isHidden ? '<span style="color:#ef4444; font-size:0.8rem;">🔒 [Coming Soon]</span>' : ''}</h3>
+              <h3> ${proj.name || 'โปรเจกต์ไม่มีชื่อ'} ${isHidden ? '<span style="color:#ef4444; font-size:0.8rem;">🔒 [Coming Soon]</span>' : ''}</h3>
               <p>รับสมัครสูงสุด: ${proj.maxMembers || 0} คน | สมัครทั้งหมด ${totalApps} คน | ผ่านคัดเลือกแล้ว ${passedCount} คน</p>
             </div>
             <button class="banner-action-btn ${isHidden ? 'disabled' : ''}" ${isHidden ? 'disabled' : `onclick="openProjectInner(${index})"`}>${isHidden ? 'Coming Soon' : 'เข้าสู่โปรเจกต์ ➔'}</button>
@@ -242,7 +250,10 @@
         document.getElementById('projectInnerView').style.display = 'block';
 
         document.getElementById('innerProjName').innerText = proj.name || 'โปรเจกต์ไม่มีชื่อ';
-        document.getElementById('innerProjDesc').innerText = proj.description || 'ศูนย์รวมข้อมูลและการรับสมัครประจำโปรเจกต์';
+        
+        // แสดงข้อความรายละเอียดโปรเจกต์ในแท็บ 1
+        const descText = proj.description || 'ไม่มีรายละเอียดเพิ่มเติม';
+        document.getElementById('innerProjDesc').innerText = descText;
 
         const galleryContainer = document.getElementById('innerImageGallery');
         galleryContainer.innerHTML = '';
@@ -329,7 +340,6 @@
           rank3.value = userApp.rolePriority.rank3 || '';
         }
 
-        // 🛠️ อัปเกรดสร้างฟิลด์รับค่าตามประเภทที่แอดมินตั้งค่า (text, textarea, number, date, email)
         const qContainer = document.getElementById('dynamicQuestionsContainer');
         qContainer.innerHTML = '';
         if (proj.customQuestions && proj.customQuestions.length > 0) {
