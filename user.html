@@ -66,7 +66,7 @@
     <div id="stage2Modal" class="modal-overlay">
       <div class="modal-card" style="max-width: 650px">
         <button class="close-modal" onclick="closeStage2Modal()">✕</button>
-        <h3 style="color: #17a2b8; margin-bottom: 5px">📝 ส่งหรือแก้ไขเอกสารรอบ 2</h3>
+        <h3 style="color: #17a2b8; margin-bottom: 5px">📝 ส่งหรือแก้ไขเอกสารรอบ 2 (ระบบ 2)</h3>
         <p id="s2ModalSub" style="color: #aaa; font-size: 0.85rem; margin-bottom: 10px"></p>
         <form id="stage2UserForm" onsubmit="submitStage2Answers(event)">
           <div id="stage2QuestionsInputsContainer"></div>
@@ -82,7 +82,7 @@
     <div id="requestEditModal" class="modal-overlay">
       <div class="modal-card">
         <button class="close-modal" onclick="closeRequestEditModal()">✕</button>
-        <h3 style="color: #f0ad4e; margin-bottom: 5px">🔄 ขอแก้ไขเอกสารรอบ 2 (ขั้นที่ 1.9.5)</h3>
+        <h3 style="color: #f0ad4e; margin-bottom: 5px">🔄 ขอแก้ไขเอกสารรอบ 2 (ระบบ 1.9.5)</h3>
         <form onsubmit="submitRequestEdit(event)">
           <div class="form-group-input">
             <label>เหตุผลในการขอแก้ไข:</label>
@@ -100,8 +100,8 @@
     <div id="roleAppealModal" class="modal-overlay">
       <div class="modal-card" style="max-width: 480px; background: #1a1a1a; border: 1px solid #444;">
         <button class="close-modal" onclick="closeRoleAppealModal()">✕</button>
-        <h3 style="color: #f0ad4e; margin-bottom: 10px;">🔄 1.2.5 เลือกบทบาทที่ต้องการอุทธรณ์</h3>
-        <p style="color: #aaa; font-size: 0.85rem; margin-bottom: 15px;">เลือกบทบาทสำรองที่ต้องการส่งให้แอดมินตรวจสอบและอนุมัติ (แสดงเฉพาะที่ยังไม่เต็ม)</p>
+        <h3 style="color: #f0ad4e; margin-bottom: 10px;">🔄 ระบบ 1.2.5 เลือกบทบาทที่ต้องการอุทธรณ์</h3>
+        <p style="color: #aaa; font-size: 0.85rem; margin-bottom: 15px;">เลือกบทบาทสำรองที่ต้องการส่งให้แอดมินตรวจสอบและอนุมัติ (แสดงเฉพาะที่ยังไม่เต็มโควตา)</p>
         
         <div id="availableRolesAppealContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; max-height: 250px; overflow-y: auto;"></div>
 
@@ -122,7 +122,7 @@
     <div id="projectNewsModal" class="modal-overlay">
       <div class="modal-card" style="max-width: 700px">
         <button class="close-modal" onclick="closeProjectNewsModal()">✕</button>
-        <h3 id="pNewsModalTitle" style="color: #28a745; margin-bottom: 5px">📢 ประกาศภายในโปรเจกต์</h3>
+        <h3 id="pNewsModalTitle" style="color: #28a745; margin-bottom: 5px">📢 ประกาศภายในโปรเจกต์ (ระบบ 3)</h3>
         <div id="projectNewsContentList" style="display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto;"></div>
       </div>
     </div>
@@ -207,13 +207,22 @@
 
       function isCountedAsPassed(status) {
         return [
+          "step_1_2_passed",
           "passed",
+          "step_2_submitted",
           "stage2_submitted",
+          "step_2_revision",
           "revision_requested",
+          "step_1_9_5_requested",
           "edit_requested",
+          "step_1_9_5_allowed",
           "edit_allowed",
+          "step_3_approved",
           "approved",
-          "completed"
+          "step_3_completed",
+          "completed",
+          "step_1_2_5_pending",
+          "role_pending_review"
         ].includes(status);
       }
 
@@ -221,7 +230,7 @@
         let html = "";
         if (appItem.answers && typeof appItem.answers === "object") {
           html += `<div style="background: #181818; padding: 12px; border-radius: 6px; margin-top: 10px; border: 1px solid #333;">`;
-          html += `<p style="color: #ff4d4d; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px;">📋 ข้อมูลที่สมัครไว้ (รอบแรก):</p>`;
+          html += `<p style="color: #ff4d4d; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px;">📋 ข้อมูลระบบ 1 (สมัครรอบแรก):</p>`;
           for (const [key, val] of Object.entries(appItem.answers)) {
             html += `<p style="color: #ccc; font-size: 0.85rem; margin: 3px 0;">• <strong>${key}:</strong> ${val !== undefined && val !== null ? val : "-"}</p>`;
           }
@@ -234,7 +243,7 @@
         let html = "";
         if (appItem.stage2Answers && typeof appItem.stage2Answers === "object") {
           html += `<div style="background: #181818; padding: 12px; border-radius: 6px; margin-top: 10px; border: 1px solid #333;">`;
-          html += `<p style="color: #17a2b8; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px;">📋 ข้อมูลรอบที่ 2 ที่ส่ง:</p>`;
+          html += `<p style="color: #17a2b8; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px;">📋 ข้อมูลระบบ 2 (ส่งรอบ 2):</p>`;
           for (const [key, val] of Object.entries(appItem.stage2Answers)) {
             let displayVal = val;
             if (typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://')) && (val.match(/\.(jpeg|jpg|gif|png)$/i) || val.includes('imgur') || val.includes('firebasestorage'))) {
@@ -270,17 +279,27 @@
 
                 if (matchUid || matchEmail) {
                   const fullItem = { projectData: proj, appIndex: appIndex, appDetails: appItem };
-                  const st = appItem.status || "pending";
+                  const st = appItem.status || "pending_application";
 
                   userAppsList.push(fullItem);
 
+                  // เชื่อมโยงสถานะที่ผ่านเข้ามาแสดงในแท็บ "สถานะภายในโปรเจกต์" (รวมถึง 1.2.5 อุทธรณ์)
                   if ([
+                    "step_1_2_passed",
                     "passed",
+                    "step_2_submitted",
                     "stage2_submitted",
+                    "step_2_revision",
                     "revision_requested",
+                    "step_1_9_5_requested",
                     "edit_requested",
+                    "step_1_9_5_allowed",
                     "edit_allowed",
-                    "approved"
+                    "step_3_approved",
+                    "approved",
+                    "step_1_2_5_pending",
+                    "role_pending_review",
+                    "step_1_2_5_revision"
                   ].includes(st)) {
                     acceptedAppsList.push(fullItem);
                   }
@@ -289,7 +308,6 @@
             }
           });
 
-          // 🔄 เรียงลำดับให้รายการที่มาทีหลัง (ใหม่กว่า) ขึ้นแสดงผลก่อนเสมอ
           const sortByNewest = (a, b) => {
             const getTime = (val) => {
               if (!val) return 0;
@@ -307,20 +325,20 @@
             containerApps.innerHTML = `<div style="padding: 40px; text-align: center;"><p style="color: #aaa;">📭 ไม่พบประวัติการสมัครเข้าร่วมโปรเจกต์</p></div>`;
           } else {
             userAppsList.forEach((item) => {
-              const status = item.appDetails.status || "pending";
+              const status = item.appDetails.status || "pending_application";
               const proj = item.projectData;
               const appItem = item.appDetails;
 
-              let statusText = "⏳ 1. ยืนสมัคร (รอตรวจสอบ)";
-              if (status === "interview") statusText = `📅 1.1 สัมภาษณ์: ${appItem.interviewDate || "-"}`;
-              else if (status === "rejected") statusText = "❌ ไม่ผ่านการคัดเลือก";
-              else if (status === "role_pending_review") statusText = "⏳ 1.2.5 รอแอดมินพิจารณาอุทธรณ์บทบาท";
-              else if (status === "revision_requested") statusText = "🔄 1.2.5 แจ้งยื่นอุทธรณ์บทบาทใหม่";
-              else if (status === "passed") statusText = `🎉 ผ่านการคัดเลือก / บทบาทปัจจุบัน: [${appItem.assignedRole || "-"}] (เข้าสู่ขั้นตอนที่ 2)`;
-              else if (status === "stage2_submitted") statusText = "⏳ 2. ส่งเอกสารรอบ 2 แล้ว (รอแอดมินตรวจสอบ)";
-              else if (status === "edit_requested") statusText = "🔄 1.9.5 ขอแก้ไขเอกสารรอบ 2 (รอแอดมินอนุมัติ)";
-              else if (status === "edit_allowed") statusText = "🔓 1.9.5 แอดมินอนุญาตให้แก้ไขเอกสารรอบ 2 แล้ว";
-              else if (status === "approved") statusText = `🎉 3. เข้าสู่โปรเจกต์แล้ว (${appItem.assignedRole || "ทีมงาน"})`;
+              let statusText = "⏳ ระบบ 1: ยืนสมัคร (รอตรวจสอบ)";
+              if (status === "step_1_1_interview" || status === "interview") statusText = `📅 ระบบ 1.1 สัมภาษณ์: ${appItem.interviewDate || "-"}`;
+              else if (status === "rejected") statusText = "❌ ไม่ผ่านการคัดเลือก / ยกเลิกโปรเจกต์";
+              else if (status === "step_1_2_5_pending" || status === "role_pending_review") statusText = "⏳ ระบบ 1.2.5 รอแอดมินพิจารณาอุทธรณ์บทบาท";
+              else if (status === "step_1_2_5_revision" || status === "revision_requested") statusText = "🔄 ระบบ 1.2.5 แจ้งยื่นอุทธรณ์บทบาทใหม่ (เนื่องจากบทบาทเต็ม)";
+              else if (status === "step_1_2_passed" || status === "passed") statusText = `🎉 ผ่านการคัดเลือก / ล็อคบทบาท: [${appItem.assignedRole || "-"}] (เข้าสู่ระบบ 2)`;
+              else if (status === "step_2_submitted" || status === "stage2_submitted") statusText = "⏳ ระบบ 2.1: ส่งเอกสารรอบ 2 แล้ว (รอแอดมินยืนยันหรือตีกลับ)";
+              else if (status === "step_1_9_5_requested" || status === "edit_requested") statusText = "🔄 ระบบ 1.9.5 ขอแก้ไขเอกสารรอบ 2 (รอแอดมินอนุมัติ)";
+              else if (status === "step_1_9_5_allowed" || status === "edit_allowed") statusText = "🔓 ระบบ 1.9.5 แอดมินอนุญาตให้แก้ไขเอกสารรอบ 2 แล้ว";
+              else if (status === "step_3_approved" || status === "approved") statusText = `🎉 ระบบ 3: เข้าสู่โปรเจกต์แล้ว (${appItem.assignedRole || "สมาชิก"})`;
 
               const card = document.createElement("div");
               card.className = "app-status-card";
@@ -333,7 +351,7 @@
           }
 
           if (acceptedAppsList.length === 0) {
-            containerAccepted.innerHTML = `<div style="padding: 40px; text-align: center;"><p style="color: #aaa;">🔒 ยังไม่มีโปรเจกต์ที่ผ่านเข้าสู่ขั้นตอนที่ 2 หรือ 3</p></div>`;
+            containerAccepted.innerHTML = `<div style="padding: 40px; text-align: center;"><p style="color: #aaa;">🔒 ยังไม่มีโปรเจกต์ที่อยู่ในขั้นตอนอุทธรณ์ รอบ 2 หรือระบบ 3</p></div>`;
           } else {
             acceptedAppsList.forEach((item) => {
               const status = item.appDetails.status;
@@ -345,37 +363,42 @@
 
               const stage2DescHtml = proj.stage2Description ? `
                 <div style="background: #111; padding: 10px; border-left: 3px solid #17a2b8; margin: 10px 0; border-radius: 4px;">
-                  <p style="color: #17a2b8; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;">📌 คำอธิบาย / คำแนะนำเอกสารฉบับที่ 2:</p>
+                  <p style="color: #17a2b8; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;">📌 คำอธิบาย / คำแนะนำเอกสารรอบ 2:</p>
                   <p style="color: #ccc; font-size: 0.85rem;">${proj.stage2Description}</p>
                 </div>
               ` : "";
 
-              if (status === "role_pending_review") {
-                statusBadge = '<span class="badge-status" style="background: #17a2b8; color: #fff;">⏳ 1.2.5 รอแอดมินอนุมัติอุทธรณ์บทบาท</span>';
+              if (status === "step_1_2_5_pending" || status === "role_pending_review") {
+                statusBadge = '<span class="badge-status" style="background: #17a2b8; color: #fff;">⏳ ระบบ 1.2.5 รอแอดมินอนุมัติอุทธรณ์บทบาท</span>';
                 actionAreaHtml = `<p style="color: #f0ad4e; font-size: 0.85rem; margin-top: 10px;">กำลังรอผู้ดูแลระบบพิจารณาคำขอเปลี่ยนเป็นบทบาท: <strong>${appItem.pendingAppealRole || "-"}</strong></p>`;
-              } else if (status === "revision_requested") {
-                statusBadge = '<span class="badge-status" style="background: #f0ad4e; color: #000; font-weight: bold;">1.2.5 กรุณาเลือกบทบาทอุทธรณ์ใหม่</span>';
+              } else if (status === "step_1_2_5_revision" || status === "revision_requested") {
+                // ระบบ 1.2.5: ให้เลือกอุทธรณ์บทบาทใหม่ หรือขอยกเลิกการเข้าร่วม
+                statusBadge = '<span class="badge-status" style="background: #f0ad4e; color: #000; font-weight: bold;">ระบบ 1.2.5 กรุณาเลือกบทบาทอุทธรณ์ใหม่</span>';
                 actionAreaHtml = `
                   <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
-                    <button class="btn-action-floating" style="background: #f0ad4e; color: #000; font-weight: bold;" onclick="openRoleAppealModal('${proj.firebaseId}', ${item.appIndex})">🔄 1.2.5 เลือกบทบาทอุทธรณ์ / ยกเลิกโปรเจกต์</button>
+                    <button class="btn-action-floating" style="background: #f0ad4e; color: #000; font-weight: bold;" onclick="openRoleAppealModal('${proj.firebaseId}', ${item.appIndex})">🔄 ระบบ 1.2.5 เลือกบทบาทอุทธรณ์ / ยกเลิกโปรเจกต์</button>
                   </div>
                 `;
-              } else if (status === "passed" || status === "edit_allowed") {
-                statusBadge = `<span class="badge-status" style="background: #28a745; color: #fff; font-weight: bold;">🎉 ผ่านการคัดเลือก (บทบาท: ${appItem.assignedRole || "-"}) - เข้าสู่ขั้นตอนที่ 2</span>`;
+              } else if (status === "step_1_2_passed" || status === "step_1_9_5_allowed" || status === "passed" || status === "edit_allowed") {
+                // ระบบ 2: กรอก/ส่งเอกสารรอบ 2 (รวมถึงกรณีถูกตีกลับมาจากขั้นตอน 2.1)
+                statusBadge = `<span class="badge-status" style="background: #28a745; color: #fff; font-weight: bold;">🎉 ผ่านการคัดเลือก (บทบาท: ${appItem.assignedRole || "-"}) - เข้าสู่ระบบ 2</span>`;
                 actionAreaHtml = `
                   ${stage2DescHtml}
                   <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
-                    <button class="btn-action-floating btn-stage2" onclick="openStage2Modal('${proj.firebaseId}', ${item.appIndex})">📝 กรอก/แก้ไขเอกสารรอบ 2</button>
+                    <button class="btn-action-floating btn-stage2" onclick="openStage2Modal('${proj.firebaseId}', ${item.appIndex})">📝 ระบบ 2: กรอก/ส่งเอกสารรอบ 2</button>
                   </div>
                 `;
-              } else if (status === "stage2_submitted") {
-                statusBadge = '<span class="badge-status" style="background: #17a2b8; color: #fff;">⏳ 2. ส่งเอกสารรอบ 2 แล้ว (รอแอดมินตรวจสอบ)</span>';
+              } else if (status === "step_2_submitted" || status === "stage2_submitted") {
+                // ส่งเอกสารรอบ 2 แล้ว รอแอดมินตรวจในระบบ 2.1
+                statusBadge = '<span class="badge-status" style="background: #17a2b8; color: #fff;">⏳ ระบบ 2.1: ส่งเอกสารรอบ 2 แล้ว (รอแอดมินยืนยันหรือตีกลับ)</span>';
                 actionAreaHtml = `${stage2DescHtml} ${renderStage2Answers(appItem)}`;
-              } else if (status === "edit_requested") {
-                statusBadge = '<span class="badge-status" style="background: #f0ad4e; color: #000;">🔄 1.9.5 ขอแก้ไขเอกสารรอบ 2 (รอแอดมินอนุมัติ)</span>';
+              } else if (status === "step_1_9_5_requested" || status === "edit_requested") {
+                // ระบบ 1.9.5: ขอแก้ไขเอกสารรอบ 2 รอแอดมินอนุมัติ
+                statusBadge = '<span class="badge-status" style="background: #f0ad4e; color: #000;">🔄 ระบบ 1.9.5 ขอแก้ไขเอกสารรอบ 2 (รอแอดมินอนุมัติ)</span>';
                 actionAreaHtml = `${stage2DescHtml} ${renderStage2Answers(appItem)}`;
-              } else if (status === "approved") {
-                statusBadge = `<span class="badge-status" style="background: #28a745; color: #fff;">🎉 3. สมาชิกอย่างเป็นทางการ (${appItem.assignedRole || "สมาชิก"})</span>`;
+              } else if (status === "step_3_approved" || status === "approved") {
+                // ระบบ 3: สมาชิกโปรเจกต์
+                statusBadge = `<span class="badge-status" style="background: #28a745; color: #fff;">🎉 ระบบ 3: สมาชิกโปรเจกต์ (${appItem.assignedRole || "สมาชิก"})</span>`;
 
                 actionAreaHtml = `
                   ${stage2DescHtml}
@@ -384,8 +407,8 @@
                     <p style="color: #28a745; font-size: 0.85rem; font-weight: bold; margin: 0;">🎯 บทบาทปัจจุบัน: ${appItem.assignedRole || "สมาชิก"}</p>
                   </div>
                   <div style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn-action-floating" style="background: #28a745; color: #fff;" onclick="openProjectNewsModal('${proj.firebaseId}')">📢 3. ดูข่าวสารโปรเจกต์</button>
-                    <button class="btn-action-floating" style="background: #495057; color: #fff;" onclick="openRequestEditModal('${proj.firebaseId}', ${item.appIndex})">🔄 1.9.5 ส่งคำขอแก้ไขเอกสารรอบ 2</button>
+                    <button class="btn-action-floating" style="background: #28a745; color: #fff;" onclick="openProjectNewsModal('${proj.firebaseId}')">📢 ระบบ 3: ดูข่าวสาร/บอร์ดโปรเจกต์</button>
+                    <button class="btn-action-floating" style="background: #495057; color: #fff;" onclick="openRequestEditModal('${proj.firebaseId}', ${item.appIndex})">🔄 ระบบ 1.9.5 ส่งคำขอแก้ไขเอกสารรอบ 2</button>
                   </div>
                 `;
               }
@@ -396,7 +419,7 @@
                 <div class="app-card-header"><span class="app-proj-name">${proj.name}</span>${statusBadge}</div>
                 <div class="app-card-body">
                   ${renderFirstRoundAnswers(appItem)}
-                  ${appItem.revisionNote ? `<div style="background: #2a1b1b; padding: 10px; border-left: 3px solid #ff4d4d; margin-top: 8px;"><p style="color:#ff4d4d; font-size:0.85rem;">💬 ข้อความล่าสุดจากแอดมิน: ${appItem.revisionNote}</p></div>` : ""}
+                  ${appItem.revisionNote ? `<div style="background: #2a1b1b; padding: 10px; border-left: 3px solid #ff4d4d; margin-top: 8px;"><p style="color:#ff4d4d; font-size:0.85rem;">💬 ข้อความจากแอดมิน: ${appItem.revisionNote}</p></div>` : ""}
                   ${actionAreaHtml}
                   <p style="color: #777; font-size: 0.75rem; margin-top: 10px;">🕒 ยื่นสมัครเมื่อ: ${appItem.createdAt || "-"}</p>
                 </div>
@@ -464,8 +487,8 @@
 
         proj.applications[appIndex].appealStatus = "pending";
         proj.applications[appIndex].pendingAppealRole = selectedRole;
-        proj.applications[appIndex].status = "role_pending_review";
-        proj.applications[appIndex].revisionNote = `ผู้ใช้ส่งคำขออุทธรณ์เปลี่ยนเป็นบทบาท: ${selectedRole} (1.2.5 รอแอดมินอนุมัติ)`;
+        proj.applications[appIndex].status = "step_1_2_5_pending";
+        proj.applications[appIndex].revisionNote = `ผู้ใช้ส่งคำขออุทธรณ์เปลี่ยนเป็นบทบาท: ${selectedRole} (ระบบ 1.2.5 รอแอดมินอนุมัติ)`;
 
         try {
           await updateDoc(doc(db, "projects", proj.firebaseId), { applications: proj.applications });
@@ -488,7 +511,7 @@
         proj.applications[appIndex].assignedRole = null;
         proj.applications[appIndex].appealStatus = null;
         proj.applications[appIndex].pendingAppealRole = null;
-        proj.applications[appIndex].revisionNote = "ผู้ใช้กดยกเลิกการเข้าร่วมโปรเจกต์ด้วยตนเอง";
+        proj.applications[appIndex].revisionNote = "ผู้ใช้กดยกเลิกการเข้าร่วมโปรเจกต์ด้วยตนเองในระบบ 1.2.5";
 
         try {
           await updateDoc(doc(db, "projects", proj.firebaseId), { applications: proj.applications });
@@ -525,7 +548,7 @@
           } else if (qType === 'email') {
             inputHtml = `<input type="email" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" placeholder="example@email.com" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
           } else if (qType === 'image') {
-            inputHtml = `<input type="url" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" placeholder="วางลิงก์รูปภาพ (เช่น URL รูปผลงาน หรือ อัปโหลดผ่านเว็บฝากไฟล์)" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+            inputHtml = `<input type="url" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" placeholder="วางลิงก์รูปภาพผลงาน / เอกสาร" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
           } else {
             inputHtml = `<input type="text" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" placeholder="กรอกคำตอบของคุณ..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
           }
@@ -554,13 +577,13 @@
           answersMap[qTitle] = formData.get(`s2_q_${idx}`) || "";
         });
         proj.applications[appIndex].stage2Answers = answersMap;
-        proj.applications[appIndex].status = "stage2_submitted";
+        proj.applications[appIndex].status = "step_2_submitted"; // ส่งเอกสารรอบ 2 แล้ว ไปที่ขั้นตอน 2.1 รอแอดมินยืนยันหรือตีกลับ
         proj.applications[appIndex].editReason = null;
 
         try {
           await updateDoc(doc(db, "projects", proj.firebaseId), { applications: proj.applications });
           window.closeStage2Modal();
-          alert("📤 ส่งเอกสารรอบ 2 กลับไปยังแอดมินเรียบร้อยแล้ว!");
+          alert("📤 ส่งเอกสารรอบ 2 (ระบบ 2) กลับไปยังแอดมินเรียบร้อยแล้ว!");
         } catch (err) {
           alert("❌ เกิดข้อผิดพลาด: " + err.message);
         }
@@ -584,13 +607,13 @@
         const proj = currentProjectsData.find((p) => p.firebaseId === projId);
         if (!proj) return;
 
-        proj.applications[appIndex].status = "edit_requested";
+        proj.applications[appIndex].status = "step_1_9_5_requested"; // เข้าสู่ระบบ 1.9.5 (ขอแก้ไขรอบ 2 รอแอดมินอนุมัติ)
         proj.applications[appIndex].editReason = reason;
 
         try {
           await updateDoc(doc(db, "projects", proj.firebaseId), { applications: proj.applications });
           window.closeRequestEditModal();
-          alert("📤 ส่งคำขอแก้ไข (1.9.5) เรียบร้อย รอแอดมินอนุมัติสิทธิ์!");
+          alert("📤 ส่งคำขอแก้ไข (ระบบ 1.9.5) เรียบร้อย รอแอดมินอนุมัติสิทธิ์!");
         } catch (err) {
           alert("❌ เกิดข้อผิดพลาด: " + err.message);
         }
@@ -599,12 +622,12 @@
       window.openProjectNewsModal = function (projId) {
         const proj = currentProjectsData.find((p) => p.firebaseId === projId);
         if (!proj) return;
-        document.getElementById("pNewsModalTitle").innerText = `📢 ข้อมูลโปรเจกต์: ${proj.name}`;
+        document.getElementById("pNewsModalTitle").innerText = `📢 บอร์ดโปรเจกต์ (ระบบ 3): ${proj.name}`;
         const container = document.getElementById("projectNewsContentList");
         container.innerHTML = "";
         const newsList = proj.projectNews || [];
         if (newsList.length === 0) {
-          container.innerHTML = '<p style="color:#888; text-align:center;">ยังไม่มีประกาศ</p>';
+          container.innerHTML = '<p style="color:#888; text-align:center;">ยังไม่มีประกาศในระบบ 3</p>';
         } else {
           newsList.forEach((item) => {
             container.innerHTML += `<div style="background: #181818; padding: 12px; border-radius: 4px;"><h4 style="color:#fff;">${item.title}</h4><p style="color:#ccc;">${item.content}</p></div>`;
@@ -618,4 +641,4 @@
       };
     </script>
   </body>
-</html>  
+</html>
