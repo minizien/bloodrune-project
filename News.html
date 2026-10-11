@@ -95,6 +95,19 @@
           newsDataList.push({ id: doc.id, ...doc.data() });
         });
 
+        // 🔄 จัดเรียงลำดับให้ข่าวใหม่ล่าสุดไปแสดงฝั่งขวาสุด (เรียงจากเวลาเก่า -> ใหม่)
+        newsDataList.sort((a, b) => {
+          const getTime = (val) => {
+            if (!val) return 0;
+            if (typeof val.toDate === 'function') return val.toDate().getTime();
+            const parsed = new Date(val).getTime();
+            return isNaN(parsed) ? 0 : parsed;
+          };
+          const timeA = a.createdAt ? getTime(a.createdAt) : new Date(a.date || 0).getTime();
+          const timeB = b.createdAt ? getTime(b.createdAt) : new Date(b.date || 0).getTime();
+          return timeA - timeB; // เปลี่ยนเป็น timeA - timeB เพื่อให้อันใหม่กว่าอยู่ขวา
+        });
+
         renderNewsList(newsDataList);
       }, (error) => {
         console.error("Error fetching news from Firebase: ", error);
@@ -109,7 +122,6 @@
         newsGrid.innerHTML = '';
 
         items.forEach((item) => {
-          // แปลง imageUrl ที่คั่นด้วยจุลภาคหรือขึ้นบรรทัดใหม่ให้อยู่ในรูป Array
           let imageUrls = [];
           if (item.imageUrl) {
             imageUrls = item.imageUrl.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0);
@@ -128,7 +140,6 @@
                </div>`
             : '';
 
-          // แสดงวันที่สร้าง และวันที่แก้ไขล่าสุด (ถ้ามี)
           let dateInfo = `วันที่ประกาศ: ${item.date || '-'}`;
           if (item.updatedAtString) {
             dateInfo += `<br>แก้ไขล่าสุด: ${item.updatedAtString}`;
