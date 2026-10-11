@@ -191,6 +191,17 @@
           loadedProjects.push({ docId: docSnap.id, ...docSnap.data() });
         });
 
+        // 🔄 เรียงลำดับให้โปรเจกต์ที่สร้างขึ้นทีหลัง (ใหม่กว่า) ขึ้นแสดงผลก่อนเสมอ
+        loadedProjects.sort((a, b) => {
+          const getTime = (val) => {
+            if (!val) return 0;
+            if (typeof val.toDate === 'function') return val.toDate().getTime();
+            const parsed = new Date(val).getTime();
+            return isNaN(parsed) ? 0 : parsed;
+          };
+          return getTime(b.createdAt) - getTime(a.createdAt);
+        });
+
         renderProjectBanners(loadedProjects);
 
         if (currentActiveProjIndex !== null) {
