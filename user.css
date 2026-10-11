@@ -14,13 +14,14 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 /* --- Top Navigation Bar --- */
 .top-nav {
   background: linear-gradient(180deg, #1a0505 0%, #0d0d0d 100%);
   border-bottom: 2px solid #ff2a2a;
-  padding: 15px 30px;
+  padding: 15px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -48,7 +49,8 @@ body {
 .nav-title {
   color: #ff2a2a;
   letter-spacing: 2px;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
+  text-align: center;
 }
 
 /* --- Side Drawer Menu --- */
@@ -56,7 +58,7 @@ body {
   position: fixed;
   top: 0;
   left: -280px;
-  width: 280px;
+  width: 260px;
   height: 100vh;
   background: #141414;
   border-right: 2px solid #ff2a2a;
@@ -79,7 +81,7 @@ body {
   color: #aaa;
   font-size: 1.5rem;
   cursor: pointer;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .close-drawer-btn:hover {
@@ -89,15 +91,15 @@ body {
 .drawer-nav {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
 }
 
 .drawer-item {
   color: #ffffff;
   text-decoration: none;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  padding: 12px 15px;
+  padding: 10px 14px;
   border-radius: 6px;
   border-left: 4px solid transparent;
   background: rgba(255, 255, 255, 0.03);
@@ -108,7 +110,7 @@ body {
   background: rgba(255, 42, 42, 0.15);
   border-left-color: #ff2a2a;
   color: #ff2a2a;
-  padding-left: 20px;
+  padding-left: 18px;
 }
 
 .drawer-overlay {
@@ -133,8 +135,8 @@ body {
 /* --- Main Layout Container --- */
 .project-container {
   max-width: 1000px;
-  margin: 30px auto;
-  padding: 0 20px;
+  margin: 20px auto;
+  padding: 0 15px;
   width: 100%;
 }
 
@@ -143,14 +145,14 @@ body {
   background: #141414;
   border: 1px solid #282828;
   border-left: 5px solid #ff2a2a;
-  padding: 20px 25px;
+  padding: 16px 20px;
   border-radius: 8px;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
 .profile-info-box h3 {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   color: #fff;
   text-shadow: 0 0 8px rgba(255, 42, 42, 0.4);
 }
@@ -158,10 +160,10 @@ body {
 /* --- Tab Navigation --- */
 .user-tabs-nav {
   display: flex;
-  gap: 10px;
-  margin-bottom: 25px;
+  gap: 8px;
+  margin-bottom: 20px;
   border-bottom: 1px solid #282828;
-  padding-bottom: 12px;
+  padding-bottom: 10px;
   flex-wrap: wrap;
 }
 
@@ -169,11 +171,14 @@ body {
   background: #141414;
   border: 1px solid #282828;
   color: #aaa;
-  padding: 10px 20px;
+  padding: 8px 16px;
   border-radius: 6px;
   font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex: 1;
+  text-align: center;
 }
 
 .user-tab-btn:hover {
@@ -200,14 +205,14 @@ body {
 .my-apps-grid {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .app-status-card {
   background-color: #141414;
   border: 1px solid #282828;
   border-radius: 8px;
-  padding: 22px;
+  padding: 18px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
   transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
@@ -223,25 +228,27 @@ body {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #222;
-  padding-bottom: 12px;
-  margin-bottom: 12px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .app-proj-name {
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #fff;
 }
 
 /* --- Status Badges --- */
 .badge-status {
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 12px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   border: 1px solid transparent;
+  max-width: 100%;
+  text-align: center;
 }
 
 .status-pending { background-color: rgba(100, 100, 100, 0.2); color: #ccc; border-color: #555; }
@@ -251,22 +258,24 @@ body {
 .status-rejected { background-color: rgba(220, 53, 69, 0.2); color: #dc3545; border-color: #dc3545; }
 
 .app-card-body p {
-  margin: 8px 0;
+  margin: 6px 0;
   color: #ccc;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 /* --- Action Buttons Inside Cards --- */
 .btn-action-floating {
   display: inline-block;
-  margin-top: 15px;
-  padding: 9px 16px;
+  margin-top: 12px;
+  padding: 8px 14px;
   border-radius: 4px;
   font-weight: 700;
+  font-size: 0.85rem;
   border: none;
   cursor: pointer;
   text-decoration: none;
   transition: 0.2s ease;
+  text-align: center;
 }
 
 .btn-action-floating:hover {
@@ -293,6 +302,7 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
+  padding: 15px;
 }
 
 .modal-overlay.open {
@@ -303,9 +313,9 @@ body {
 .modal-card {
   background-color: #141414;
   border: 1px solid #ff2a2a;
-  width: 90%;
+  width: 100%;
   max-width: 500px;
-  padding: 25px;
+  padding: 20px;
   border-radius: 8px;
   position: relative;
   box-shadow: 0 0 30px rgba(255, 42, 42, 0.3);
@@ -315,13 +325,14 @@ body {
 
 .close-modal {
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: 12px;
+  right: 12px;
   background: transparent;
   border: none;
   color: #aaa;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   cursor: pointer;
+  padding: 4px;
 }
 
 .close-modal:hover {
@@ -330,14 +341,14 @@ body {
 
 /* Form Inputs inside Modal */
 .form-group-input {
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .form-group-input label {
   display: block;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #ddd;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
   font-weight: 600;
 }
 
@@ -347,7 +358,7 @@ body {
   background-color: #090909;
   border: 1px solid #333;
   color: #fff;
-  padding: 10px 12px;
+  padding: 10px;
   border-radius: 4px;
   font-size: 0.95rem;
   outline: none;
@@ -362,12 +373,14 @@ body {
 
 .form-group-input textarea {
   resize: vertical;
-  min-height: 90px;
+  min-height: 80px;
 }
 
 .modal-actions {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 15px;
 }
 
 .btn-primary-action {
@@ -376,6 +389,7 @@ body {
   border: none;
   border-radius: 4px;
   font-weight: 700;
+  font-size: 0.9rem;
   cursor: pointer;
   background: #ff2a2a;
   color: #fff;
@@ -395,6 +409,7 @@ body {
   border: none;
   border-radius: 4px;
   font-weight: 700;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: 0.2s;
 }
@@ -406,22 +421,54 @@ body {
 /* Loading Spinner */
 .loading-state {
   text-align: center;
-  padding: 40px;
+  padding: 30px;
   color: #ff2a2a;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: bold;
 }
 
 .spinner {
-  width: 45px;
-  height: 45px;
+  width: 40px;
+  height: 40px;
   border: 4px solid rgba(255, 42, 42, 0.2);
   border-top-color: #ff2a2a;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 15px auto;
+  margin: 0 auto 12px auto;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* --- Responsive Media Queries (โทรศัพท์และแท็บเล็ต) --- */
+@media (max-width: 768px) {
+  .top-nav {
+    padding: 12px 15px;
+  }
+
+  .nav-title {
+    font-size: 1.1rem;
+  }
+
+  .project-container {
+    padding: 0 10px;
+    margin: 15px auto;
+  }
+
+  .user-tabs-nav {
+    flex-direction: column;
+  }
+
+  .user-tab-btn {
+    width: 100%;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
 }
