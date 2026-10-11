@@ -13,6 +13,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 /* Header Navbar */
@@ -61,7 +62,7 @@ body {
 
 .news-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .news-header h2 {
@@ -71,16 +72,115 @@ body {
   text-shadow: 0 0 10px rgba(255, 42, 42, 0.5);
 }
 
-.news-header p {
-  color: #aaa;
-  font-size: 1rem;
+/* ==========================================
+   📢 FEATURED LARGE NEWS BANNER (ประกาศขนาดใหญ่)
+   ========================================== */
+.featured-news-banner {
+  background: linear-gradient(135deg, #1f0808 0%, #141414 70%);
+  border: 2px solid #ff2a2a;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 35px;
+  box-shadow: 0 10px 30px rgba(255, 42, 42, 0.25);
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.featured-news-banner:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(255, 42, 42, 0.4);
+}
+
+.featured-banner-img {
+  width: 100%;
+  height: 320px;
+  overflow: hidden;
+  background: #000;
+}
+
+.featured-banner-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.featured-news-banner:hover .featured-banner-img img {
+  transform: scale(1.04);
+}
+
+.featured-banner-content {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.featured-badge {
+  display: inline-block;
+  background: #ff2a2a;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  width: fit-content;
+}
+
+.featured-date {
+  font-size: 0.85rem;
+  color: #ff4d4d;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.featured-title {
+  font-size: 1.8rem;
+  color: #ffffff;
+  font-weight: 700;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+.featured-snippet {
+  font-size: 0.95rem;
+  color: #bbb;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.btn-read-featured {
+  background: transparent;
+  color: #ff2a2a;
+  border: 1px solid #ff2a2a;
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  width: fit-content;
+  transition: 0.3s;
+}
+
+.featured-news-banner:hover .btn-read-featured {
+  background: #ff2a2a;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(255, 42, 42, 0.6);
 }
 
 /* News Grid & Loading Spinner */
 .news-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
 }
 
 .loading-state {
@@ -122,14 +222,14 @@ body {
 }
 
 .news-item-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-4px);
   border-color: #ff2a2a;
   box-shadow: 0 8px 20px rgba(255, 42, 42, 0.25);
 }
 
 .card-img-wrapper {
   width: 100%;
-  height: 180px;
+  height: 170px;
   overflow: hidden;
   background: #1f1f1f;
   display: flex;
@@ -144,17 +244,12 @@ body {
   transition: transform 0.3s ease;
 }
 
-/* กรณีไม่มีรูป ให้ซ่อนส่วน wrapper รูป */
 .news-item-card.no-image .card-img-wrapper {
   display: none;
 }
 
-.news-item-card:hover .card-img-wrapper img {
-  transform: scale(1.05);
-}
-
 .card-body {
-  padding: 18px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -165,10 +260,11 @@ body {
   color: #ff4d4d;
   margin-bottom: 8px;
   font-weight: 600;
+  line-height: 1.4;
 }
 
 .card-title {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   color: #fff;
   margin-bottom: 6px;
   font-weight: 700;
@@ -187,7 +283,7 @@ body {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   line-height: 1.5;
   flex: 1;
 }
@@ -215,6 +311,7 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
+  padding: 15px;
 }
 
 .modal-overlay.open {
@@ -226,10 +323,10 @@ body {
   background: #141414;
   border: 1px solid #ff2a2a;
   border-radius: 8px;
-  width: 90%;
+  width: 100%;
   max-width: 700px;
-  max-height: 85vh;
-  padding: 25px;
+  max-height: 90vh;
+  padding: 20px;
   position: relative;
   overflow-y: auto;
   box-shadow: 0 0 30px rgba(255, 42, 42, 0.3);
@@ -237,21 +334,22 @@ body {
 
 .close-modal {
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: 12px;
+  right: 12px;
   background: transparent;
   border: none;
   color: #aaa;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   cursor: pointer;
   transition: color 0.2s;
+  padding: 5px;
 }
 
 .close-modal:hover { color: #ff2a2a; }
 
 .modal-title {
   color: #ffffff;
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   margin-bottom: 8px;
   padding-right: 30px;
 }
@@ -259,20 +357,20 @@ body {
 .modal-date {
   display: block;
   color: #ff4d4d;
-  font-size: 0.85rem;
-  margin-bottom: 20px;
+  font-size: 0.8rem;
+  margin-bottom: 15px;
 }
 
 .news-gallery {
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   padding-bottom: 5px;
 }
 
 .news-gallery img {
-  max-height: 250px;
+  max-height: 220px;
   border-radius: 6px;
   border: 1px solid #333;
   object-fit: cover;
@@ -281,7 +379,7 @@ body {
 .modal-content-text {
   color: #ddd;
   line-height: 1.7;
-  font-size: 1rem;
+  font-size: 0.95rem;
   white-space: pre-wrap;
   margin-bottom: 20px;
 }
@@ -297,6 +395,8 @@ body {
   text-decoration: none;
   font-weight: bold;
   transition: 0.3s;
+  font-size: 0.9rem;
+  text-align: center;
 }
 
 .btn-news-link:hover {
@@ -309,7 +409,7 @@ body {
   position: fixed;
   top: 0;
   left: -280px;
-  width: 280px;
+  width: 270px;
   height: 100vh;
   background: #141414;
   border-right: 2px solid #ff2a2a;
@@ -328,9 +428,9 @@ body {
   background: transparent;
   border: none;
   color: #aaa;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   cursor: pointer;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .close-drawer-btn:hover { color: #ff2a2a; }
@@ -338,15 +438,15 @@ body {
 .drawer-nav {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .drawer-item {
   color: #ffffff;
   text-decoration: none;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  padding: 12px 15px;
+  padding: 10px 14px;
   border-radius: 6px;
   border-left: 4px solid transparent;
   background: rgba(255, 255, 255, 0.03);
@@ -357,7 +457,7 @@ body {
   background: rgba(255, 42, 42, 0.15);
   border-left-color: #ff2a2a;
   color: #ff2a2a;
-  padding-left: 20px;
+  padding-left: 18px;
 }
 
 .drawer-overlay {
@@ -377,4 +477,61 @@ body {
 .drawer-overlay.open {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* ==========================================
+   📱 RESPONSIVE DESIGN (สำหรับโทรศัพท์และแท็บเล็ต)
+   ========================================== */
+@media (max-width: 900px) {
+  .top-nav {
+    padding: 12px 15px;
+  }
+
+  .nav-title {
+    font-size: 1.2rem;
+  }
+
+  .news-container {
+    padding: 20px 12px;
+  }
+
+  .news-header h2 {
+    font-size: 1.6rem;
+  }
+
+  /* ปรับแต่ง Featured Banner บนมือถือให้เรียงต่อกันแนวตั้ง */
+  .featured-news-banner {
+    grid-template-columns: 1fr;
+    margin-bottom: 25px;
+  }
+  
+  .featured-banner-img {
+    height: 200px;
+  }
+
+  .featured-banner-content {
+    padding: 16px;
+  }
+
+  .featured-title {
+    font-size: 1.35rem;
+  }
+
+  .featured-snippet {
+    font-size: 0.88rem;
+    margin-bottom: 14px;
+  }
+
+  .news-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .modal-card {
+    padding: 15px;
+  }
+
+  .modal-title {
+    font-size: 1.2rem;
+  }
 }
