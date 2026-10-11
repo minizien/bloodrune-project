@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BR.PJ - Admin Zone</title>
-    <!-- ใช้ Admin_2.css ตามที่คุณมีอยู่จริง -->
     <link rel="stylesheet" href="Admin.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap"
@@ -48,6 +47,15 @@
               + สร้างโปรเจกต์ใหม่
             </button>
           </div>
+          <div style="margin-bottom: 15px;">
+            <input 
+              type="text" 
+              id="adminProjSearch" 
+              placeholder="🔍 ค้นหาชื่อโปรเจกต์..." 
+              oninput="renderProjects()"
+              style="width: 100%; padding: 10px; background: #141414; border: 1px solid #333; color: #fff; border-radius: 4px; box-sizing: border-box;"
+            />
+          </div>
           <div id="projectList" class="cards-grid">
             <p style="color: #888; grid-column: 1/-1; text-align: center">
               กำลังโหลดข้อมูลโปรเจกต์...
@@ -62,6 +70,15 @@
             <button class="btn-primary" onclick="openNewsModal()">
               + เพิ่มข่าวสารใหม่
             </button>
+          </div>
+          <div style="margin-bottom: 15px;">
+            <input 
+              type="text" 
+              id="adminNewsSearch" 
+              placeholder="🔍 ค้นหาหัวข้อข่าวสาร..." 
+              oninput="renderNews()"
+              style="width: 100%; padding: 10px; background: #141414; border: 1px solid #333; color: #fff; border-radius: 4px; box-sizing: border-box;"
+            />
           </div>
           <div id="newsList" class="news-grid">
             <p style="color: #888; text-align: center">
@@ -86,6 +103,15 @@
           <div class="tab-header">
             <h3>จัดการผู้ใช้งาน (User Management)</h3>
           </div>
+          <div style="margin-bottom: 15px;">
+            <input 
+              type="text" 
+              id="adminUserSearch" 
+              placeholder="🔍 ค้นหาชื่อ หรือ อีเมลผู้ใช้งาน..." 
+              oninput="renderUsers()"
+              style="width: 100%; padding: 10px; background: #141414; border: 1px solid #333; color: #fff; border-radius: 4px; box-sizing: border-box;"
+            />
+          </div>
           <div class="table-responsive">
             <table class="user-table">
               <thead>
@@ -109,7 +135,7 @@
       </main>
     </div>
 
-    <!-- MODAL: WINDOW 1 - CREATE / EDIT PROJECT & STAGE 1 SETUP -->
+    <!-- MODAL: WINDOW 1 -->
     <div id="projectModal" class="modal-overlay">
       <div class="modal-card">
         <button class="close-modal" type="button" onclick="closeProjectModal()">
@@ -227,7 +253,7 @@
       </div>
     </div>
 
-    <!-- MODAL: WINDOW 2 - STAGE 2 FORM BUILDER CONFIGURATION -->
+    <!-- MODAL: WINDOW 2 -->
     <div id="stage2ConfigModal" class="modal-overlay">
       <div class="modal-card">
         <button
@@ -289,7 +315,7 @@
       </div>
     </div>
 
-    <!-- MODAL: VIEW APPLICATIONS & STAGE 1 / STAGE 2 MANAGEMENT -->
+    <!-- MODAL: VIEW APPLICATIONS -->
     <div id="appModal" class="modal-overlay">
       <div class="modal-card" style="max-width: 850px">
         <button class="close-modal" type="button" onclick="closeAppModal()">
@@ -341,7 +367,7 @@
       </div>
     </div>
 
-    <!-- MODAL: WINDOW 3 - PROJECT EXCLUSIVE NEWS & MEMBER MANAGER -->
+    <!-- MODAL: WINDOW 3 -->
     <div id="projectWindow3Modal" class="modal-overlay">
       <div class="modal-card" style="max-width: 900px">
         <button
@@ -356,7 +382,6 @@
         </h3>
         <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 20px">
           หน้านี้จะประกาศข่าวสารที่เห็นเฉพาะสมาชิกที่ผ่านเข้าร่วมโปรเจกต์นี้เท่านั้น
-          (และสามารถปลดสมาชิกออกได้)
         </p>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
@@ -452,7 +477,7 @@
       </div>
     </div>
 
-    <!-- MODAL: PICK INTERVIEW DATE & TIME -->
+    <!-- MODAL: INTERVIEW DATE -->
     <div id="interviewModal" class="modal-overlay">
       <div class="modal-card" style="max-width: 400px">
         <button
@@ -564,7 +589,6 @@
       </div>
     </div>
 
-    <!-- ใช้ไฟล์ Admin.js ตัวเดิมที่คุณมีอยู่แล้วเพื่อคุมระบบทั้งหมด -->
     <script type="module" src="Admin.js"></script>
   </body>
 </html>
