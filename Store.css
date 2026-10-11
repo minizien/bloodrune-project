@@ -13,6 +13,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 /* Header Navbar */
@@ -60,7 +61,7 @@ body {
 
 .store-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .store-header h2 {
@@ -78,8 +79,8 @@ body {
 /* Product Grid */
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
 }
 
 /* Loading State & Animation */
@@ -119,7 +120,7 @@ body {
   background: #141414;
   border: 1px solid #282828;
   border-radius: 8px;
-  padding: 22px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -137,11 +138,6 @@ body {
   border: 1px dashed #444;
   background: #0f0f0f;
   box-shadow: none;
-}
-
-.product-card.hidden-card:hover {
-  transform: none;
-  border-color: #666;
 }
 
 .card-status-bar {
@@ -166,9 +162,9 @@ body {
 }
 
 .product-title {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   color: #ffffff;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   display: -webkit-box;
   line-clamp: 2;
   -webkit-line-clamp: 2;
@@ -185,6 +181,7 @@ body {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  line-height: 1.5;
 }
 
 .card-footer {
@@ -192,6 +189,8 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-top: auto;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .app-count {
@@ -208,6 +207,7 @@ body {
   font-weight: bold;
   cursor: pointer;
   transition: 0.2s ease;
+  font-size: 0.9rem;
 }
 
 .btn-apply:hover {
@@ -231,6 +231,7 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
+  padding: 15px;
 }
 
 .modal-overlay.open {
@@ -242,22 +243,25 @@ body {
   background: #141414;
   border: 1px solid #ff2a2a;
   border-radius: 8px;
-  width: 90%;
-  max-width: 500px;
-  padding: 25px;
+  width: 100%;
+  max-width: 550px;
+  max-height: 90vh;
+  padding: 20px;
   position: relative;
+  overflow-y: auto;
   box-shadow: 0 0 30px rgba(255, 42, 42, 0.3);
 }
 
 .close-modal {
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: 12px;
+  right: 12px;
   background: transparent;
   border: none;
   color: #aaa;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   cursor: pointer;
+  padding: 5px;
 }
 
 .close-modal:hover { color: #ff2a2a; }
@@ -265,18 +269,18 @@ body {
 .modal-subtitle {
   font-size: 0.85rem;
   color: #888;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .form-group label {
   display: block;
   font-size: 0.9rem;
   color: #ddd;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .form-group select, 
@@ -306,6 +310,7 @@ body {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
+  flex-wrap: wrap;
 }
 
 .btn-primary {
@@ -332,7 +337,7 @@ body {
   position: fixed;
   top: 0;
   left: -280px;
-  width: 280px;
+  width: 270px;
   height: 100vh;
   background: #141414;
   border-right: 2px solid #ff2a2a;
@@ -351,23 +356,23 @@ body {
   background: transparent;
   border: none;
   color: #aaa;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   cursor: pointer;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .drawer-nav {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
 }
 
 .drawer-item {
   color: #ffffff;
   text-decoration: none;
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  padding: 12px 15px;
+  padding: 10px 14px;
   border-radius: 6px;
   border-left: 4px solid transparent;
   background: rgba(255, 255, 255, 0.03);
@@ -378,7 +383,7 @@ body {
   background: rgba(255, 42, 42, 0.15);
   border-left-color: #ff2a2a;
   color: #ff2a2a;
-  padding-left: 20px;
+  padding-left: 18px;
 }
 
 .drawer-overlay {
@@ -398,4 +403,38 @@ body {
 .drawer-overlay.open {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* ==========================================
+   📱 RESPONSIVE DESIGN (สำหรับโทรศัพท์และแท็บเล็ต)
+   ========================================== */
+@media (max-width: 900px) {
+  .top-nav {
+    padding: 12px 15px;
+  }
+
+  .nav-title {
+    font-size: 1.2rem;
+  }
+
+  .store-container {
+    padding: 20px 12px;
+  }
+
+  .store-header h2 {
+    font-size: 1.6rem;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
 }
