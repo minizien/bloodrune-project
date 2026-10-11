@@ -70,16 +70,26 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
+// ฟังก์ชันตรวจสอบสถานะที่ถือว่าผ่านหรือครอบครองโควตาบทบาทในโปรเจกต์
 function isCountedAsPassed(status) {
   const countedStatuses = [
+    "step_1_2_passed",
     "passed",
+    "step_2_submitted",
     "stage2_submitted",
+    "step_2_revision",
     "revision_requested",
+    "step_1_9_5_requested",
     "edit_requested",
+    "step_1_9_5_allowed",
     "edit_allowed",
+    "step_3_approved",
     "approved",
+    "step_3_completed",
     "completed",
-    "role_pending_review"
+    "step_1_2_5_pending",
+    "role_pending_review",
+    "step_1_2_5_revision"
   ];
   return countedStatuses.includes(status);
 }
@@ -105,7 +115,6 @@ function initAdminPanel() {
       projects.push({ firebaseId: docSnap.id, ...docSnap.data() });
     });
 
-    // 🔄 เรียงลำดับโปรเจกต์: สร้างทีหลัง (ใหม่กว่า) ขึ้นแสดงผลก่อนเสมอ
     projects.sort((a, b) => {
       const getTime = (val) => {
         if (!val) return 0;
@@ -217,9 +226,9 @@ window.renderProjects = function() {
         <ul style="padding-left: 15px; font-size: 0.85rem; color: #ccc;">${rolesHtml}</ul>
       </div>
       <div class="card-actions" style="margin-top: 10px;">
-        <button class="btn-secondary" onclick="editProject(${index})" style="background:#2a2a2a;">⚙️ 1. ตั้งค่าโปรเจกต์</button>
-        <button class="btn-secondary" onclick="openStage2Config(${index})" style="background:#17a2b8;">📝 2. ฟอร์มรอบ 2</button>
-        <button class="btn-secondary" onclick="openProjectWindow3(${index})" style="background:#28a745;">📢 3. บอร์ดประกาศ</button>
+        <button class="btn-secondary" onclick="editProject(${index})" style="background:#2a2a2a;">⚙️ ตั้งค่าโปรเจกต์</button>
+        <button class="btn-secondary" onclick="openStage2Config(${index})" style="background:#17a2b8;">📝 ฟอร์มรอบ 2</button>
+        <button class="btn-secondary" onclick="openProjectWindow3(${index})" style="background:#28a745;">📢 บอร์ด (ขั้นตอนที่ 3)</button>
         <button class="btn-secondary" onclick="viewApps(${index})">📋 ประวัติผู้สมัคร (${proj.applications ? proj.applications.length : 0})</button>
         <button class="btn-secondary" style="background: #c9302c;" onclick="deleteProject(${index})">🗑️ ลบ</button>
       </div>
@@ -396,7 +405,7 @@ window.deleteProject = async function (index) {
 };
 
 // ==========================================
-// 2. STAGE 2 CONFIG
+// STAGE 2 CONFIG
 // ==========================================
 window.openStage2Config = function (index) {
   currentProjectIndexForStage2Config = index;
@@ -489,7 +498,7 @@ window.handleSaveStage2Config = async function (e) {
 };
 
 // ==========================================
-// 3. APPLICATIONS & ROUND MANAGEMENT
+// 📋 APPLICATIONS & DETAILED STEPS MANAGEMENT
 // ==========================================
 window.viewApps = function (index) {
   currentProjectIndex = index;
@@ -557,18 +566,14 @@ window.renderApplicationsList = function () {
   if (currentProjectIndex === null) return;
   const proj = projects[currentProjectIndex];
   const container = document.getElementById("appListContent");
-  container.innerHTML = `<h4>โปรเจกต์: ${proj.name} (ประวัติผู้สมัครทุกรอบ)</h4><br>`;
+  container.innerHTML = `<h4>โปรเจกต์: ${proj.name} (ประวัติผู้สมัครทุกขั้นตอนตามลำดับ)</h4><br>`;
 
   if (!proj.applications || proj.applications.length === 0) {
-    container.innerHTML +=
-      '<p style="color:#888;">ยังไม่มีประวัติผู้สมัครในระบบ</p>';
+    container.innerHTML += '<p style="color:#888;">ยังไม่มีประวัติผู้สมัครในระบบ</p>';
     return;
   }
 
-  const searchTerm = document
-    .getElementById("appSearchInput")
-    .value.toLowerCase()
-    .trim();
+  const searchTerm = document.getElementById("appSearchInput").value.toLowerCase().trim();
   const statusFilter = document.getElementById("appStatusFilter").value;
 
   const sortedApps = [...proj.applications].sort((a, b) => {
@@ -583,17 +588,12 @@ window.renderApplicationsList = function () {
 
   sortedApps.forEach((app) => {
     const appIndex = proj.applications.indexOf(app);
-    const appStatus = app.status || "pending";
+    const appStatus = app.status || "pending_application";
 
     if (statusFilter !== "all" && appStatus !== statusFilter) return;
     const userName = (app.user || "").toLowerCase();
     const userEmail = (app.accountEmail || "").toLowerCase();
-    if (
-      searchTerm &&
-      !userName.includes(searchTerm) &&
-      !userEmail.includes(searchTerm)
-    )
-      return;
+    if (searchTerm && !userName.includes(searchTerm) && !userEmail.includes(searchTerm)) return;
 
     let round1Html = "";
     const userChoices = extractApplicantChoices(app, proj);
@@ -610,8 +610,7 @@ window.renderApplicationsList = function () {
       }
     }
 
-    let round2Html =
-      '<p style="color:#666; font-size:0.85rem;">ยังไม่ได้ส่งข้อมูลรอบ 2</p>';
+    let round2Html = '<p style="color:#666; font-size:0.85rem;">ยังไม่ได้ส่งข้อมูลรอบ 2</p>';
     if (app.stage2Answers) {
       round2Html = "";
       for (const [q, a] of Object.entries(app.stage2Answers)) {
@@ -619,84 +618,74 @@ window.renderApplicationsList = function () {
       }
     }
 
-    let statusBadge =
-      '<span class="badge-status status-pending">1. ยืนสมัคร (รอตรวจรอบ 1)</span>';
-    if (appStatus === "interview")
-      statusBadge =
-        '<span class="badge-status status-interview">1.1 สัมภาษณ์แล้ว</span>';
-    if (appStatus === "passed")
-      statusBadge =
-        '<span class="badge-status status-passed">1.2 ผ่านรอบ 1 (รอผู้สมัครส่งเอกสารรอบ 2)</span>';
-    if (appStatus === "stage2_submitted")
-      statusBadge =
-        '<span class="badge-status" style="background:#17a2b8; color:#fff;">2. ส่งเอกสารรอบ 2 แล้ว (รอแอดมินยืนยันข้อมูล)</span>';
-    if (appStatus === "revision_requested")
-      statusBadge =
-        '<span class="badge-status" style="background:#f0ad4e; color:#000;">🔄 ตีกลับรอบ 2 ให้แก้ไข</span>';
-    if (appStatus === "edit_requested")
-      statusBadge =
-        '<span class="badge-status" style="background:#f0ad4e; color:#000;">1.9.5 ขอแก้ไขเอกสารรอบ 2 (รอแอดมินอนุมัติ)</span>';
-    if (appStatus === "edit_allowed")
-      statusBadge =
-        '<span class="badge-status" style="background:#28a745; color:#fff;">🔓 1.9.5 อนุญาตให้แก้ไขแล้ว</span>';
-    if (appStatus === "role_pending_review" || app.appealStatus === "pending")
-      statusBadge = `<span class="badge-status" style="background:#17a2b8; color:#fff;">⏳ 1.2.5 รออนุมัติอุทธรณ์บทบาท (${app.pendingAppealRole || app.selectedNewRole || "-"})</span>`;
-    if (appStatus === "approved")
-      statusBadge = `<span class="badge-status status-approved">3. เข้าสู่โปรเจกต์แล้ว (${app.assignedRole || "สมาชิก"})</span>`;
-    if (appStatus === "rejected")
-      statusBadge =
-        '<span class="badge-status status-rejected">❌ ไม่ผ่านการคัดเลือก</span>';
+    // ป้ายสถานะจำแนกตามโครงสร้างใหม่
+    let statusBadge = '<span class="badge-status status-pending">1. ยืนสมัคร</span>';
+    if (appStatus === "step_1_1_interview" || appStatus === "interview") statusBadge = '<span class="badge-status status-interview">1.1 นัดสัมภาษณ์แล้ว</span>';
+    if (appStatus === "step_1_2_passed" || appStatus === "passed") statusBadge = '<span class="badge-status status-passed">1.2 ผ่าน & ล็อคบทบาทแล้ว (เข้าสู่ 2)</span>';
+    if (appStatus === "step_1_2_5_pending" || appStatus === "role_pending_review") statusBadge = `<span class="badge-status" style="background:#17a2b8; color:#fff;">⏳ 1.2.5 รออนุมัติอุทธรณ์บทบาท (${app.pendingAppealRole || "-"})</span>`;
+    if (appStatus === "step_1_2_5_revision" || appStatus === "revision_requested") statusBadge = '<span class="badge-status" style="background:#f0ad4e; color:#000;">🔄 1.2.5 แจ้งให้เลือกอุทธรณ์บทบาทใหม่</span>';
+    if (appStatus === "step_1_9_5_requested" || appStatus === "edit_requested") statusBadge = '<span class="badge-status" style="background:#f0ad4e; color:#000;">1.9.5 ขอแก้ไขเอกสารรอบ 2 (รอแอดมินอนุมัติ)</span>';
+    if (appStatus === "step_1_9_5_allowed" || appStatus === "edit_allowed") statusBadge = '<span class="badge-status" style="background:#28a745; color:#fff;">🔓 1.9.5 แอดมินอนุมัติให้แก้ไขแล้ว</span>';
+    if (appStatus === "step_2_submitted" || appStatus === "stage2_submitted") statusBadge = '<span class="badge-status" style="background:#17a2b8; color:#fff;">2.1 ส่งเอกสารรอบ 2 แล้ว (รอแอดมินยืนยันหรือตีกลับ)</span>';
+    if (appStatus === "step_3_approved" || appStatus === "approved") statusBadge = `<span class="badge-status status-approved">3. เข้าสู่โปรเจกต์แล้ว (${app.assignedRole || "สมาชิก"})</span>`;
+    if (appStatus === "rejected") statusBadge = '<span class="badge-status status-rejected">❌ ไม่ผ่านการคัดเลือก / ยกเลิก</span>';
 
     let choiceSummaryTag = "";
     if (userChoices.length > 0) {
-      choiceSummaryTag = `<div style="font-size:0.8rem; color:#f0ad4e; margin-top:2px;">⭐ ตัวเลือกที่ระบุ: ${userChoices.map((c, i) => `อันดับ ${i + 1}:${c}`).join(" | ")}</div>`;
+      choiceSummaryTag = `<div style="font-size:0.8rem; color:#f0ad4e; margin-top:2px;">⭐ ตัวเลือกบทบาท: ${userChoices.map((c, i) => `อันดับ ${i + 1}:${c}`).join(" | ")}</div>`;
     }
     let lockedRoleTag = "";
     if (app.assignedRole) {
-      lockedRoleTag = `<div style="font-size:0.80rem; color:#28a745; font-weight:bold; margin-top:2px;">🔒 ล็อคบทบาท: ${app.assignedRole}${app.approvedRank ? `(จากตัวเลือกอันดับ ${app.approvedRank})` : ""}</div>`;
+      lockedRoleTag = `<div style="font-size:0.80rem; color:#28a745; font-weight:bold; margin-top:2px;">🔒 ล็อคบทบาท: ${app.assignedRole}${app.approvedRank ? `(จากอันดับ ${app.approvedRank})` : ""}</div>`;
     }
 
     let actionButtons = "";
-    if (appStatus === "pending") {
+
+    // 1. ยืนสมัคร (ครอบคลุมสถานะเริ่มต้นทุกแบบ)
+    if (appStatus === "pending_application" || appStatus === "pending" || !appStatus) {
       actionButtons = `
-        <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openInterviewPrompt(${appIndex})">📅 1.1 นัดสัมภาษณ์</button>
-        <button class="btn-secondary" style="background:#c9302c;" onclick="updateAppStatus(${appIndex}, 'rejected')">❌ ปฏิเสธ</button>
+        <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openInterviewPrompt(${appIndex})">📅 1. ตั้งค่าวัน/เวลาสัมภาษณ์</button>
+        <button class="btn-secondary" style="background:#c9302c;" onclick="updateAppStatus(${appIndex}, 'rejected')">❌ ปฏิเสธการสมัคร</button>
       `;
-    } else if (appStatus === "interview") {
+    } 
+    // 1.1 สัมภาษณ์
+    else if (appStatus === "step_1_1_interview" || appStatus === "interview") {
       actionButtons = `
-        <button class="btn-secondary" style="background:#17a2b8;" onclick="openApplicationChoicesModal(${appIndex})">✅ 1.2 พิจารณาบทบาทรอบ 2</button>
-        <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openInterviewPrompt(${appIndex})">📅 เปลี่ยนเวลานัดสัมภาษณ์</button>
-        <button class="btn-secondary" style="background:#c9302c;" onclick="updateAppStatus(${appIndex}, 'rejected')">❌ ปฏิเสธ</button>
+        <button class="btn-secondary" style="background:#17a2b8;" onclick="openApplicationChoicesModal(${appIndex})">✅ 1.2 พิจารณาบทบาท (อันดับ 1, 2, 3)</button>
+        <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openInterviewPrompt(${appIndex})">📅 เปลี่ยนวันนัดสัมภาษณ์</button>
+        <button class="btn-secondary" style="background:#c9302c;" onclick="updateAppStatus(${appIndex}, 'rejected')">❌ ปฏิเสธผ่านสัมภาษณ์</button>
       `;
-    } else if (appStatus === "stage2_submitted") {
+    } 
+    // 1.2.5 การยื่นอุทธรณ์บทบาท
+    else if (appStatus === "step_1_2_5_pending" || appStatus === "role_pending_review") {
       actionButtons = `
-        <button class="btn-secondary" style="background:#28a745;" onclick="updateAppStatus(${appIndex}, 'approved')">🎯 2.1 ยืนยันข้อมูล & เข้าสู่โปรเจกต์ (รอบ 3)</button>
-        <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openRevisionPrompt(${appIndex})">🔄 ตีกลับรอบ 2 ให้แก้ไข</button>
-      `;
-    } else if (appStatus === "edit_requested") {
-      actionButtons = `
-        <button class="btn-secondary" style="background:#28a745;" onclick="approveEditRequest(${appIndex})">🔓 1.9.5 อนุมัติคำขอแก้</button>
-        <button class="btn-secondary" style="background:#c9302c;" onclick="rejectEditRequest(${appIndex})">❌ 1.9.5 ไม่อนุมัติคำขอแก้</button>
-      `;
-    } else if (appStatus === "edit_allowed") {
-      actionButtons = `
-        <span style="font-size:0.85rem; color:#28a745; align-self:center;">⏳ กำลังรอผู้สมัครแก้ไขและส่งข้อมูลรอบ 2 กลับมา...</span>
-      `;
-    } else if (appStatus === "passed") {
-      actionButtons = `
-        <button class="btn-secondary" style="background:#17a2b8;" onclick="openApplicationChoicesModal(${appIndex})">🔍 ดูตัวเลือก/เปลี่ยนบทบาท (1.2)</button>
-      `;
-    } else if (appStatus === "role_pending_review" || app.appealStatus === "pending") {
-      actionButtons = `
-        <button class="btn-secondary" style="background:#28a745;" onclick="adminReviewRole(${appIndex}, 'approve')">✅ 1.2.5 อนุมัติอุทธรณ์ (${app.pendingAppealRole || app.selectedNewRole})</button>
+        <button class="btn-secondary" style="background:#28a745;" onclick="adminReviewRole(${appIndex}, 'approve')">✅ 1.2.5 อนุมัติอุทธรณ์บทบาท (${app.pendingAppealRole})</button>
         <button class="btn-secondary" style="background:#c9302c;" onclick="adminReviewRole(${appIndex}, 'reject')">❌ 1.2.5 ปฏิเสธอุทธรณ์</button>
       `;
-    } else if (appStatus === "revision_requested") {
+    } 
+    // 1.9.5 การขอแก้ไขเอกสารรอบ 2
+    else if (appStatus === "step_1_9_5_requested" || appStatus === "edit_requested") {
       actionButtons = `
-        <span style="font-size:0.85rem; color:#f0ad4e; align-self:center;">⏳ รอผู้สมัครแก้ไขและส่งข้อมูลรอบ 2 ใหม่ (ขั้นตอนที่ 2)...</span>
+        <button class="btn-secondary" style="background:#28a745;" onclick="approveEditRequest(${appIndex})">🔓 1.9.5 อนุมัติคำขอแก้ไข</button>
+        <button class="btn-secondary" style="background:#c9302c;" onclick="rejectEditRequest(${appIndex})">❌ 1.9.5 ไม่อนุมัติคำขอแก้ไข</button>
       `;
-    } else if (appStatus === "approved") {
-      actionButtons = `<span style="font-size:0.85rem; color:#28a745;">✨ 3. อยู่ในโปรเจกต์เรียบร้อยแล้ว</span>`;
+    } 
+    // 2. การส่งเอกสารรอบ 2 (แอดมินจะต้องรอเท่านั้นและทำอะไรไม่ได้ทั้งสิ้น)
+    else if (appStatus === "step_1_2_passed" || appStatus === "step_1_9_5_allowed" || appStatus === "step_1_2_5_revision" || appStatus === "passed" || appStatus === "edit_allowed" || appStatus === "revision_requested") {
+      actionButtons = `
+        <span style="font-size:0.85rem; color:#f0ad4e; align-self:center;">⏳ [2. กำลังส่งเอกสารรอบ 2] แอดมินจะต้องรอผู้ใช้ส่งเอกสารเท่านั้น และทำอะไรไม่ได้ทั้งสิ้น</span>
+      `;
+    } 
+    // 2.1 ขั้นตอนยืนยันข้อมูล (เมื่อแอดมินยืนยันข้อมูลแล้วจะเข้าสู่ขั้นตอนที่ 3 / หรือตีกลับไปขั้นตอน 2 ใหม่)
+    else if (appStatus === "step_2_submitted" || appStatus === "stage2_submitted") {
+      actionButtons = `
+        <button class="btn-secondary" style="background:#28a745;" onclick="updateAppStatus(${appIndex}, 'step_3_approved')">🎯 2.1 ยืนยันข้อมูล & เข้าสู่ขั้นตอนที่ 3</button>
+        <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openRevisionPrompt(${appIndex})">🔄 2.1 ตีกลับรอบ 2 ให้แก้ไข (กลับไปขั้นตอน 2)</button>
+      `;
+    } 
+    // 3. ขั้นตอนเข้าสู่โปรเจ็คแล้ว
+    else if (appStatus === "step_3_approved" || appStatus === "approved") {
+      actionButtons = `<span style="font-size:0.85rem; color:#28a745;">✨ [3. เข้าสู่โปรเจกต์แล้ว] จัดการประกาศและสมาชิกเฉพาะกลุ่มได้ที่บอร์ดโปรเจกต์</span>`;
     } else {
       actionButtons = ``;
     }
@@ -708,14 +697,14 @@ window.renderApplicationsList = function () {
         ${lockedRoleTag}
         <div style="font-size:0.8rem; color:#aaa; margin-top:4px; margin-bottom:6px;">📧 ${app.accountEmail || "-"} | สมัครเมื่อ: ${app.createdAtString || "-"}</div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-          <div style="background:#1c1c1c; padding:8px; border-radius:4px;"><p style="color:#ff2a2a; font-size:0.8rem; font-weight:bold;">📋 รอบที่ 1 (คำตอบผู้สมัคร):</p>${round1Html}</div>
-          <div style="background:#1c1c1c; padding:8px; border-radius:4px;"><p style="color:#17a2b8; font-size:0.8rem; font-weight:bold;">📝 รอบที่ 2:</p>${round2Html}</div>
+          <div style="background:#1c1c1c; padding:8px; border-radius:4px;"><p style="color:#ff2a2a; font-size:0.8rem; font-weight:bold;">📋 ข้อมูลรอบ 1 (สมัคร):</p>${round1Html}</div>
+          <div style="background:#1c1c1c; padding:8px; border-radius:4px;"><p style="color:#17a2b8; font-size:0.8rem; font-weight:bold;">📝 ข้อมูลรอบ 2:</p>${round2Html}</div>
         </div>
         ${app.interviewDate ? `<p style="font-size:0.85rem; color:#f0ad4e; margin-top:6px;">📅 นัดสัมภาษณ์ (1.1): ${app.interviewDate}</p>` : ""}
-        ${app.assignedRole && !lockedRoleTag ? `<p style="font-size:0.85rem; color:#28a745; margin-top:6px;">🎯 บทบาทที่ได้รับ: ${app.assignedRole}${app.approvedRank ? `(จากตัวเลือกอันดับ ${app.approvedRank})` : ""}</p>` : ""}
+        ${app.assignedRole && !lockedRoleTag ? `<p style="font-size:0.85rem; color:#28a745; margin-top:6px;">🎯 บทบาทที่ได้รับ: ${app.assignedRole}</p>` : ""}
         ${app.pendingAppealRole ? `<p style="font-size:0.85rem; color:#17a2b8; margin-top:6px;">🔄 บทบาทที่ยื่นอุทธรณ์ (1.2.5): ${app.pendingAppealRole}</p>` : ""}
         ${app.revisionNote ? `<p style="font-size:0.85rem; color:#f0ad4e; margin-top:6px;">💬 หมายเหตุจากแอดมิน: ${app.revisionNote}</p>` : ""}
-        ${app.editReason ? `<p style="font-size:0.85rem; color:#f0ad4e; margin-top:6px;">🔄 เหตุผลขอแก้ (1.9.5): ${app.editReason}</p>` : ""}
+        ${app.editReason ? `<p style="font-size:0.85rem; color:#f0ad4e; margin-top:6px;">🔄 เหตุผลขอแก้ไข (1.9.5): ${app.editReason}</p>` : ""}
         <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">${actionButtons}</div>
       </div>
     `;
@@ -734,14 +723,22 @@ function checkRoleAvailability(proj, roleName) {
     ? proj.applications.filter((a) => {
         const hasRoleAssigned = a.assignedRole === targetRole.name;
         const isValidStatus = [
+          "step_1_2_passed",
           "passed",
+          "step_2_submitted",
           "stage2_submitted",
+          "step_2_revision",
           "revision_requested",
+          "step_1_9_5_requested",
           "edit_requested",
+          "step_1_9_5_allowed",
           "edit_allowed",
+          "step_3_approved",
           "approved",
+          "step_3_completed",
           "completed",
-          "role_pending_review",
+          "step_1_2_5_pending",
+          "role_pending_review"
         ].includes(a.status);
         return hasRoleAssigned && isValidStatus;
       }).length
@@ -756,37 +753,9 @@ function checkRoleAvailability(proj, roleName) {
   };
 }
 
-window.adminReviewRole = async function (appIndex, actionType) {
-  const proj = projects[currentProjectIndex];
-  const app = proj.applications[appIndex];
-  const appealRole = app.pendingAppealRole || app.selectedNewRole;
-
-  if (actionType === "approve") {
-    app.assignedRole = appealRole;
-    app.status = "passed";
-    app.appealStatus = "approved";
-    delete app.pendingAppealRole;
-    delete app.selectedNewRole;
-    app.revisionNote = `เจ้าหน้าที่อนุมัติอุทธรณ์เปลี่ยนเป็นบทบาท: ${app.assignedRole} เรียบร้อยแล้ว`;
-  } else if (actionType === "reject") {
-    app.status = "revision_requested";
-    app.appealStatus = "rejected";
-    delete app.pendingAppealRole;
-    delete app.selectedNewRole;
-    app.revisionNote = `เจ้าหน้าที่ปฏิเสธคำขออุทธรณ์บทบาท กรุณาเลือกบทบาทอื่น`;
-  }
-
-  try {
-    await updateDoc(doc(db, "projects", proj.firebaseId), {
-      applications: proj.applications,
-    });
-    window.renderApplicationsList();
-    alert(actionType === "approve" ? "✅ อนุมัติอุทธรณ์บทบาทเรียบร้อย!" : "❌ ปฏิเสธคำขออุทธรณ์เรียบร้อย!");
-  } catch (err) {
-    alert("เกิดข้อผิดพลาด: " + err.message);
-  }
-};
-
+// ==========================================
+// 1.2 การพิจารณาบทบาท
+// ==========================================
 window.openApplicationChoicesModal = function (appIndex) {
   const proj = projects[currentProjectIndex];
   const app = proj.applications[appIndex];
@@ -808,13 +777,13 @@ window.openApplicationChoicesModal = function (appIndex) {
       let statusColor = "#28a745";
       let statusBadgeText = "ว่าง";
       let statusText = `🟢 ยังว่าง (จับจองแล้ว ${roleCheck.currentCount}/${roleCheck.maxCount} คน)`;
-      let actionHtml = `<button class="btn-secondary" style="background:#28a745; padding:6px 12px; font-size:0.85rem; font-weight:bold;" onclick="approveAppWithChoice(${appIndex}, '${choiceRole}', ${rankNumber})">✅ ล็อคบทบาทนี้ (อันดับ ${rankNumber}) - เข้าสู่รอบ 2</button>`;
+      let actionHtml = `<button class="btn-secondary" style="background:#28a745; padding:6px 12px; font-size:0.85rem; font-weight:bold;" onclick="approveAppWithChoice(${appIndex}, '${choiceRole}', ${rankNumber})">✅ ล็อคบทบาทนี้ (อันดับ ${rankNumber}) - เข้าสู่ 2 ทันที</button>`;
 
       if (!roleCheck.available) {
         statusColor = "#ff2a2a";
         statusBadgeText = "เต็ม";
         statusText = `🔴 เต็มแล้ว! (${roleCheck.currentCount}/${roleCheck.maxCount} คน เต็มโควตา)`;
-        actionHtml = `<p style="margin:0; font-size:0.75rem; color:#aaa; font-style:italic;">*บทบาทนี้เต็มโควตาตามเงื่อนไขข้อ 1.2 (ลองพิจารณาอันดับถัดไป)</p>`;
+        actionHtml = `<p style="margin:0; font-size:0.75rem; color:#aaa; font-style:italic;">*อันดับนี้เต็มแล้ว (ระบบให้ตรวจสอบอันดับถัดไป หรือส่งไปขั้นตอนอุทธรณ์ 1.2.5)</p>`;
       }
 
       choicesHtml += `
@@ -849,11 +818,11 @@ window.openApplicationChoicesModal = function (appIndex) {
 
   document.getElementById("appChoicesContent").innerHTML = `
     <h4 style="margin-top:0; color:#fff; border-bottom:1px solid #333; padding-bottom:8px;">1.2 พิจารณาบทบาท: <span style="color:#f0ad4e;">${app.user || "ไม่ระบุชื่อ"}</span></h4>
-    <p style="font-size:0.85rem; color:#aaa; margin-bottom:10px;">นับจากอันดับ 1 หากเต็มให้ดูอันดับ 2, 3 ตามลำดับ</p>
+    <p style="font-size:0.85rem; color:#aaa; margin-bottom:10px;">นับจากอันดับ 1 ที่ผู้ใช้เลือก -> เต็มเลือกอันที่ 2 -> เต็มเลือกอันที่ 3 -> หากอันสุดท้ายยังเต็ม สามารถส่งไปขั้นตอนอุทธรณ์ 1.2.5 ได้</p>
     ${choicesHtml}
     <hr style="border-color:#333; margin:15px 0;">
     <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:space-between;">
-      <button class="btn-secondary" style="background:#f0ad4e; color:#000; font-weight:bold;" onclick="requestNewChoices(${appIndex})">🔄 1.2.5 แจ้งยื่นอุทธรณ์บทบาทใหม่</button>
+      <button class="btn-secondary" style="background:#f0ad4e; color:#000; font-weight:bold;" onclick="requestNewChoices(${appIndex})">🔄 ส่งไปขั้นตอน 1.2.5 (อุทธรณ์บทบาทใหม่)</button>
       <button class="btn-secondary" style="background:#c9302c; font-weight:bold;" onclick="rejectApplicationCompletely(${appIndex})">❌ ปฏิเสธการสมัคร</button>
     </div>
   `;
@@ -863,36 +832,106 @@ window.openApplicationChoicesModal = function (appIndex) {
 };
 
 window.approveAppWithChoice = async function (appIndex, chosenRole, rankNumber) {
-  if (!confirm(`ยืนยันล็อคบทบาท "${chosenRole}" (จากอันดับ ${rankNumber}) และนำเข้าสู่รอบ 2?`)) return;
+  if (!confirm(`ยืนยันล็อคบทบาท "${chosenRole}" (จากอันดับ ${rankNumber}) ให้ผู้ใช้ทันที และเข้าสู่ 2?`)) return;
 
-  await updateAppStatusWithData(appIndex, "passed", {
+  await updateAppStatusWithData(appIndex, "step_1_2_passed", {
     assignedRole: chosenRole,
     approvedRank: rankNumber,
-    approvalNote: `ล็อคบทบาท ${chosenRole} (อันดับ ${rankNumber}) เรียบร้อย เข้าสู่รอบ 2`,
+    approvalNote: `แอดมินล็อคบทบาท ${chosenRole} (อันดับ ${rankNumber}) สำเร็จ เข้าสู่ 2`,
   });
 
   const modal = document.getElementById("appChoicesModal");
   if (modal) modal.style.display = "none";
-  alert("✅ ล็อคบทบาทและนำเข้าสู่รอบที่ 2 สำเร็จ!");
+  alert("✅ ล็อคบทบาทและเข้าสู่ 2 สำเร็จ!");
 };
 
+// ==========================================
+// 1.2.5 การยื่นอุทธรณ์
+// ==========================================
 window.requestNewChoices = async function (appIndex) {
-  const note = prompt("ระบุข้อความแจ้งเตือนให้ผู้สมัครยื่นอุทธรณ์เปลี่ยนบทบาทใหม่ (1.2.5):");
+  const note = prompt("ระบุหมายเหตุแจ้งเตือนให้ผู้ใช้ไปยื่นอุทธรณ์เปลี่ยนบทบาทใหม่ในขั้นตอน 1.2.5:");
   if (note !== null) {
-    await updateAppStatusWithData(appIndex, "revision_requested", {
-      revisionNote: note || "กรุณายื่นอุทธรณ์เลือกบทบาทใหม่อีกครั้ง (1.2.5)",
+    await updateAppStatusWithData(appIndex, "step_1_2_5_revision", {
+      revisionNote: note || "อันดับ 1-3 เต็มหมด กรุณายื่นอุทธรณ์เลือกบทบาทใหม่ใน 1.2.5",
       requiresNewChoices: true,
     });
-    alert("✅ ส่งคำขอให้ผู้สมัครเรียบร้อยแล้ว!");
+    alert("✅ ส่งคำขอให้ผู้ใช้ไปดำเนินการอุทธรณ์ใน 1.2.5 เรียบร้อย!");
     const modal = document.getElementById("appChoicesModal");
     if (modal) modal.style.display = "none";
+  }
+};
+
+window.adminReviewRole = async function (appIndex, actionType) {
+  const proj = projects[currentProjectIndex];
+  const app = proj.applications[appIndex];
+  const appealRole = app.pendingAppealRole || app.selectedNewRole;
+
+  if (actionType === "approve") {
+    app.assignedRole = appealRole;
+    app.status = "step_1_2_passed"; // หลังเลือกบทบาทแล้ว ส่งกลับไปเข้าระบบ 2
+    app.appealStatus = "approved";
+    delete app.pendingAppealRole;
+    delete app.selectedNewRole;
+    app.revisionNote = `แอดมินอนุมัติอุทธรณ์เปลี่ยนเป็นบทบาท: ${app.assignedRole} สำเร็จ (ส่งกลับไปเข้า 2)`;
+  } else if (actionType === "reject") {
+    app.status = "step_1_2_5_revision"; 
+    app.appealStatus = "rejected";
+    delete app.pendingAppealRole;
+    delete app.selectedNewRole;
+    app.revisionNote = `แอดมินปฏิเสธคำขออุทธรณ์บทบาท กรุณาเลือกบทบาทใหม่หรือขอยกเลิกการสมัคร`;
+  }
+
+  try {
+    await updateDoc(doc(db, "projects", proj.firebaseId), {
+      applications: proj.applications,
+    });
+    window.renderApplicationsList();
+    alert(actionType === "approve" ? "✅ อนุมัติอุทธรณ์บทบาทสำเร็จ!" : "❌ ปฏิเสธคำขออุทธรณ์เรียบร้อย!");
+  } catch (err) {
+    alert("เกิดข้อผิดพลาด: " + err.message);
+  }
+};
+
+// ==========================================
+// 1.9.5 การขอแก้ไขเอกสารรอบ 2
+// ==========================================
+window.approveEditRequest = async function (appIndex) {
+  if (!confirm("🔓 ต้องการอนุมัติคำขอแก้ไขเอกสารรอบ 2 (1.9.5) ให้ผู้ใช้หรือไม่?")) return;
+  await updateAppStatusWithData(appIndex, "step_1_9_5_allowed", {
+    revisionNote: "แอดมินอนุมัติคำขอแก้ไขเอกสารรอบ 2 แล้ว สามารถส่งข้อมูลกลับมาใหม่ใน 2 ได้",
+  });
+  alert("✅ อนุมัติสิทธิ์ให้ผู้ใช้แก้ไขเรียบร้อย!");
+};
+
+window.rejectEditRequest = async function (appIndex) {
+  const note = prompt("ระบุเหตุผลที่ไม่อนุมัติคำขอแก้ไข (1.9.5):");
+  if (note !== null) {
+    await updateAppStatusWithData(appIndex, "step_2_submitted", {
+      editReason: null,
+      revisionNote: `ไม่อนุมัติคำขอแก้ไขรอบ 2 (1.9.5): ${note}`,
+    });
+    alert("❌ ปฏิเสธคำขอแก้ไขเรียบร้อย");
+  }
+};
+
+// ==========================================
+// 2.1 ขั้นตอนยืนยันข้อมูล & ตีกลับไปขั้นตอน 2 ใหม่
+// ==========================================
+window.openRevisionPrompt = function (appIndex) {
+  const note = prompt("ระบุจุดที่ต้องการตีกลับให้ผู้ใช้แก้ไขในรอบ 2:");
+  if (note !== null) {
+    updateAppStatusWithData(appIndex, "step_1_2_passed", {
+      revisionNote: note || "ข้อมูลในรอบ 2 ไม่ถูกต้อง กรุณาแก้ไขและส่งข้อมูลใหม่ในขั้นตอนที่ 2",
+      stage2Answers: null // ล้างข้อมูลเก่าเพื่อให้ผู้ใช้ส่งใหม่ในขั้นตอนที่ 2 ได้อย่างสมบูรณ์
+    });
+    alert("🔄 ตีกลับข้อมูลไปยังขั้นตอนที่ 2 ให้ผู้ใช้แก้ไขเรียบร้อยแล้ว!");
   }
 };
 
 window.rejectApplicationCompletely = async function (appIndex) {
   if (confirm("⚠️ ต้องการปฏิเสธการสมัครของผู้สมัครรายนี้?")) {
     await updateAppStatusWithData(appIndex, "rejected", {
-      approvalNote: "ปฏิเสธการสมัครเนื่องจากโควตาเต็มหรือคุณสมบัติไม่ผ่าน",
+      approvalNote: "ปฏิเสธการสมัครเนื่องจากไม่ผ่านเกณฑ์",
     });
     const modal = document.getElementById("appChoicesModal");
     if (modal) modal.style.display = "none";
@@ -919,38 +958,10 @@ window.confirmInterviewSchedule = async function () {
   const [dPart, tPart] = dtInput.split("T");
   const [y, m, d] = dPart.split("-");
   if (selectedAppIndexForInterview !== null) {
-    await updateAppStatusWithData(selectedAppIndexForInterview, "interview", {
+    await updateAppStatusWithData(selectedAppIndexForInterview, "step_1_1_interview", {
       interviewDate: `${d}/${m}/${y} เวลา ${tPart} น.`,
     });
     window.closeInterviewModal();
-  }
-};
-
-window.openRevisionPrompt = function (appIndex) {
-  const note = prompt("ระบุจุดที่ต้องการให้ผู้สมัครแก้ไขในฟอร์มรอบที่ 2:");
-  if (note !== null) {
-    updateAppStatusWithData(appIndex, "revision_requested", {
-      revisionNote: note || "กรุณาแก้ไขข้อมูลในรอบที่ 2",
-    });
-  }
-};
-
-window.approveEditRequest = async function (appIndex) {
-  if (!confirm("🔓 ต้องการอนุมัติคำขอแก้ไขเอกสารรอบ 2 ให้ผู้สมัครหรือไม่?")) return;
-  await updateAppStatusWithData(appIndex, "edit_allowed", {
-    revisionNote: "แอดมินอนุมัติคำขอแก้ไขเอกสารรอบ 2 แล้ว กรุณาส่งข้อมูลกลับมาใหม่",
-  });
-  alert("✅ อนุมัติสิทธิ์ให้ผู้สมัครแก้ไขเรียบร้อย!");
-};
-
-window.rejectEditRequest = async function (appIndex) {
-  const note = prompt("ระบุเหตุผลที่ไม่อนุมัติคำขอแก้ไข (1.9.5):");
-  if (note !== null) {
-    await updateAppStatusWithData(appIndex, "stage2_submitted", {
-      editReason: null,
-      revisionNote: `ไม่อนุมัติคำขอแก้ไขรอบ 2 (1.9.5): ${note}`,
-    });
-    alert("❌ ปฏิเสธคำขอแก้ไขเรียบร้อย");
   }
 };
 
@@ -984,12 +995,12 @@ window.closeAppModal = function () {
 };
 
 // ==========================================
-// 4. WINDOW 3 - PROJECT NEWS & MEMBERS
+// 3. ขั้นตอนเข้าสู่โปรเจกต์แล้ว (จัดการประกาศและสมาชิก)
 // ==========================================
 window.openProjectWindow3 = function (index) {
   currentProjectIndexForWindow3 = index;
   const proj = projects[index];
-  document.getElementById("w3ProjTitle").innerText = `ประกาศ & สมาชิก (ขั้นตอนที่ 3): ${proj.name}`;
+  document.getElementById("w3ProjTitle").innerText = `บอร์ดโปรเจกต์ (3): ${proj.name}`;
   document.getElementById("pNewsTitle").value = "";
   document.getElementById("pNewsContent").value = "";
   renderProjectNewsList();
@@ -1009,7 +1020,7 @@ function renderProjectNewsList() {
   const pNews = proj.projectNews || [];
 
   if (pNews.length === 0) {
-    container.innerHTML = '<p style="color:#888; font-size:0.85rem;">ยังไม่มีประกาศเฉพาะกลุ่ม</p>';
+    container.innerHTML = '<p style="color:#888; font-size:0.85rem;">ยังไม่มีประกาศเฉพาะกลุ่มใน 3</p>';
     return;
   }
 
@@ -1046,7 +1057,7 @@ window.handleSaveProjectNews = async function (e) {
     document.getElementById("pNewsTitle").value = "";
     document.getElementById("pNewsContent").value = "";
     renderProjectNewsList();
-    alert("✅ ส่งข่าวเฉพาะกลุ่มสำเร็จ!");
+    alert("✅ ส่งประกาศเฉพาะกลุ่มใน 3 สำเร็จ!");
   } catch (err) {
     alert("❌ เกิดข้อผิดพลาด: " + err.message);
   }
@@ -1076,7 +1087,7 @@ function renderProjectMembersList() {
   const members = proj.applications ? proj.applications.filter((a) => isCountedAsPassed(a.status)) : [];
 
   if (members.length === 0) {
-    container.innerHTML = '<p style="color:#888; font-size:0.85rem;">ยังไม่มีสมาชิกในโปรเจกต์</p>';
+    container.innerHTML = '<p style="color:#888; font-size:0.85rem;">ยังไม่มีสมาชิกใน 3</p>';
     return;
   }
 
@@ -1091,10 +1102,10 @@ function renderProjectMembersList() {
       </div>
     `;
   });
-}
+};
 
 window.removeMemberFromProject = async function (appIndex) {
-  if (!confirm("⚠️ ต้องการปลดสมาชิกออกและคืนโควตาใช่หรือไม่?")) return;
+  if (!confirm("⚠️ ต้องการปลดสมาชิกออกจากโปรเจกต์และคืนโควตาใช่หรือไม่?")) return;
   const proj = projects[currentProjectIndexForWindow3];
   const currentDateTime = new Date().toLocaleString("th-TH");
   proj.applications[appIndex].status = "rejected";
