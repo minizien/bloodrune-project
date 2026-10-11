@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BR.PJ - Admin Panel</title>
+    <title>BR.PJ - Admin Zone</title>
     <!-- ใช้ Admin_2.css ตามที่คุณมีอยู่จริง -->
     <link rel="stylesheet" href="Admin.css" />
     <link
@@ -14,7 +14,7 @@
   <body>
     <header class="admin-header">
       <div class="admin-brand">
-        <h2>🔑 ADMIN PANEL</h2>
+        <h2>Admin Zone</h2>
       </div>
       <div class="admin-actions">
         <button class="btn-lobby" onclick="location.href = 'index.html'">
@@ -26,16 +26,16 @@
     <div class="admin-container">
       <aside class="admin-sidebar">
         <button class="nav-tab active" onclick="switchTab('projectTab', this)">
-          📁 Projects
+          Projects
         </button>
         <button class="nav-tab" onclick="switchTab('newsTab', this)">
-          📰 News
+          News
         </button>
         <button class="nav-tab" onclick="switchTab('storeTab', this)">
-          🛒 Store
+          Store
         </button>
         <button class="nav-tab" onclick="switchTab('userTab', this)">
-          👤 Users
+          Users
         </button>
       </aside>
 
@@ -50,7 +50,7 @@
           </div>
           <div id="projectList" class="cards-grid">
             <p style="color: #888; grid-column: 1/-1; text-align: center">
-              ⏳ กำลังโหลดข้อมูลโปรเจกต์...
+              กำลังโหลดข้อมูลโปรเจกต์...
             </p>
           </div>
         </section>
@@ -65,7 +65,7 @@
           </div>
           <div id="newsList" class="news-grid">
             <p style="color: #888; text-align: center">
-              ⏳ กำลังโหลดข้อมูลข่าวสาร...
+              กำลังโหลดข้อมูลข่าวสาร...
             </p>
           </div>
         </section>
@@ -76,7 +76,7 @@
             <h3>ร้านค้า (Store)</h3>
           </div>
           <div class="update-box">
-            <h2>🛒 Store System - update v.New</h2>
+            <h2>Store System - update v.New</h2>
             <p>ระบบร้านค้ากำลังอยู่ระหว่างการพัฒนาเวอร์ชันใหม่</p>
           </div>
         </section>
@@ -99,7 +99,7 @@
               <tbody id="userTableBody">
                 <tr>
                   <td colspan="4" style="text-align: center; color: #888">
-                    ⏳ กำลังโหลดข้อมูลผู้ใช้งาน...
+                    กำลังโหลดข้อมูลผู้ใช้งาน...
                   </td>
                 </tr>
               </tbody>
@@ -186,7 +186,7 @@
               id="roleError"
               style="display: none; color: #ff2a2a; margin-top: 5px"
             >
-              ⚠️ สรุปรวมจำนวนคนของทุกบทบาท ต้องไม่เกินจำนวนคนที่รับรวม!
+              สรุปรวมจำนวนคนของทุกบทบาท ต้องไม่เกินจำนวนคนที่รับรวม!
             </small>
           </div>
 
@@ -295,7 +295,7 @@
         <button class="close-modal" type="button" onclick="closeAppModal()">
           ✕
         </button>
-        <h3 id="appModalTitle">📋 รายชื่อผู้ยื่นสมัครเข้าร่วมโปรเจกต์</h3>
+        <h3 id="appModalTitle">รายชื่อผู้ยื่นสมัครเข้าร่วมโปรเจกต์</h3>
 
         <div style="display: flex; gap: 10px; margin: 15px 0">
           <input
@@ -376,7 +376,7 @@
                 padding-bottom: 8px;
               "
             >
-              📢 สร้างประกาศสำหรับสมาชิกโปรเจกต์
+              สร้างประกาศสำหรับสมาชิกโปรเจกต์
             </h4>
             <form onsubmit="handleSaveProjectNews(event)">
               <div class="form-group">
@@ -398,7 +398,7 @@
                 ></textarea>
               </div>
               <button type="submit" class="btn-primary" style="width: 100%">
-                📤 ส่งประกาศไปยังหน้า USER ของสมาชิก
+                ส่งประกาศไปยังหน้า USER ของสมาชิก
               </button>
             </form>
 
@@ -435,7 +435,7 @@
                 padding-bottom: 8px;
               "
             >
-              👥 สมาชิกที่ผ่านเข้าโปรเจกต์นี้
+              สมาชิกที่ผ่านเข้าโปรเจกต์นี้
             </h4>
             <div
               id="projectMembersListContainer"
@@ -463,7 +463,7 @@
           ✕
         </button>
         <h3 style="color: #ff2a2a; margin-bottom: 15px">
-          📅 เลือกวันและเวลานัดสัมภาษณ์
+          เลือกวันและเวลานัดสัมภาษณ์
         </h3>
 
         <div class="form-group">
