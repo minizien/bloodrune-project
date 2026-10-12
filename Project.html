@@ -163,16 +163,25 @@
       let currentActiveProjIndex = null;
       let activeUsersList = [];
 
+      // เชื่อมโยงสถานะที่ถือว่าผ่านเข้ารอบหรือครองโควตาบทบาทร่วมกับ Admin อย่างสมบูรณ์
       function isCountedAsPassed(status) {
         const countedStatuses = [
+          "step_1_2_passed",
           "passed",
+          "step_2_submitted",
           "stage2_submitted",
+          "step_2_revision",
           "revision_requested",
+          "step_1_9_5_requested",
           "edit_requested",
+          "step_1_9_5_allowed",
           "edit_allowed",
-          "edit_approved",
+          "step_3_approved",
           "approved",
-          "completed"
+          "step_3_completed",
+          "completed",
+          "step_1_2_5_pending",
+          "role_pending_review"
         ];
         return countedStatuses.includes(status);
       }
@@ -475,8 +484,8 @@
 
               content += `
                 <div style="background:#111; padding:12px; border-radius:6px; margin-bottom:10px; border: 1px solid #222;">
-                  <span style="color:#fbbf24; font-weight:600; font-size: 0.95rem;">❓ คำถาม: ${qTitle}</span>
-                  <div style="margin-top:6px; color:#fff; word-break: break-all; font-size: 0.9rem;">💬 คำตอบ: ${displayAnswer}</div>
+                  <span style="color:#fbbf24; font-weight:600; font-size: 0.95rem;"> ${qTitle}</span>
+                  <div style="margin-top:6px; color:#fff; word-break: break-all; font-size: 0.9rem;"> ${displayAnswer}</div>
                 </div>
               `;
             }
