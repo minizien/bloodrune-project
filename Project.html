@@ -76,7 +76,7 @@
         <div id="tab-passed" class="tab-pane">
           <div style="background: #121216; padding: 20px; border-radius: 8px; border: 1px solid #2a1b1b;">
             <h3 style="color: #ef4444; margin-bottom: 10px;">รายชื่อผู้ผ่านการคัดเลือก</h3>
-            <p style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 15px;">คลิกที่ปุ่มเพื่อเปิดดูข้อมูลและคำถาม-คำตอบ</p>
+            <p style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 15px;">คลิกที่ปุ่มเพื่อเปิดดูข้อมูลคำตอบและรูปภาพประกอบรอบที่ 2</p>
             <div id="passedUsersContainer"></div>
           </div>
         </div>
@@ -106,7 +106,7 @@
               </div>
 
               <!-- ส่วนฟิลด์คำถามตามประเภทที่แอดมินตั้งค่า -->
-              <div id="dynamicQuestionsContainer" style="margin-top: 15px;"></div>
+              <div id="dynamicQuestionsContainer" style="margin-top: 15px;"></div>  
 
               <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
                 <button type="submit" id="submitAppBtn" class="banner-action-btn" style="width: 100%; padding: 10px;">ยื่นใบสมัคร</button>
@@ -121,8 +121,8 @@
     <!-- Modal (แบนเนอร์ลอย) แสดงข้อมูล -->
     <div id="userDetailModal" class="modal-overlay">
       <div class="modal-card">
-        <h3 style="color: #ef4444; margin-bottom: 5px;" id="modalUserTitle">👤 คำถามและคำตอบ</h3>
-        <p style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 15px;">รายละเอียดคำตอบที่บันทึกไว้ในระบบ</p>
+        <h3 style="color: #ef4444; margin-bottom: 5px;" id="modalUserTitle">👤 คำถามและคำตอบรอบที่ 2</h3>
+        <p style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 15px;">รายละเอียดข้อมูลและรูปภาพรอบที่ 2 ที่บันทึกไว้ในระบบ</p>
         
         <div id="userDetailContent" style="background: #09090b; padding: 15px; border-radius: 6px; border: 1px solid #222; font-size: 0.9rem; color: #ddd; max-height: 350px; overflow-y: auto; margin-bottom: 20px;"></div>
         
@@ -162,7 +162,6 @@
       let currentActiveProjIndex = null;
       let activeUsersList = [];
 
-      // เชื่อมโยงสถานะที่ถือว่าผ่านเข้ารอบหรือครองโควตาบทบาทร่วมกับ Admin อย่างสมบูรณ์
       function isCountedAsPassed(status) {
         const countedStatuses = [
           "step_1_2_passed",
@@ -199,7 +198,6 @@
           loadedProjects.push({ docId: docSnap.id, ...docSnap.data() });
         });
 
-        // 🔄 เรียงลำดับให้โปรเจกต์ที่สร้างขึ้นทีหลัง (ใหม่กว่า) ขึ้นแสดงผลก่อนเสมอ[cite: 15]
         loadedProjects.sort((a, b) => {
           const getTime = (val) => {
             if (!val) return 0;
@@ -315,9 +313,9 @@
               <div class="new-user-card" onclick="window.showUserModalData(${index}, ${i})">
                 <div>
                   <h4 style="color: #fff; font-size: 1.1rem; margin-bottom: 3px;">👤 ${userName}</h4>
-                  <p style="color: #9ca3af; font-size: 0.85rem;">บทบาทที่ผ่าน: <span style="color: #ef4444; font-weight: bold;">[${userRole}]</span></p>
+                  <p style="color: #9ca3af; font-size: 0.85rem;">บทบาท: <span style="color: #ef4444; font-weight: bold;">[${userRole}]</span></p>
                 </div>
-                <button type="button" class="banner-action-btn" style="padding: 6px 14px; font-size: 0.85rem;" onclick="event.stopPropagation(); window.showUserModalData(${index}, ${i})">ดูข้อมูลคำถาม-คำตอบ ➔</button>
+                <button type="button" class="banner-action-btn" style="padding: 6px 14px; font-size: 0.85rem;" onclick="event.stopPropagation(); window.showUserModalData(${index}, ${i})">ดูข้อมูลรอบที่ 2 ➔</button>
               </div>
             `;
           });
@@ -360,8 +358,9 @@
 
         const qContainer = document.getElementById('dynamicQuestionsContainer');
         qContainer.innerHTML = '';
+        
         if (proj.customQuestions && proj.customQuestions.length > 0) {
-          proj.customQuestions.forEach((qItem) => {
+          proj.customQuestions.forEach((qItem, qIdx) => {
             const qTitle = typeof qItem === 'object' ? qItem.title : qItem;
             const qType = typeof qItem === 'object' && qItem.type ? qItem.type : 'text';
             const prevAns = (userApp && userApp.answers) ? (userApp.answers[qTitle] || '') : '';
@@ -370,18 +369,63 @@
             if (qType === 'textarea') {
               inputHtml = `<textarea class="custom-ans-input" data-title="${qTitle}" placeholder="กรอกคำตอบของคุณ..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; min-height:80px; box-sizing:border-box;">${prevAns}</textarea>`;
             } else if (qType === 'date') {
-              inputHtml = `<input type="date" class="custom-ans-input" data-title="${qTitle}" value="${prevAns}" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+              let pYear = '', pMonth = '', pDay = '';
+              if (prevAns) {
+                const parts = prevAns.split(/[-/]/);
+                if (parts.length === 3) {
+                  if (parts[0].length === 4) {
+                    pYear = parts[0]; pMonth = parts[1]; pDay = parts[2];
+                  } else {
+                    pDay = parts[0]; pMonth = parts[1]; pYear = parts[2];
+                  }
+                }
+              }
+
+              let dayOptions = '<option value="">วัน</option>';
+              for (let d = 1; d <= 31; d++) {
+                const dStr = String(d).padStart(2, '0');
+                dayOptions += `<option value="${dStr}" ${pDay === dStr ? 'selected' : ''}>${d}</option>`;
+              }
+
+              const months = [
+                {val: '01', name: 'มกราคม'}, {val: '02', name: 'กุมภาพันธ์'}, {val: '03', name: 'มีนาคม'},
+                {val: '04', name: 'เมษายน'}, {val: '05', name: 'พฤษภาคม'}, {val: '06', name: 'มิถุนายน'},
+                {val: '07', name: 'กรกฎาคม'}, {val: '08', name: 'สิงหาคม'}, {val: '09', name: 'กันยายน'},
+                {val: '10', name: 'ตุลาคม'}, {val: '11', name: 'พฤศจิกายน'}, {val: '12', name: 'ธันวาคม'}
+              ];
+              let monthOptions = '<option value="">เดือน</option>';
+              months.forEach(m => {
+                monthOptions += `<option value="${m.val}" ${pMonth === m.val ? 'selected' : ''}>${m.name}</option>`;
+              });
+
+              let yearOptions = '<option value="">ปี พ.ศ. / ค.ศ.</option>';
+              const currentYear = new Date().getFullYear();
+              for (let y = currentYear; y >= currentYear - 80; y--) {
+                const yStr = String(y);
+                yearOptions += `<option value="${yStr}" ${pYear === yStr ? 'selected' : ''}>${y + 543} (${y})</option>`;
+              }
+
+              inputHtml = `
+                <div class="date-picker-group" data-title="${qTitle}" style="display: flex; gap: 8px;">
+                  <select class="date-day" style="flex: 1; padding: 10px; background: #090909; border: 1px solid #333; color: #fff; border-radius: 4px;" onchange="updateDateValue(this)" required>${dayOptions}</select>
+                  <select class="date-month" style="flex: 1.5; padding: 10px; background: #090909; border: 1px solid #333; color: #fff; border-radius: 4px;" onchange="updateDateValue(this)" required>${monthOptions}</select>
+                  <select class="date-year" style="flex: 1.2; padding: 10px; background: #090909; border: 1px solid #333; color: #fff; border-radius: 4px;" onchange="updateDateValue(this)" required>${yearOptions}</select>
+                  <input type="hidden" class="custom-ans-input" data-title="${qTitle}" value="${prevAns}" required />
+                </div>
+              `;
             } else if (qType === 'number') {
               inputHtml = `<input type="number" class="custom-ans-input" data-title="${qTitle}" value="${prevAns}" placeholder="กรอกตัวเลข..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
             } else if (qType === 'email') {
               inputHtml = `<input type="email" class="custom-ans-input" data-title="${qTitle}" value="${prevAns}" placeholder="example@email.com" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+            } else if (qType === 'image') {
+              inputHtml = `<input type="url" class="custom-ans-input" data-title="${qTitle}" value="${prevAns}" placeholder="วางลิงก์รูปภาพผลงาน / เอกสาร (URL)" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
             } else {
               inputHtml = `<input type="text" class="custom-ans-input" data-title="${qTitle}" value="${prevAns}" placeholder="กรอกคำตอบของคุณ..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
             }
 
             qContainer.innerHTML += `
               <div class="form-group" style="margin-bottom:14px;">
-                <label style="display:block; margin-bottom:6px; color:#ddd; font-size:0.9rem;">${qTitle}</label>
+                <label style="display:block; margin-bottom:6px; color:#ddd; font-size:0.9rem;">ข้อที่ ${qIdx + 1}. ${qTitle}</label>
                 ${inputHtml}
               </div>`;
           });
@@ -418,11 +462,24 @@
         }
       };
 
+      window.updateDateValue = function(el) {
+        const wrapper = el.closest('.date-picker-group');
+        const day = wrapper.querySelector('.date-day').value;
+        const month = wrapper.querySelector('.date-month').value;
+        const year = wrapper.querySelector('.date-year').value;
+        const hiddenInput = wrapper.querySelector('.custom-ans-input');
+        if (day && month && year) {
+          hiddenInput.value = `${day}/${month}/${year}`;
+        } else {
+          hiddenInput.value = '';
+        }
+      };
+
       function setFormInputsEditable(isEditable) {
         document.getElementById('roleRank1').disabled = !isEditable;
         document.getElementById('roleRank2').disabled = !isEditable;
         document.getElementById('roleRank3').disabled = !isEditable;
-        document.querySelectorAll('.custom-ans-input').forEach(input => {
+        document.querySelectorAll('.custom-ans-input, .date-day, .date-month, .date-year').forEach(input => {
           input.disabled = !isEditable;
         });
       }
@@ -457,6 +514,7 @@
         }
       };
 
+      // จัดเรียงคำถามรอบที่ 2 และตรวจสอบหัวข้อที่มีคำว่า "รูป" หรือ "ภาพ" เพื่อแปลงลิงก์เป็นรูปภาพอัตโนมัติ
       window.showUserModalData = function(projIdx, userIdx) {
         let content = '';
         
@@ -470,26 +528,42 @@
         } else {
           const uData = activeUsersList[userIdx];
           const userName = uData.user || uData.name || uData.username || uData.fullName || uData.uid || 'ผู้ใช้งาน';
+          const proj = loadedProjects[projIdx];
 
-          document.getElementById('modalUserTitle').innerText = `👤 ข้อมูลของ: ${userName}`;
+          document.getElementById('modalUserTitle').innerText = `👤 ข้อมูลรอบที่ 2 ของ: ${userName}`;
 
-          const answers = uData.answers || {};
-          if (Object.keys(answers).length > 0) {
-            for (const [qTitle, qAns] of Object.entries(answers)) {
-              let displayAnswer = qAns;
-              if (typeof qAns === 'string' && (qAns.startsWith('http://') || qAns.startsWith('https://')) && (qAns.match(/\.(jpeg|jpg|gif|png)$/i) || qAns.includes('imgur') || qAns.includes('firebasestorage'))) {
-                displayAnswer = `<br><a href="${qAns}" target="_blank" style="color:#ef4444; text-decoration:underline;">🔗 เปิดดูลิงก์รูปภาพ</a><br><img src="${qAns}" style="max-width:100%; height:auto; border-radius:4px; margin-top:6px; border:1px solid #333;" onerror="this.style.display='none'"/>`;
+          const stage2Answers = uData.stage2Answers || {};
+          const stage2Questions = proj.stage2Questions || [];
+
+          if (Object.keys(stage2Answers).length > 0) {
+            let orderedKeys = stage2Questions.map(q => typeof q === 'object' ? q.title : q);
+            Object.keys(stage2Answers).forEach(k => {
+              if (!orderedKeys.includes(k)) orderedKeys.push(k);
+            });
+
+            orderedKeys.forEach((qTitle, qIdx) => {
+              if (stage2Answers[qTitle] !== undefined) {
+                let qAns = stage2Answers[qTitle];
+                let displayAnswer = qAns;
+
+                // ตรวจสอบว่าเป็น URL หรือมีคำว่า รูป, ภาพ, image, photo อยู่ในหัวข้อคำถาม เพื่อแปลงเป็นรูปภาพ
+                const isImageUrl = (typeof qAns === 'string' && (qAns.startsWith('http://') || qAns.startsWith('https://')) && (qAns.match(/\.(jpeg|jpg|gif|png|webp)$/i) || qAns.includes('imgur') || qAns.includes('firebasestorage') || qAns.includes('googleusercontent') || qAns.includes('ibb.co') || qAns.includes('127.0.0.1') || qAns.includes('localhost')));
+                const isImageQuestion = qTitle.toLowerCase().includes('รูป') || qTitle.toLowerCase().includes('ภาพ') || qTitle.toLowerCase().includes('image') || qTitle.toLowerCase().includes('photo');
+
+                if (isImageUrl || (isImageQuestion && typeof qAns === 'string' && (qAns.startsWith('http://') || qAns.startsWith('https://')))) {
+                  displayAnswer = `<br><a href="${qAns}" target="_blank" style="color:#ef4444; text-decoration:underline; display:inline-block; margin-top:4px;">🔗 เปิดดูรูปภาพขนาดเต็ม</a><br><img src="${qAns}" style="max-width:100%; height:auto; border-radius:6px; margin-top:8px; border:1px solid #333;" onerror="this.style.display='none'"/>`;
+                }
+
+                content += `
+                  <div style="background:#111; padding:12px; border-radius:6px; margin-bottom:10px; border: 1px solid #222;">
+                    <span style="color:#fbbf24; font-weight:600; font-size: 0.95rem;">❓ ข้อที่ ${qIdx + 1}. ${qTitle}</span>
+                    <div style="margin-top:6px; color:#fff; word-break: break-all; font-size: 0.9rem;">💬 คำตอบ/เอกสาร: ${displayAnswer}</div>
+                  </div>
+                `;
               }
-
-              content += `
-                <div style="background:#111; padding:12px; border-radius:6px; margin-bottom:10px; border: 1px solid #222;">
-                  <span style="color:#fbbf24; font-weight:600; font-size: 0.95rem;"> ${qTitle}</span>
-                  <div style="margin-top:6px; color:#fff; word-break: break-all; font-size: 0.9rem;"> ${displayAnswer}</div>
-                </div>
-              `;
-            }
+            });
           } else {
-            content += `<p style="color:#888; font-style:italic; text-align:center; padding: 20px;">ไม่มีข้อมูลคำตอบในระบบ</p>`;
+            content += `<p style="color:#888; font-style:italic; text-align:center; padding: 20px;">ยังไม่มีข้อมูลหรือผู้ใช้อยู่ในขั้นตอนการส่งข้อมูลรอบที่ 2</p>`;
           }
         }
 
@@ -537,9 +611,17 @@
         }
 
         const newAnswers = {};
+        let isValidAnswers = true;
         document.querySelectorAll('.custom-ans-input').forEach(input => {
-          newAnswers[input.getAttribute('data-title')] = input.value.trim();
+          const val = input.value.trim();
+          if (!val) isValidAnswers = false;
+          newAnswers[input.getAttribute('data-title')] = val;
         });
+
+        if (!isValidAnswers) {
+          alert('⚠️ กรุณากรอกข้อมูลคำถามทั้งหมดให้ครบถ้วน');
+          return;
+        }
 
         const roleChoicesArray = [r1, r2, r3].filter(Boolean);
 
