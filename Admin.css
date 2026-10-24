@@ -171,6 +171,7 @@ body {
 
 .status-hidden { background: #444; color: #ccc; }
 .status-active { background: #1e7e34; color: #fff; }
+.status-closed { background: #d9534f; color: #fff; }
 
 .card-title {
   font-size: 1.1rem;
@@ -399,8 +400,9 @@ body {
     width: 100%;
   }
 
-  #projectWindow3Modal .modal-card > div[style*="grid-template-columns"] {
+  /* ปรับการแสดงผลหน้าต่างที่ 3 แบบ 2 ซีก ให้เรียงแถวเดี่ยวบนจอมือถือ */
+  #projectWindow3Modal .modal-card div[style*="grid-template-columns"] {
     display: flex !important;
-    flex-direction: column;
+    flex-direction: column !important;
   }
 }
