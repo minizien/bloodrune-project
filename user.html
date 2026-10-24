@@ -147,8 +147,8 @@
         collection,
         onSnapshot,
         doc,
-        updateDoc,
         getDoc,
+        runTransaction,
       } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
       import {
         getAuth,
@@ -232,7 +232,9 @@
           html += `<div style="background: #181818; padding: 12px; border-radius: 6px; margin-top: 10px; border: 1px solid #333;">`;
           html += `<p style="color: #ff4d4d; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px;">📋 ข้อมูลระบบ 1 (สมัครรอบแรก):</p>`;
           for (const [key, val] of Object.entries(appItem.answers)) {
-            html += `<p style="color: #ccc; font-size: 0.85rem; margin: 3px 0;">• <strong>${key}:</strong> ${val !== undefined && val !== null ? val : "-"}</p>`;
+            let displayVal = val;
+            if (Array.isArray(val)) displayVal = val.join(", ");
+            html += `<p style="color: #ccc; font-size: 0.85rem; margin: 3px 0;">• <strong>${key}:</strong> ${displayVal !== undefined && displayVal !== null ? displayVal : "-"}</p>`;
           }
           html += `</div>`;
         }
@@ -246,7 +248,8 @@
           html += `<p style="color: #17a2b8; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px;">📋 ข้อมูลระบบ 2 (ส่งรอบ 2):</p>`;
           for (const [key, val] of Object.entries(appItem.stage2Answers)) {
             let displayVal = val;
-            if (typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://')) && (val.match(/\.(jpeg|jpg|gif|png)$/i) || val.includes('imgur') || val.includes('firebasestorage'))) {
+            if (Array.isArray(val)) displayVal = val.join(", ");
+            if (typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://')) && (val.match(/\.(jpeg|jpg|gif|png|webp)$/i) || val.includes('imgur') || val.includes('firebasestorage'))) {
               displayVal = `<br><a href="${val}" target="_blank" style="color:#17a2b8; text-decoration:underline;">🔗 เปิดดูลิงก์รูปภาพ</a><br><img src="${val}" style="max-width:100%; height:auto; border-radius:4px; margin-top:6px; border:1px solid #333;" onerror="this.style.display='none'"/>`;
             }
             html += `<p style="color: #ccc; font-size: 0.85rem; margin: 6px 0;">• <strong>${key}:</strong> ${displayVal}</p>`;
@@ -283,7 +286,6 @@
 
                   userAppsList.push(fullItem);
 
-                  // เชื่อมโยงสถานะที่ผ่านเข้ามาแสดงในแท็บ "สถานะภายในโปรเจกต์" (รวมถึง 1.2.5 อุทธรณ์)
                   if ([
                     "step_1_2_passed",
                     "passed",
@@ -372,32 +374,27 @@
                 statusBadge = '<span class="badge-status" style="background: #17a2b8; color: #fff;">⏳ ระบบ 1.2.5 รอแอดมินอนุมัติอุทธรณ์บทบาท</span>';
                 actionAreaHtml = `<p style="color: #f0ad4e; font-size: 0.85rem; margin-top: 10px;">กำลังรอผู้ดูแลระบบพิจารณาคำขอเปลี่ยนเป็นบทบาท: <strong>${appItem.pendingAppealRole || "-"}</strong></p>`;
               } else if (status === "step_1_2_5_revision" || status === "revision_requested") {
-                // ระบบ 1.2.5: ให้เลือกอุทธรณ์บทบาทใหม่ หรือขอยกเลิกการเข้าร่วม
                 statusBadge = '<span class="badge-status" style="background: #f0ad4e; color: #000; font-weight: bold;">ระบบ 1.2.5 กรุณาเลือกบทบาทอุทธรณ์ใหม่</span>';
                 actionAreaHtml = `
                   <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
-                    <button class="btn-action-floating" style="background: #f0ad4e; color: #000; font-weight: bold;" onclick="openRoleAppealModal('${proj.firebaseId}', ${item.appIndex})">🔄 ระบบ 1.2.5 เลือกบทบาทอุทธรณ์ / ยกเลิกโปรเจกต์</button>
+                    <button class="btn-action-floating" style="background: #f0ad4e; color: #000; font-weight: bold;" onclick="openRoleAppealModal('${proj.firebaseId}')">🔄 ระบบ 1.2.5 เลือกบทบาทอุทธรณ์ / ยกเลิกโปรเจกต์</button>
                   </div>
                 `;
               } else if (status === "step_1_2_passed" || status === "step_1_9_5_allowed" || status === "passed" || status === "edit_allowed") {
-                // ระบบ 2: กรอก/ส่งเอกสารรอบ 2 (รวมถึงกรณีถูกตีกลับมาจากขั้นตอน 2.1)
                 statusBadge = `<span class="badge-status" style="background: #28a745; color: #fff; font-weight: bold;">🎉 ผ่านการคัดเลือก (บทบาท: ${appItem.assignedRole || "-"}) - เข้าสู่ระบบ 2</span>`;
                 actionAreaHtml = `
                   ${stage2DescHtml}
                   <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
-                    <button class="btn-action-floating btn-stage2" onclick="openStage2Modal('${proj.firebaseId}', ${item.appIndex})">📝 ระบบ 2: กรอก/ส่งเอกสารรอบ 2</button>
+                    <button class="btn-action-floating btn-stage2" onclick="openStage2Modal('${proj.firebaseId}')">📝 ระบบ 2: กรอก/ส่งเอกสารรอบ 2</button>
                   </div>
                 `;
               } else if (status === "step_2_submitted" || status === "stage2_submitted") {
-                // ส่งเอกสารรอบ 2 แล้ว รอแอดมินตรวจในระบบ 2.1
                 statusBadge = '<span class="badge-status" style="background: #17a2b8; color: #fff;">⏳ ระบบ 2.1: ส่งเอกสารรอบ 2 แล้ว (รอแอดมินยืนยันหรือตีกลับ)</span>';
                 actionAreaHtml = `${stage2DescHtml} ${renderStage2Answers(appItem)}`;
               } else if (status === "step_1_9_5_requested" || status === "edit_requested") {
-                // ระบบ 1.9.5: ขอแก้ไขเอกสารรอบ 2 รอแอดมินอนุมัติ
                 statusBadge = '<span class="badge-status" style="background: #f0ad4e; color: #000;">🔄 ระบบ 1.9.5 ขอแก้ไขเอกสารรอบ 2 (รอแอดมินอนุมัติ)</span>';
                 actionAreaHtml = `${stage2DescHtml} ${renderStage2Answers(appItem)}`;
               } else if (status === "step_3_approved" || status === "approved") {
-                // ระบบ 3: สมาชิกโปรเจกต์
                 statusBadge = `<span class="badge-status" style="background: #28a745; color: #fff;">🎉 ระบบ 3: สมาชิกโปรเจกต์ (${appItem.assignedRole || "สมาชิก"})</span>`;
 
                 actionAreaHtml = `
@@ -408,7 +405,7 @@
                   </div>
                   <div style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="btn-action-floating" style="background: #28a745; color: #fff;" onclick="openProjectNewsModal('${proj.firebaseId}')">📢 ระบบ 3: ดูข่าวสาร/บอร์ดโปรเจกต์</button>
-                    <button class="btn-action-floating" style="background: #495057; color: #fff;" onclick="openRequestEditModal('${proj.firebaseId}', ${item.appIndex})">🔄 ระบบ 1.9.5 ส่งคำขอแก้ไขเอกสารรอบ 2</button>
+                    <button class="btn-action-floating" style="background: #495057; color: #fff;" onclick="openRequestEditModal('${proj.firebaseId}')">🔄 ระบบ 1.9.5 ส่งคำขอแก้ไขเอกสารรอบ 2</button>
                   </div>
                 `;
               }
@@ -430,10 +427,10 @@
         });
       }
 
-      window.openRoleAppealModal = function (projId, appIndex) {
+      window.openRoleAppealModal = function (projId) {
         const proj = currentProjectsData.find((p) => p.firebaseId === projId);
         if (!proj) return;
-        activeRoleAppealTarget = { projId, appIndex };
+        activeRoleAppealTarget = projId;
 
         const container = document.getElementById("availableRolesAppealContainer");
         container.innerHTML = "";
@@ -479,19 +476,29 @@
 
       window.submitUserRoleAppeal = async function (selectedRole) {
         if (!activeRoleAppealTarget) return;
-        const { projId, appIndex } = activeRoleAppealTarget;
-        const proj = currentProjectsData.find((p) => p.firebaseId === projId);
-        if (!proj) return;
+        const projId = activeRoleAppealTarget;
 
         if (!confirm(`⚠️ ยืนยันเลือกอุทธรณ์ขอเปลี่ยนเป็นบทบาท "${selectedRole}" และส่งให้แอดมินอนุมัติ?`)) return;
 
-        proj.applications[appIndex].appealStatus = "pending";
-        proj.applications[appIndex].pendingAppealRole = selectedRole;
-        proj.applications[appIndex].status = "step_1_2_5_pending";
-        proj.applications[appIndex].revisionNote = `ผู้ใช้ส่งคำขออุทธรณ์เปลี่ยนเป็นบทบาท: ${selectedRole} (ระบบ 1.2.5 รอแอดมินอนุมัติ)`;
-
         try {
-          await updateDoc(doc(db, "projects", proj.firebaseId), { applications: proj.applications });
+          await runTransaction(db, async (transaction) => {
+            const projRef = doc(db, "projects", projId);
+            const projDoc = await transaction.get(projRef);
+            if (!projDoc.exists()) throw new Error("ไม่พบโปรเจกต์นี้ในระบบ");
+
+            const projData = projDoc.data();
+            const apps = projData.applications || [];
+            const appIndex = apps.findIndex(a => a.uid === currentUid);
+            if (appIndex === -1) throw new Error("ไม่พบข้อมูลการสมัครของคุณในโปรเจกต์นี้");
+
+            apps[appIndex].appealStatus = "pending";
+            apps[appIndex].pendingAppealRole = selectedRole;
+            apps[appIndex].status = "step_1_2_5_pending";
+            apps[appIndex].revisionNote = `ผู้ใช้ส่งคำขออุทธรณ์เปลี่ยนเป็นบทบาท: ${selectedRole} (ระบบ 1.2.5 รอแอดมินอนุมัติ)`;
+
+            transaction.update(projRef, { applications: apps });
+          });
+
           window.closeRoleAppealModal();
           alert(`📤 ส่งคำขออุทธรณ์บทบาท "${selectedRole}" ไปยังแอดมินเรียบร้อยแล้ว!`);
         } catch (err) {
@@ -501,20 +508,30 @@
 
       window.confirmCancelProjectParticipation = async function () {
         if (!activeRoleAppealTarget) return;
-        const { projId, appIndex } = activeRoleAppealTarget;
-        const proj = currentProjectsData.find((p) => p.firebaseId === projId);
-        if (!proj) return;
+        const projId = activeRoleAppealTarget;
 
         if (!confirm("⚠️ คำเตือน: คุณต้องการขอยกเลิกการเข้าร่วมโปรเจกต์นี้ใช่หรือไม่? การกระทำนี้จะเปลี่ยนสถานะเป็นไม่ผ่านและปลดออกจากโปรเจกต์ทันที!")) return;
 
-        proj.applications[appIndex].status = "rejected";
-        proj.applications[appIndex].assignedRole = null;
-        proj.applications[appIndex].appealStatus = null;
-        proj.applications[appIndex].pendingAppealRole = null;
-        proj.applications[appIndex].revisionNote = "ผู้ใช้กดยกเลิกการเข้าร่วมโปรเจกต์ด้วยตนเองในระบบ 1.2.5";
-
         try {
-          await updateDoc(doc(db, "projects", proj.firebaseId), { applications: proj.applications });
+          await runTransaction(db, async (transaction) => {
+            const projRef = doc(db, "projects", projId);
+            const projDoc = await transaction.get(projRef);
+            if (!projDoc.exists()) throw new Error("ไม่พบโปรเจกต์นี้ในระบบ");
+
+            const projData = projDoc.data();
+            const apps = projData.applications || [];
+            const appIndex = apps.findIndex(a => a.uid === currentUid);
+            if (appIndex === -1) throw new Error("ไม่พบข้อมูลการสมัครของคุณในโปรเจกต์นี้");
+
+            apps[appIndex].status = "rejected";
+            apps[appIndex].assignedRole = null;
+            apps[appIndex].appealStatus = null;
+            apps[appIndex].pendingAppealRole = null;
+            apps[appIndex].revisionNote = "ผู้ใช้กดยกเลิกการเข้าร่วมโปรเจกต์ด้วยตนเองในระบบ 1.2.5";
+
+            transaction.update(projRef, { applications: apps });
+          });
+
           window.closeRoleAppealModal();
           alert("🚫 ยกเลิกการเข้าร่วมโปรเจกต์เรียบร้อยแล้ว");
         } catch (err) {
@@ -522,44 +539,145 @@
         }
       };
 
-      window.openStage2Modal = function (projId, appIndex) {
+      window.openStage2Modal = function (projId) {
         const proj = currentProjectsData.find((p) => p.firebaseId === projId);
         if (!proj) return;
-        activeStage2Target = { proj, appIndex };
+        activeStage2Target = projId;
         document.getElementById("s2ModalSub").innerText = `โปรเจกต์: ${proj.name}`;
 
         const container = document.getElementById("stage2QuestionsInputsContainer");
         container.innerHTML = "";
         const s2Questions = proj.stage2Questions || [{ title: "ลิงก์ Discord / ข้อมูลติดต่อ", type: "text" }];
-        const existingAnswers = proj.applications[appIndex].stage2Answers || {};
+        
+        const userApp = (proj.applications || []).find(a => a.uid === currentUid);
+        const existingAnswers = userApp ? (userApp.stage2Answers || {}) : {};
 
         s2Questions.forEach((q, idx) => {
           const qTitle = typeof q === 'object' ? q.title : q;
           const qType = typeof q === 'object' && q.type ? q.type : 'text';
+          const qOptions = typeof q === 'object' && Array.isArray(q.options) ? q.options : [];
           const savedValue = existingAnswers[qTitle] || "";
 
           let inputHtml = "";
           if (qType === 'textarea') {
-            inputHtml = `<textarea class="stage2-ans-input" name="s2_q_${idx}" placeholder="กรอกคำตอบของคุณ..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; min-height:80px; box-sizing:border-box;">${savedValue}</textarea>`;
+            inputHtml = `<textarea class="stage2-ans-input" data-title="${qTitle}" name="s2_q_${idx}" placeholder="กรอกคำตอบของคุณ..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; min-height:80px; box-sizing:border-box;">${savedValue}</textarea>`;
+          } else if (qType === 'radio') {
+            let radioHtml = `<div class="stage2-ans-group" data-title="${qTitle}" data-type="radio" style="display:flex; flex-direction:column; gap:8px; margin-top:6px;">`;
+            if (qOptions.length > 0) {
+              qOptions.forEach((opt) => {
+                const isChecked = savedValue === opt ? 'checked' : '';
+                radioHtml += `
+                  <label style="display: flex; align-items: center; gap: 10px; background: #111; padding: 10px 14px; border-radius: 6px; border: 1px solid #222; color: #ddd; cursor: pointer;">
+                    <input type="radio" name="s2_q_${idx}" value="${opt}" ${isChecked} required style="accent-color: #17a2b8; width: 18px; height: 18px; margin: 0; cursor: pointer;" />
+                    <span style="font-size: 0.95rem;">${opt}</span>
+                  </label>`;
+              });
+            } else {
+              radioHtml += `<p style="color:#777; font-size:0.85rem;">ไม่มีตัวเลือก</p>`;
+            }
+            radioHtml += `</div>`;
+            inputHtml = radioHtml;
+          } else if (qType === 'checkbox') {
+            let checkHtml = `<div class="stage2-ans-group" data-title="${qTitle}" data-type="checkbox" style="display:flex; flex-direction:column; gap:8px; margin-top:6px;">`;
+            const savedArray = Array.isArray(savedValue) ? savedValue : (typeof savedValue === 'string' && savedValue ? savedValue.split(',').map(s => s.trim()) : []);
+            if (qOptions.length > 0) {
+              qOptions.forEach((opt, optIdx) => {
+                const isChecked = savedArray.includes(opt) ? 'checked' : '';
+                checkHtml += `
+                  <label style="display: flex; align-items: center; gap: 10px; background: #111; padding: 10px 14px; border-radius: 6px; border: 1px solid #222; color: #ddd; cursor: pointer;">
+                    <input type="checkbox" name="s2_q_${idx}_${optIdx}" value="${opt}" ${isChecked} style="accent-color: #17a2b8; width: 18px; height: 18px; margin: 0; cursor: pointer;" />
+                    <span style="font-size: 0.95rem;">${opt}</span>
+                  </label>`;
+              });
+            } else {
+              checkHtml += `<p style="color:#777; font-size:0.85rem;">ไม่มีตัวเลือก</p>`;
+            }
+            checkHtml += `</div>`;
+            inputHtml = checkHtml;
+          } else if (qType === 'select') {
+            let selectHtml = `<select class="stage2-ans-input" data-title="${qTitle}" name="s2_q_${idx}" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;">`;
+            selectHtml += `<option value="">-- กรุณาเลือก --</option>`;
+            qOptions.forEach(opt => {
+              const isSelected = savedValue === opt ? 'selected' : '';
+              selectHtml += `<option value="${opt}" ${isSelected}>${opt}</option>`;
+            });
+            selectHtml += `</select>`;
+            inputHtml = selectHtml;
           } else if (qType === 'date') {
-            inputHtml = `<input type="date" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+            let pYear = '', pMonth = '', pDay = '';
+            if (savedValue) {
+              const parts = savedValue.split(/[-/]/);
+              if (parts.length === 3) {
+                if (parts[0].length === 4) {
+                  pYear = parts[0]; pMonth = parts[1]; pDay = parts[2];
+                } else {
+                  pDay = parts[0]; pMonth = parts[1]; pYear = parts[2];
+                }
+              }
+            }
+
+            let dayOptions = '<option value="">วัน</option>';
+            for (let d = 1; d <= 31; d++) {
+              const dStr = String(d).padStart(2, '0');
+              dayOptions += `<option value="${dStr}" ${pDay === dStr ? 'selected' : ''}>${d}</option>`;
+            }
+
+            const months = [
+              {val: '01', name: 'มกราคม'}, {val: '02', name: 'กุมภาพันธ์'}, {val: '03', name: 'มีนาคม'},
+              {val: '04', name: 'เมษายน'}, {val: '05', name: 'พฤษภาคม'}, {val: '06', name: 'มิถุนายน'},
+              {val: '07', name: 'กรกฎาคม'}, {val: '08', name: 'สิงหาคม'}, {val: '09', name: 'กันยายน'},
+              {val: '10', name: 'ตุลาคม'}, {val: '11', name: 'พฤศจิกายน'}, {val: '12', name: 'ธันวาคม'}
+            ];
+            let monthOptions = '<option value="">เดือน</option>';
+            months.forEach(m => {
+              monthOptions += `<option value="${m.val}" ${pMonth === m.val ? 'selected' : ''}>${m.name}</option>`;
+            });
+
+            let yearOptions = '<option value="">ปี พ.ศ. / ค.ศ.</option>';
+            const currentYear = new Date().getFullYear();
+            for (let y = currentYear; y >= currentYear - 80; y--) {
+              const yStr = String(y);
+              yearOptions += `<option value="${yStr}" ${pYear === yStr ? 'selected' : ''}>${y + 543} (${y})</option>`;
+            }
+
+            inputHtml = `
+              <div class="date-picker-group" data-title="${qTitle}" style="display: flex; gap: 8px;">
+                <select class="date-day" style="flex: 1; padding: 10px; background: #111; border: 1px solid #333; color: #fff; border-radius: 4px;" onchange="updateDateValue(this)" required>${dayOptions}</select>
+                <select class="date-month" style="flex: 1.5; padding: 10px; background: #111; border: 1px solid #333; color: #fff; border-radius: 4px;" onchange="updateDateValue(this)" required>${monthOptions}</select>
+                <select class="date-year" style="flex: 1.2; padding: 10px; background: #111; border: 1px solid #333; color: #fff; border-radius: 4px;" onchange="updateDateValue(this)" required>${yearOptions}</select>
+                <input type="hidden" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" required />
+              </div>
+            `;
           } else if (qType === 'number') {
-            inputHtml = `<input type="number" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" placeholder="กรอกตัวเลข..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+            inputHtml = `<input type="number" class="stage2-ans-input" data-title="${qTitle}" name="s2_q_${idx}" value="${savedValue}" placeholder="กรอกตัวเลข..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
           } else if (qType === 'email') {
-            inputHtml = `<input type="email" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" placeholder="example@email.com" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+            inputHtml = `<input type="email" class="stage2-ans-input" data-title="${qTitle}" name="s2_q_${idx}" value="${savedValue}" placeholder="example@email.com" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
           } else if (qType === 'image') {
-            inputHtml = `<input type="url" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" placeholder="วางลิงก์รูปภาพผลงาน / เอกสาร" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+            inputHtml = `<input type="url" class="stage2-ans-input" data-title="${qTitle}" name="s2_q_${idx}" value="${savedValue}" placeholder="วางลิงก์รูปภาพผลงาน / เอกสาร" required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
           } else {
-            inputHtml = `<input type="text" class="stage2-ans-input" name="s2_q_${idx}" value="${savedValue}" placeholder="กรอกคำตอบของคุณ..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
+            inputHtml = `<input type="text" class="stage2-ans-input" data-title="${qTitle}" name="s2_q_${idx}" value="${savedValue}" placeholder="กรอกคำตอบของคุณ..." required style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; border-radius:4px; box-sizing:border-box;" />`;
           }
 
           const div = document.createElement("div");
           div.className = "form-group-input";
           div.style.marginBottom = "14px";
-          div.innerHTML = `<label style="display:block; margin-bottom:6px; color:#ddd; font-size:0.9rem;">${qTitle}</label>${inputHtml}`;
+          div.innerHTML = `<label style="display:block; margin-bottom:6px; color:#ddd; font-size:0.9rem; font-weight:600;">${qTitle}</label>${inputHtml}`;
           container.appendChild(div);
         });
         document.getElementById("stage2Modal").classList.add("open");
+      };
+
+      window.updateDateValue = function(el) {
+        const wrapper = el.closest('.date-picker-group');
+        const day = wrapper.querySelector('.date-day').value;
+        const month = wrapper.querySelector('.date-month').value;
+        const year = wrapper.querySelector('.date-year').value;
+        const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+        if (day && month && year) {
+          hiddenInput.value = `${day}/${month}/${year}`;
+        } else {
+          hiddenInput.value = '';
+        }
       };
 
       window.closeStage2Modal = function () {
@@ -569,19 +687,47 @@
       window.submitStage2Answers = async function (e) {
         e.preventDefault();
         if (!activeStage2Target) return;
-        const { proj, appIndex } = activeStage2Target;
-        const formData = new FormData(e.target);
-        let answersMap = {};
-        proj.stage2Questions.forEach((q, idx) => {
-          const qTitle = typeof q === 'object' ? q.title : q;
-          answersMap[qTitle] = formData.get(`s2_q_${idx}`) || "";
-        });
-        proj.applications[appIndex].stage2Answers = answersMap;
-        proj.applications[appIndex].status = "step_2_submitted"; // ส่งเอกสารรอบ 2 แล้ว ไปที่ขั้นตอน 2.1 รอแอดมินยืนยันหรือตีกลับ
-        proj.applications[appIndex].editReason = null;
+        const projId = activeStage2Target;
 
         try {
-          await updateDoc(doc(db, "projects", proj.firebaseId), { applications: proj.applications });
+          await runTransaction(db, async (transaction) => {
+            const projRef = doc(db, "projects", projId);
+            const projDoc = await transaction.get(projRef);
+            if (!projDoc.exists()) throw new Error("ไม่พบโปรเจกต์นี้ในระบบ");
+
+            const projData = projDoc.data();
+            const apps = projData.applications || [];
+            const appIndex = apps.findIndex(a => a.uid === currentUid);
+            if (appIndex === -1) throw new Error("ไม่พบข้อมูลการสมัครของคุณในโปรเจกต์นี้");
+
+            let answersMap = {};
+            const s2Questions = projData.stage2Questions || [];
+
+            s2Questions.forEach((q, idx) => {
+              const qTitle = typeof q === 'object' ? q.title : q;
+              const qType = typeof q === 'object' && q.type ? q.type : 'text';
+
+              if (qType === 'radio') {
+                const checkedRadio = document.querySelector(`input[name="s2_q_${idx}"]:checked`);
+                answersMap[qTitle] = checkedRadio ? checkedRadio.value : "";
+              } else if (qType === 'checkbox') {
+                const checkedBoxes = document.querySelectorAll(`input[name^="s2_q_${idx}_"]:checked`);
+                let vals = [];
+                checkedBoxes.forEach(cb => vals.push(cb.value));
+                answersMap[qTitle] = vals;
+              } else {
+                const inputElem = document.querySelector(`[name="s2_q_${idx}"]`);
+                answersMap[qTitle] = inputElem ? inputElem.value.trim() : "";
+              }
+            });
+
+            apps[appIndex].stage2Answers = answersMap;
+            apps[appIndex].status = "step_2_submitted";
+            apps[appIndex].editReason = null;
+
+            transaction.update(projRef, { applications: apps });
+          });
+
           window.closeStage2Modal();
           alert("📤 ส่งเอกสารรอบ 2 (ระบบ 2) กลับไปยังแอดมินเรียบร้อยแล้ว!");
         } catch (err) {
@@ -589,8 +735,8 @@
         }
       };
 
-      window.openRequestEditModal = function (projId, appIndex) {
-        activeRequestEditTarget = { projId, appIndex };
+      window.openRequestEditModal = function (projId) {
+        activeRequestEditTarget = projId;
         document.getElementById("editReasonInput").value = "";
         document.getElementById("requestEditModal").classList.add("open");
       };
@@ -602,16 +748,26 @@
       window.submitRequestEdit = async function (e) {
         e.preventDefault();
         if (!activeRequestEditTarget) return;
-        const { projId, appIndex } = activeRequestEditTarget;
+        const projId = activeRequestEditTarget;
         const reason = document.getElementById("editReasonInput").value;
-        const proj = currentProjectsData.find((p) => p.firebaseId === projId);
-        if (!proj) return;
-
-        proj.applications[appIndex].status = "step_1_9_5_requested"; // เข้าสู่ระบบ 1.9.5 (ขอแก้ไขรอบ 2 รอแอดมินอนุมัติ)
-        proj.applications[appIndex].editReason = reason;
 
         try {
-          await updateDoc(doc(db, "projects", proj.firebaseId), { applications: proj.applications });
+          await runTransaction(db, async (transaction) => {
+            const projRef = doc(db, "projects", projId);
+            const projDoc = await transaction.get(projRef);
+            if (!projDoc.exists()) throw new Error("ไม่พบโปรเจกต์นี้ในระบบ");
+
+            const projData = projDoc.data();
+            const apps = projData.applications || [];
+            const appIndex = apps.findIndex(a => a.uid === currentUid);
+            if (appIndex === -1) throw new Error("ไม่พบข้อมูลการสมัครของคุณในโปรเจกต์นี้");
+
+            apps[appIndex].status = "step_1_9_5_requested";
+            apps[appIndex].editReason = reason;
+
+            transaction.update(projRef, { applications: apps });
+          });
+
           window.closeRequestEditModal();
           alert("📤 ส่งคำขอแก้ไข (ระบบ 1.9.5) เรียบร้อย รอแอดมินอนุมัติสิทธิ์!");
         } catch (err) {
