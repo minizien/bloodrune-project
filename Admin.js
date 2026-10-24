@@ -11,6 +11,7 @@ import {
   orderBy,
   serverTimestamp,
   getDoc,
+  runTransaction,
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import {
   getAuth,
@@ -70,7 +71,6 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// ฟังก์ชันตรวจสอบสถานะที่ถือว่าผ่านหรือครอบครองโควตาบทบาทในโปรเจกต์
 function isCountedAsPassed(status) {
   const countedStatuses = [
     "step_1_2_passed",
@@ -126,6 +126,9 @@ function initAdminPanel() {
     });
 
     renderProjects();
+    if (currentProjectIndex !== null) {
+      window.renderApplicationsList();
+    }
   });
 
   const newsQuery = query(collection(db, "news"), orderBy("date", "desc"));
@@ -248,9 +251,9 @@ window.openProjectModal = function () {
   document.getElementById("roleInputsContainer").innerHTML = "";
   document.getElementById("customQuestionsContainer").innerHTML = "";
   window.addRoleInput();
-  window.addQuestionInput("วันเดือนปีเกิด", "date");
-  window.addQuestionInput("อีเมลติดต่อกลับ", "email");
-  window.addQuestionInput("เหตุผลที่สนใจเข้าร่วมโปรเจกต์", "textarea");
+  window.addQuestionInput("วันเดือนปีเกิด", "date", []);
+  window.addQuestionInput("อีเมลติดต่อกลับ", "email", []);
+  window.addQuestionInput("เคยเล่นโรลมาก่อนไหม", "radio", ["เคย", "ไม่เคย"]);
   document.getElementById("projectModal").classList.add("open");
 };
 
@@ -270,22 +273,173 @@ window.addRoleInput = function (name = "", count = "") {
   container.appendChild(div);
 };
 
-window.addQuestionInput = function (qText = "", qType = "text") {
+// ==========================================
+// FORM BUILDER UI (คำถามส่วนที่ 1 - ไม่มีช่องข้อความธรรมดาแล้ว)
+// ==========================================
+window.addQuestionInput = function (qText = "", qType = "text", optionsList = []) {
   const container = document.getElementById("customQuestionsContainer");
   const div = document.createElement("div");
   div.className = "question-row";
+  div.style.cssText = "display: flex; flex-direction: column; width: 100%; box-sizing: border-box; background: #222; border: 1px solid #3c3c3c; border-left: 4px solid #4a90e2; padding: 16px; border-radius: 8px; margin-bottom: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);";
+
+  const isMultiType = ['radio', 'checkbox', 'select'].includes(qType);
+
   div.innerHTML = `
-    <input type="text" placeholder="หัวข้อคำถาม" class="question-title" value="${qText}" required style="flex:2;" />
-    <select class="question-type" style="flex:1;">
-      <option value="text" ${qType === "text" ? "selected" : ""}>ข้อความสั้น</option>
-      <option value="textarea" ${qType === "textarea" ? "selected" : ""}>ข้อความยาว</option>
-      <option value="number" ${qType === "number" ? "selected" : ""}>ตัวเลข</option>
-      <option value="date" ${qType === "date" ? "selected" : ""}>วันที่</option>
-      <option value="email" ${qType === "email" ? "selected" : ""}>อีเมล</option>
-    </select>
-    <button type="button" onclick="this.parentElement.remove()" style="background:#ff2a2a; color:#fff; border:none; padding:0 10px; border-radius:4px; cursor:pointer;">✕</button>
+    <div style="display: flex; width: 100%; gap: 12px; align-items: center; box-sizing: border-box;">
+      <input type="text" placeholder="หัวข้อคำถาม" class="question-title" value="${qText}" required style="flex: 2; width: 100%; padding: 10px 12px; background: #181818; border: 1px solid #444; color: #fff; border-radius: 6px; font-size: 0.95rem; box-sizing: border-box;" />
+      <select class="question-type" style="flex: 1; padding: 10px 12px; background: #181818; border: 1px solid #444; color: #fff; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" onchange="toggleOptionsBuilder(this)">
+        <option value="text" ${qType === "text" ? "selected" : ""}>📝 ข้อความสั้น</option>
+        <option value="textarea" ${qType === "textarea" ? "selected" : ""}>📄 ข้อความยาว</option>
+        <option value="radio" ${qType === "radio" ? "selected" : ""}>🔘 หลายตัวเลือก (เลือก 1 ข้อ)</option>
+        <option value="checkbox" ${qType === "checkbox" ? "selected" : ""}>☑️ ช่องทำเครื่องหมาย (เลือกหลายข้อ)</option>
+        <option value="select" ${qType === "select" ? "selected" : ""}>🔽 รายการแบบดร็อปดาวน์</option>
+        <option value="number" ${qType === "number" ? "selected" : ""}>🔢 ตัวเลข</option>
+        <option value="date" ${qType === "date" ? "selected" : ""}>📅 วันที่</option>
+        <option value="email" ${qType === "email" ? "selected" : ""}>📧 อีเมล</option>
+      </select>
+    </div>
+
+    <div class="options-builder-area" style="display: ${isMultiType ? 'block' : 'none'}; width: 100%; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #383838; box-sizing: border-box;">
+      <div class="options-list-container" style="display: flex; flex-direction: column; width: 100%; gap: 10px; margin-bottom: 10px;"></div>
+      <button type="button" onclick="addOptionRow(this)" style="background: transparent; color: #4a90e2; border: 1px dashed #4a90e2; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;">
+        ➕ เพิ่มตัวเลือก
+      </button>
+    </div>
+
+    <div style="display: flex; width: 100%; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 14px; padding-top: 10px; border-top: 1px solid #2d2d2d; box-sizing: border-box;">
+      <button type="button" title="เลื่อนขึ้น" onclick="moveQuestionRow(this, -1)" style="background:#2a2a2a; color:#ccc; border:1px solid #444; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:0.85rem;">▲ เลื่อนขึ้น</button>
+      <button type="button" title="เลื่อนลง" onclick="moveQuestionRow(this, 1)" style="background:#2a2a2a; color:#ccc; border:1px solid #444; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:0.85rem;">▼ เลื่อนลง</button>
+      <span style="color:#444; margin: 0 2px;">|</span>
+      <button type="button" title="ลบคำถาม" onclick="this.closest('.question-row').remove()" style="background:#c9302c; color:#fff; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-weight:bold; font-size: 0.85rem;">🗑️ ลบคำถาม</button>
+    </div>
+  `;
+
+  container.appendChild(div);
+
+  const optsContainer = div.querySelector('.options-list-container');
+  if (Array.isArray(optionsList) && optionsList.length > 0) {
+    optionsList.forEach(optVal => createOptionItemUI(optsContainer, optVal, qType));
+  } else if (isMultiType) {
+    createOptionItemUI(optsContainer, "ตัวเลือกที่ 1", qType);
+  }
+};
+
+// ==========================================
+// FORM BUILDER UI (คำถามส่วนที่ 2 - มีช่องข้อความธรรมดา "แสดงผลจริงรอบ 2")
+// ==========================================
+window.addStage2QuestionInput = function (qText = "", qType = "text", optionsList = [], placeholder = "") {
+  const container = document.getElementById("stage2QuestionsContainer");
+  const wrapper = document.createElement("div");
+  wrapper.className = "stage2-question-row";
+  wrapper.style.cssText = "display: flex; flex-direction: column; width: 100%; box-sizing: border-box; background: #222; border: 1px solid #3c3c3c; border-left: 4px solid #17a2b8; padding: 16px; border-radius: 8px; margin-bottom: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);";
+
+  const isMultiType = ['radio', 'checkbox', 'select'].includes(qType);
+
+  wrapper.innerHTML = `
+    <div style="display: flex; width: 100%; gap: 12px; align-items: center; box-sizing: border-box;">
+      <input type="text" placeholder="หัวข้อคำถาม / ชื่อเอกสาร" class="s2-q-title" value="${qText}" required style="flex: 2; width: 100%; padding: 10px 12px; background: #181818; border: 1px solid #444; color: #fff; border-radius: 6px; font-size: 0.95rem; box-sizing: border-box;" />
+      <select class="s2-q-type" style="flex: 1; padding: 10px 12px; background: #181818; border: 1px solid #444; color: #fff; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" onchange="toggleOptionsBuilder(this)">
+        <option value="text" ${qType === "text" ? "selected" : ""}>📝 ข้อความสั้น</option>
+        <option value="textarea" ${qType === "textarea" ? "selected" : ""}>📄 ข้อความยาว</option>
+        <option value="radio" ${qType === "radio" ? "selected" : ""}>🔘 หลายตัวเลือก (เลือก 1 ข้อ)</option>
+        <option value="checkbox" ${qType === "checkbox" ? "selected" : ""}>☑️ ช่องทำเครื่องหมาย (เลือกหลายข้อ)</option>
+        <option value="select" ${qType === "select" ? "selected" : ""}>🔽 รายการแบบดร็อปดาวน์</option>
+        <option value="number" ${qType === "number" ? "selected" : ""}>🔢 ตัวเลข</option>
+        <option value="date" ${qType === "date" ? "selected" : ""}>📅 วันที่</option>
+        <option value="email" ${qType === "email" ? "selected" : ""}>📧 อีเมล</option>
+        <option value="image" ${qType === "image" ? "selected" : ""}>📷 อัปโหลดภาพ / รูปเอกสาร</option>
+      </select>
+    </div>
+
+    <!-- ช่องข้อความธรรมดา "แสดงผลจริงรอบ 2" -->
+    <div class="question-preview-area" style="width: 100%; margin-top: 12px; padding: 10px 12px; background: #181818; border: 1px dashed #444; border-radius: 6px; box-sizing: border-box;">
+      <span style="font-size: 0.75rem; color: #888; display: block; margin-bottom: 4px;">👁️ แสดงผลจริงรอบ 2:</span>
+      <input type="text" class="q-placeholder-input" value="${placeholder}" placeholder="[ช่องข้อความธรรมดาที่ลิงก์กับโปรเจกต์]" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #333; color: #fff; border-radius: 4px; font-size: 0.85rem; box-sizing: border-box;" />
+    </div>
+
+    <div class="options-builder-area" style="display: ${isMultiType ? 'block' : 'none'}; width: 100%; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #383838; box-sizing: border-box;">
+      <div class="options-list-container" style="display: flex; flex-direction: column; width: 100%; gap: 10px; margin-bottom: 10px;"></div>
+      <button type="button" onclick="addOptionRow(this)" style="background: transparent; color: #17a2b8; border: 1px dashed #17a2b8; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;">
+        ➕ เพิ่มตัวเลือก
+      </button>
+    </div>
+
+    <div style="display: flex; width: 100%; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 14px; padding-top: 10px; border-top: 1px solid #2d2d2d; box-sizing: border-box;">
+      <button type="button" title="เลื่อนขึ้น" onclick="moveQuestionRow(this, -1)" style="background:#2a2a2a; color:#ccc; border:1px solid #444; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:0.85rem;">▲ เลื่อนขึ้น</button>
+      <button type="button" title="เลื่อนลง" onclick="moveQuestionRow(this, 1)" style="background:#2a2a2a; color:#ccc; border:1px solid #444; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:0.85rem;">▼ เลื่อนลง</button>
+      <span style="color:#444; margin: 0 2px;">|</span>
+      <button type="button" title="ลบคำถาม" onclick="this.closest('.stage2-question-row').remove()" style="background:#c9302c; color:#fff; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; font-weight:bold; font-size: 0.85rem;">🗑️ ลบคำถาม</button>
+    </div>
+  `;
+
+  container.appendChild(wrapper);
+
+  const optsContainer = wrapper.querySelector('.options-list-container');
+  if (Array.isArray(optionsList) && optionsList.length > 0) {
+    optionsList.forEach(optVal => createOptionItemUI(optsContainer, optVal, qType));
+  } else if (isMultiType) {
+    createOptionItemUI(optsContainer, "ตัวเลือกที่ 1", qType);
+  }
+};
+
+function createOptionItemUI(container, value = "", type = "radio") {
+  const div = document.createElement("div");
+  div.className = "option-item-row";
+  div.style.cssText = "display: flex; width: 100%; align-items: center; gap: 10px; box-sizing: border-box;";
+
+  let iconSymbol = "⚪";
+  if (type === "checkbox") iconSymbol = "◻️";
+  if (type === "select") iconSymbol = "1.";
+
+  div.innerHTML = `
+    <span class="option-type-icon" style="color: #888; font-size: 0.9rem; width: 24px; text-align: center; flex-shrink: 0;">${iconSymbol}</span>
+    <input type="text" class="opt-val-input" value="${value}" placeholder="ข้อความตัวเลือก" required style="flex: 1; padding: 8px 12px; background: #141414; border: 1px solid #383838; color: #fff; border-radius: 4px; font-size: 0.88rem; box-sizing: border-box;" />
+    <button type="button" title="ลบตัวเลือกนี้" onclick="this.parentElement.remove()" style="background: transparent; color: #888; border: none; font-size: 1.1rem; cursor: pointer; padding: 0 8px; flex-shrink: 0;">✕</button>
   `;
   container.appendChild(div);
+}
+
+window.toggleOptionsBuilder = function (selectElem) {
+  const row = selectElem.closest('.question-row') || selectElem.closest('.stage2-question-row');
+  if (!row) return;
+  const area = row.querySelector('.options-builder-area');
+  const container = row.querySelector('.options-list-container');
+  const type = selectElem.value;
+
+  if (['radio', 'checkbox', 'select'].includes(type)) {
+    area.style.display = 'block';
+    if (container.children.length === 0) {
+      createOptionItemUI(container, "ตัวเลือกที่ 1", type);
+    } else {
+      let iconSymbol = "⚪";
+      if (type === "checkbox") iconSymbol = "◻️";
+      if (type === "select") iconSymbol = "1.";
+      container.querySelectorAll('.option-type-icon').forEach(icon => icon.innerText = iconSymbol);
+    }
+  } else {
+    area.style.display = 'none';
+  }
+};
+
+window.addOptionRow = function (btnElem) {
+  const row = btnElem.closest('.question-row') || btnElem.closest('.stage2-question-row');
+  const typeSelect = row.querySelector('.question-type') || row.querySelector('.s2-q-type');
+  const container = row.querySelector('.options-list-container');
+  const type = typeSelect ? typeSelect.value : 'radio';
+  const count = container.children.length + 1;
+  createOptionItemUI(container, `ตัวเลือกที่ ${count}`, type);
+};
+
+window.moveQuestionRow = function (btn, direction) {
+  const row = btn.closest('.question-row') || btn.closest('.stage2-question-row');
+  if (!row) return;
+  const container = row.parentElement;
+  
+  if (direction === -1 && row.previousElementSibling) {
+    container.insertBefore(row, row.previousElementSibling);
+  } else if (direction === 1 && row.nextElementSibling) {
+    container.insertBefore(row.nextElementSibling, row);
+  }
 };
 
 window.handleSaveProject = async function (e) {
@@ -317,14 +471,26 @@ window.handleSaveProject = async function (e) {
   }
   if (roleErrorElem) roleErrorElem.style.display = "none";
 
-  const qTitles = document.querySelectorAll(".question-title");
-  const qTypes = document.querySelectorAll(".question-type");
+  const questionRows = document.querySelectorAll("#customQuestionsContainer .question-row");
   let customQuestions = [];
-  for (let i = 0; i < qTitles.length; i++) {
-    const title = qTitles[i].value.trim();
-    const type = qTypes[i].value;
-    if (title !== "") customQuestions.push({ title, type });
-  }
+
+  questionRows.forEach(row => {
+    const title = row.querySelector(".question-title").value.trim();
+    const type = row.querySelector(".question-type").value;
+    let options = [];
+
+    if (['radio', 'checkbox', 'select'].includes(type)) {
+      const optInputs = row.querySelectorAll(".opt-val-input");
+      optInputs.forEach(input => {
+        const val = input.value.trim();
+        if (val) options.push(val);
+      });
+    }
+
+    if (title !== "") {
+      customQuestions.push({ title, type, options });
+    }
+  });
 
   const currentDateTime = new Date().toLocaleString("th-TH");
   const projData = {
@@ -351,12 +517,9 @@ window.handleSaveProject = async function (e) {
       projData.stage2Description =
         "กรุณากรอกข้อมูลและแนบลิงก์รูปภาพประกอบตามหัวข้อด้านล่างให้ครบถ้วน";
       projData.stage2Questions = [
-        {
-          title: "ลิงก์ช่องทางติดต่อเพิ่มเติม (Discord / Facebook)",
-          type: "text",
-        },
-        { title: "ประสบการณ์การทำงาน (ปี)", type: "number" },
-        { title: "แนบลิงก์ภาพผลงาน / รูปเอกสาร", type: "image" },
+        { title: "ลิงก์ช่องทางติดต่อเพิ่มเติม (Discord / Facebook)", type: "text", options: [], placeholder: "" },
+        { title: "ประสบการณ์การทำงาน (ปี)", type: "number", options: [], placeholder: "" },
+        { title: "แนบลิงก์ภาพผลงาน / รูปเอกสาร", type: "image", options: [], placeholder: "" },
       ];
       projData.createdAt = serverTimestamp();
       projData.createdAtString = currentDateTime;
@@ -388,7 +551,7 @@ window.editProject = function (index) {
   qContainer.innerHTML = "";
   if (proj.customQuestions)
     proj.customQuestions.forEach((q) =>
-      window.addQuestionInput(q.title, q.type),
+      window.addQuestionInput(q.title, q.type, q.options || []),
     );
 
   document.getElementById("projectModal").classList.add("open");
@@ -419,7 +582,7 @@ window.openStage2Config = function (index) {
 
   const s2Questions = proj.stage2Questions || [];
   if (s2Questions.length > 0) {
-    s2Questions.forEach((q) => window.addStage2QuestionInput(q.title, q.type));
+    s2Questions.forEach((q) => window.addStage2QuestionInput(q.title, q.type, q.options || [], q.placeholder || ""));
   } else {
     window.addStage2QuestionInput();
   }
@@ -432,35 +595,6 @@ window.closeStage2ConfigModal = function () {
   currentProjectIndexForStage2Config = null;
 };
 
-window.addStage2QuestionInput = function (qText = "", qType = "text") {
-  const container = document.getElementById("stage2QuestionsContainer");
-  const wrapper = document.createElement("div");
-  wrapper.style.marginBottom = "12px";
-  wrapper.style.background = "#181818";
-  wrapper.style.padding = "10px";
-  wrapper.style.borderRadius = "6px";
-  wrapper.style.border = "1px solid #333";
-
-  wrapper.innerHTML = `
-    <div style="margin-bottom: 6px;">
-      <label style="font-size: 0.85rem; color: #17a2b8; font-weight: bold; display: block; margin-bottom: 4px;">หัวข้อคำถาม / ชื่อเอกสาร:</label>
-      <input type="text" placeholder="เช่น ลิงก์ช่องทางติดต่อ, ประสบการณ์" class="s2-q-title" value="${qText}" required style="width: 100%; padding: 8px; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px; box-sizing: border-box;" />
-    </div>
-    <div style="display: flex; gap: 8px; align-items: center;">
-      <select class="s2-q-type" style="flex: 1; padding: 6px; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px;">
-        <option value="text" ${qType === "text" ? "selected" : ""}>ข้อความสั้น</option>
-        <option value="textarea" ${qType === "textarea" ? "selected" : ""}>ข้อความยาว</option>
-        <option value="number" ${qType === "number" ? "selected" : ""}>ตัวเลข</option>
-        <option value="date" ${qType === "date" ? "selected" : ""}>วันที่</option>
-        <option value="email" ${qType === "email" ? "selected" : ""}>อีเมล</option>
-        <option value="image" ${qType === "image" ? "selected" : ""}>📷 อัปโหลดภาพ / รูปเอกสาร</option>
-      </select>
-      <button type="button" onclick="this.closest('div').parentElement.remove()" style="background:#ff2a2a; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">✕ ลบข้อนี้</button>
-    </div>
-  `;
-  container.appendChild(wrapper);
-};
-
 window.handleSaveStage2Config = async function (e) {
   e.preventDefault();
   if (currentProjectIndexForStage2Config === null) return;
@@ -469,18 +603,28 @@ window.handleSaveStage2Config = async function (e) {
   const stage2Description = document
     .getElementById("stage2Description")
     .value.trim();
-  const titles = document.querySelectorAll(".s2-q-title");
-  const types = document.querySelectorAll(".s2-q-type");
+  
+  const questionRows = document.querySelectorAll("#stage2QuestionsContainer .stage2-question-row");
   let stage2Questions = [];
 
-  for (let i = 0; i < titles.length; i++) {
-    if (titles[i].value.trim()) {
-      stage2Questions.push({
-        title: titles[i].value.trim(),
-        type: types[i].value,
+  questionRows.forEach(row => {
+    const title = row.querySelector(".s2-q-title").value.trim();
+    const type = row.querySelector(".s2-q-type").value;
+    const placeholder = row.querySelector(".q-placeholder-input") ? row.querySelector(".q-placeholder-input").value.trim() : "";
+    let options = [];
+
+    if (['radio', 'checkbox', 'select'].includes(type)) {
+      const optInputs = row.querySelectorAll(".opt-val-input");
+      optInputs.forEach(input => {
+        const val = input.value.trim();
+        if (val) options.push(val);
       });
     }
-  }
+
+    if (title !== "") {
+      stage2Questions.push({ title, type, options, placeholder });
+    }
+  });
 
   const currentDateTime = new Date().toLocaleString("th-TH");
   try {
@@ -566,6 +710,8 @@ window.renderApplicationsList = function () {
   if (currentProjectIndex === null) return;
   const proj = projects[currentProjectIndex];
   const container = document.getElementById("appListContent");
+  if (!container) return;
+  
   container.innerHTML = `<h4>โปรเจกต์: ${proj.name} (ประวัติผู้สมัครทุกขั้นตอนตามลำดับ)</h4><br>`;
 
   if (!proj.applications || proj.applications.length === 0) {
@@ -587,7 +733,6 @@ window.renderApplicationsList = function () {
   });
 
   sortedApps.forEach((app) => {
-    const appIndex = proj.applications.indexOf(app);
     const appStatus = app.status || "pending_application";
 
     if (statusFilter !== "all" && appStatus !== statusFilter) return;
@@ -595,30 +740,48 @@ window.renderApplicationsList = function () {
     const userEmail = (app.accountEmail || "").toLowerCase();
     if (searchTerm && !userName.includes(searchTerm) && !userEmail.includes(searchTerm)) return;
 
+    let applicantRealName = "";
     let round1Html = "";
     const userChoices = extractApplicantChoices(app, proj);
 
     if (app.answers) {
       if (Array.isArray(app.answers)) {
         app.answers.forEach((ans) => {
-          round1Html += `<p style="margin:2px 0; font-size:0.85rem;">• ${ans.title}: <span style="color:#ddd;">${ans.value || "-"}</span></p>`;
+          let val = Array.isArray(ans.value) ? ans.value.join(", ") : (ans.value !== undefined ? ans.value : "-");
+          const titleLower = (ans.title || "").toLowerCase();
+          if ((titleLower.includes("ชื่อ") || titleLower.includes("name")) && !applicantRealName) {
+            applicantRealName = val;
+          }
+          round1Html += `<p style="margin:4px 0; font-size:0.85rem; color:#ccc;">• <strong>${ans.title || "คำถาม"}:</strong> <span style="color:#fff;">${val}</span></p>`;
         });
-      } else {
+      } else if (typeof app.answers === "object") {
         for (const [q, a] of Object.entries(app.answers)) {
-          round1Html += `<p style="margin:2px 0; font-size:0.85rem;">• ${q}: <span style="color:#ddd;">${a || "-"}</span></p>`;
+          let val = Array.isArray(a) ? a.join(", ") : (a !== undefined && a !== null ? a : "-");
+          const titleLower = (q || "").toLowerCase();
+          if ((titleLower.includes("ชื่อ") || titleLower.includes("name")) && !applicantRealName) {
+            applicantRealName = val;
+          }
+          round1Html += `<p style="margin:4px 0; font-size:0.85rem; color:#ccc;">• <strong>${q}:</strong> <span style="color:#fff;">${val}</span></p>`;
         }
       }
+    } else {
+      round1Html = '<p style="color:#666; font-size:0.85rem;">ไม่มีข้อมูลคำตอบรอบที่ 1</p>';
     }
 
     let round2Html = '<p style="color:#666; font-size:0.85rem;">ยังไม่ได้ส่งข้อมูลรอบ 2</p>';
-    if (app.stage2Answers) {
+    if (app.stage2Answers && typeof app.stage2Answers === "object" && Object.keys(app.stage2Answers).length > 0) {
       round2Html = "";
       for (const [q, a] of Object.entries(app.stage2Answers)) {
-        round2Html += `<p style="margin:2px 0; font-size:0.85rem;">• ${q}: <span style="color:#ddd;">${a || "-"}</span></p>`;
+        let displayVal = Array.isArray(a) ? a.join(", ") : (a !== undefined && a !== null ? a : "-");
+        
+        if (typeof displayVal === 'string' && (displayVal.startsWith('http://') || displayVal.startsWith('https://')) && (displayVal.match(/\.(jpeg|jpg|gif|png|webp)$/i) || displayVal.includes('imgur') || displayVal.includes('firebasestorage'))) {
+          displayVal = `<br><a href="${displayVal}" target="_blank" style="color:#17a2b8; text-decoration:underline;">🔗 เปิดดูลิงก์รูปภาพ</a><br><img src="${displayVal}" style="max-width:100%; height:auto; border-radius:4px; margin-top:6px; border:1px solid #333;" onerror="this.style.display='none'"/>`;
+        }
+
+        round2Html += `<p style="margin:6px 0; font-size:0.85rem; color:#ccc; border-bottom:1px solid #222; padding-bottom:4px;">• <strong>${q}:</strong> <span style="color:#fff;">${displayVal}</span></p>`;
       }
     }
 
-    // ป้ายสถานะจำแนกตามโครงสร้างใหม่
     let statusBadge = '<span class="badge-status status-pending">1. ยืนสมัคร</span>';
     if (appStatus === "step_1_1_interview" || appStatus === "interview") statusBadge = '<span class="badge-status status-interview">1.1 นัดสัมภาษณ์แล้ว</span>';
     if (appStatus === "step_1_2_passed" || appStatus === "passed") statusBadge = '<span class="badge-status status-passed">1.2 ผ่าน & ล็อคบทบาทแล้ว (เข้าสู่ 2)</span>';
@@ -639,51 +802,46 @@ window.renderApplicationsList = function () {
       lockedRoleTag = `<div style="font-size:0.80rem; color:#28a745; font-weight:bold; margin-top:2px;">🔒 ล็อคบทบาท: ${app.assignedRole}${app.approvedRank ? `(จากอันดับ ${app.approvedRank})` : ""}</div>`;
     }
 
+    let realNameBadge = applicantRealName ? `<div style="font-size:0.85rem; color:#4a90e2; font-weight:bold; margin-top:2px;">🏷️ ชื่อจริงจากแบบฟอร์ม: ${applicantRealName}</div>` : "";
+
     let actionButtons = "";
 
-    // 1. ยืนสมัคร (ครอบคลุมสถานะเริ่มต้นทุกแบบ)
     if (appStatus === "pending_application" || appStatus === "pending" || !appStatus) {
       actionButtons = `
-        <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openInterviewPrompt(${appIndex})">📅 1. ตั้งค่าวัน/เวลาสัมภาษณ์</button>
-        <button class="btn-secondary" style="background:#c9302c;" onclick="updateAppStatus(${appIndex}, 'rejected')">❌ ปฏิเสธการสมัคร</button>
+        <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openInterviewPrompt('${app.uid}')">📅 1. ตั้งค่าวัน/เวลาสัมภาษณ์</button>
+        <button class="btn-secondary" style="background:#c9302c;" onclick="updateAppStatusByUid('${app.uid}', 'rejected')">❌ ปฏิเสธการสมัคร</button>
       `;
     } 
-    // 1.1 สัมภาษณ์
     else if (appStatus === "step_1_1_interview" || appStatus === "interview") {
       actionButtons = `
-        <button class="btn-secondary" style="background:#17a2b8;" onclick="openApplicationChoicesModal(${appIndex})">✅ 1.2 พิจารณาบทบาท (อันดับ 1, 2, 3)</button>
-        <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openInterviewPrompt(${appIndex})">📅 เปลี่ยนวันนัดสัมภาษณ์</button>
-        <button class="btn-secondary" style="background:#c9302c;" onclick="updateAppStatus(${appIndex}, 'rejected')">❌ ปฏิเสธผ่านสัมภาษณ์</button>
+        <button class="btn-secondary" style="background:#17a2b8;" onclick="openApplicationChoicesModalByUid('${app.uid}')">✅ 1.2 พิจารณาบทบาท (อันดับ 1, 2, 3)</button>
+        <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openInterviewPrompt('${app.uid}')">📅 เปลี่ยนวันนัดสัมภาษณ์</button>
+        <button class="btn-secondary" style="background:#c9302c;" onclick="updateAppStatusByUid('${app.uid}', 'rejected')">❌ ปฏิเสธผ่านสัมภาษณ์</button>
       `;
     } 
-    // 1.2.5 การยื่นอุทธรณ์บทบาท
     else if (appStatus === "step_1_2_5_pending" || appStatus === "role_pending_review") {
       actionButtons = `
-        <button class="btn-secondary" style="background:#28a745;" onclick="adminReviewRole(${appIndex}, 'approve')">✅ 1.2.5 อนุมัติอุทธรณ์บทบาท (${app.pendingAppealRole})</button>
-        <button class="btn-secondary" style="background:#c9302c;" onclick="adminReviewRole(${appIndex}, 'reject')">❌ 1.2.5 ปฏิเสธอุทธรณ์</button>
+        <button class="btn-secondary" style="background:#28a745;" onclick="adminReviewRoleByUid('${app.uid}', 'approve')">✅ 1.2.5 อนุมัติอุทธรณ์บทบาท (${app.pendingAppealRole})</button>
+        <button class="btn-secondary" style="background:#c9302c;" onclick="adminReviewRoleByUid('${app.uid}', 'reject')">❌ 1.2.5 ปฏิเสธอุทธรณ์</button>
       `;
     } 
-    // 1.9.5 การขอแก้ไขเอกสารรอบ 2
     else if (appStatus === "step_1_9_5_requested" || appStatus === "edit_requested") {
       actionButtons = `
-        <button class="btn-secondary" style="background:#28a745;" onclick="approveEditRequest(${appIndex})">🔓 1.9.5 อนุมัติคำขอแก้ไข</button>
-        <button class="btn-secondary" style="background:#c9302c;" onclick="rejectEditRequest(${appIndex})">❌ 1.9.5 ไม่อนุมัติคำขอแก้ไข</button>
+        <button class="btn-secondary" style="background:#28a745;" onclick="approveEditRequestByUid('${app.uid}')">🔓 1.9.5 อนุมัติคำขอแก้ไข</button>
+        <button class="btn-secondary" style="background:#c9302c;" onclick="rejectEditRequestByUid('${app.uid}')">❌ 1.9.5 ไม่อนุมัติคำขอแก้ไข</button>
       `;
     } 
-    // 2. การส่งเอกสารรอบ 2 (แอดมินจะต้องรอเท่านั้นและทำอะไรไม่ได้ทั้งสิ้น)
     else if (appStatus === "step_1_2_passed" || appStatus === "step_1_9_5_allowed" || appStatus === "step_1_2_5_revision" || appStatus === "passed" || appStatus === "edit_allowed" || appStatus === "revision_requested") {
       actionButtons = `
         <span style="font-size:0.85rem; color:#f0ad4e; align-self:center;">⏳ [2. กำลังส่งเอกสารรอบ 2] แอดมินจะต้องรอผู้ใช้ส่งเอกสารเท่านั้น และทำอะไรไม่ได้ทั้งสิ้น</span>
       `;
     } 
-    // 2.1 ขั้นตอนยืนยันข้อมูล (เมื่อแอดมินยืนยันข้อมูลแล้วจะเข้าสู่ขั้นตอนที่ 3 / หรือตีกลับไปขั้นตอน 2 ใหม่)
     else if (appStatus === "step_2_submitted" || appStatus === "stage2_submitted") {
       actionButtons = `
-        <button class="btn-secondary" style="background:#28a745;" onclick="updateAppStatus(${appIndex}, 'step_3_approved')">🎯 2.1 ยืนยันข้อมูล & เข้าสู่ขั้นตอนที่ 3</button>
-        <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openRevisionPrompt(${appIndex})">🔄 2.1 ตีกลับรอบ 2 ให้แก้ไข (กลับไปขั้นตอน 2)</button>
+        <button class="btn-secondary" style="background:#28a745;" onclick="updateAppStatusByUid('${app.uid}', 'step_3_approved')">🎯 2.1 ยืนยันข้อมูล & เข้าสู่ขั้นตอนที่ 3</button>
+        <button class="btn-secondary" style="background:#f0ad4e; color:#000;" onclick="openRevisionPromptByUid('${app.uid}')">🔄 2.1 ตีกลับรอบ 2 ให้แก้ไข (กลับไปขั้นตอน 2)</button>
       `;
     } 
-    // 3. ขั้นตอนเข้าสู่โปรเจ็คแล้ว
     else if (appStatus === "step_3_approved" || appStatus === "approved") {
       actionButtons = `<span style="font-size:0.85rem; color:#28a745;">✨ [3. เข้าสู่โปรเจกต์แล้ว] จัดการประกาศและสมาชิกเฉพาะกลุ่มได้ที่บอร์ดโปรเจกต์</span>`;
     } else {
@@ -693,12 +851,19 @@ window.renderApplicationsList = function () {
     container.innerHTML += `
       <div class="app-item" style="background:#141414; border:1px solid #333; padding:12px; border-radius:6px; margin-bottom:10px;">
         <div><strong>👤 ${app.user || "ไม่ระบุชื่อ"}</strong> ${statusBadge}</div>
+        ${realNameBadge}
         ${choiceSummaryTag}
         ${lockedRoleTag}
         <div style="font-size:0.8rem; color:#aaa; margin-top:4px; margin-bottom:6px;">📧 ${app.accountEmail || "-"} | สมัครเมื่อ: ${app.createdAtString || "-"}</div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-          <div style="background:#1c1c1c; padding:8px; border-radius:4px;"><p style="color:#ff2a2a; font-size:0.8rem; font-weight:bold;">📋 ข้อมูลรอบ 1 (สมัคร):</p>${round1Html}</div>
-          <div style="background:#1c1c1c; padding:8px; border-radius:4px;"><p style="color:#17a2b8; font-size:0.8rem; font-weight:bold;">📝 ข้อมูลรอบ 2:</p>${round2Html}</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; align-items: stretch;">
+          <div style="background:#1c1c1c; padding:10px; border-radius:4px; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box;">
+            <p style="color:#ff2a2a; font-size:0.8rem; font-weight:bold; margin-top:0; margin-bottom:8px;">📋 ข้อมูลรอบ 1 (สมัคร):</p>
+            <div style="flex:1;">${round1Html}</div>
+          </div>
+          <div style="background:#1c1c1c; padding:10px; border-radius:4px; display:flex; flex-direction:column; justify-content:flex-start; box-sizing:border-box;">
+            <p style="color:#17a2b8; font-size:0.8rem; font-weight:bold; margin-top:0; margin-bottom:8px;">📝 ข้อมูลรอบ 2:</p>
+            <div style="flex:1;">${round2Html}</div>
+          </div>
         </div>
         ${app.interviewDate ? `<p style="font-size:0.85rem; color:#f0ad4e; margin-top:6px;">📅 นัดสัมภาษณ์ (1.1): ${app.interviewDate}</p>` : ""}
         ${app.assignedRole && !lockedRoleTag ? `<p style="font-size:0.85rem; color:#28a745; margin-top:6px;">🎯 บทบาทที่ได้รับ: ${app.assignedRole}</p>` : ""}
@@ -756,9 +921,10 @@ function checkRoleAvailability(proj, roleName) {
 // ==========================================
 // 1.2 การพิจารณาบทบาท
 // ==========================================
-window.openApplicationChoicesModal = function (appIndex) {
+window.openApplicationChoicesModalByUid = function (targetUid) {
   const proj = projects[currentProjectIndex];
-  const app = proj.applications[appIndex];
+  const app = proj.applications.find(a => a.uid === targetUid);
+  if (!app) return;
 
   const choices = extractApplicantChoices(app, proj);
   let choicesHtml = "";
@@ -777,7 +943,7 @@ window.openApplicationChoicesModal = function (appIndex) {
       let statusColor = "#28a745";
       let statusBadgeText = "ว่าง";
       let statusText = `🟢 ยังว่าง (จับจองแล้ว ${roleCheck.currentCount}/${roleCheck.maxCount} คน)`;
-      let actionHtml = `<button class="btn-secondary" style="background:#28a745; padding:6px 12px; font-size:0.85rem; font-weight:bold;" onclick="approveAppWithChoice(${appIndex}, '${choiceRole}', ${rankNumber})">✅ ล็อคบทบาทนี้ (อันดับ ${rankNumber}) - เข้าสู่ 2 ทันที</button>`;
+      let actionHtml = `<button class="btn-secondary" style="background:#28a745; padding:6px 12px; font-size:0.85rem; font-weight:bold;" onclick="approveAppWithChoiceByUid('${targetUid}', '${choiceRole}', ${rankNumber})">✅ ล็อคบทบาทนี้ (อันดับ ${rankNumber}) - เข้าสู่ 2 ทันที</button>`;
 
       if (!roleCheck.available) {
         statusColor = "#ff2a2a";
@@ -822,8 +988,8 @@ window.openApplicationChoicesModal = function (appIndex) {
     ${choicesHtml}
     <hr style="border-color:#333; margin:15px 0;">
     <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:space-between;">
-      <button class="btn-secondary" style="background:#f0ad4e; color:#000; font-weight:bold;" onclick="requestNewChoices(${appIndex})">🔄 ส่งไปขั้นตอน 1.2.5 (อุทธรณ์บทบาทใหม่)</button>
-      <button class="btn-secondary" style="background:#c9302c; font-weight:bold;" onclick="rejectApplicationCompletely(${appIndex})">❌ ปฏิเสธการสมัคร</button>
+      <button class="btn-secondary" style="background:#f0ad4e; color:#000; font-weight:bold;" onclick="requestNewChoicesByUid('${targetUid}')">🔄 ส่งไปขั้นตอน 1.2.5 (อุทธรณ์บทบาทใหม่)</button>
+      <button class="btn-secondary" style="background:#c9302c; font-weight:bold;" onclick="rejectApplicationCompletelyByUid('${targetUid}')">❌ ปฏิเสธการสมัคร</button>
     </div>
   `;
 
@@ -831,10 +997,10 @@ window.openApplicationChoicesModal = function (appIndex) {
   modal.classList.add("open");
 };
 
-window.approveAppWithChoice = async function (appIndex, chosenRole, rankNumber) {
+window.approveAppWithChoiceByUid = async function (targetUid, chosenRole, rankNumber) {
   if (!confirm(`ยืนยันล็อคบทบาท "${chosenRole}" (จากอันดับ ${rankNumber}) ให้ผู้ใช้ทันที และเข้าสู่ 2?`)) return;
 
-  await updateAppStatusWithData(appIndex, "step_1_2_passed", {
+  await updateAppStatusWithDataByUid(targetUid, "step_1_2_passed", {
     assignedRole: chosenRole,
     approvedRank: rankNumber,
     approvalNote: `แอดมินล็อคบทบาท ${chosenRole} (อันดับ ${rankNumber}) สำเร็จ เข้าสู่ 2`,
@@ -848,10 +1014,10 @@ window.approveAppWithChoice = async function (appIndex, chosenRole, rankNumber) 
 // ==========================================
 // 1.2.5 การยื่นอุทธรณ์
 // ==========================================
-window.requestNewChoices = async function (appIndex) {
+window.requestNewChoicesByUid = async function (targetUid) {
   const note = prompt("ระบุหมายเหตุแจ้งเตือนให้ผู้ใช้ไปยื่นอุทธรณ์เปลี่ยนบทบาทใหม่ในขั้นตอน 1.2.5:");
   if (note !== null) {
-    await updateAppStatusWithData(appIndex, "step_1_2_5_revision", {
+    await updateAppStatusWithDataByUid(targetUid, "step_1_2_5_revision", {
       revisionNote: note || "อันดับ 1-3 เต็มหมด กรุณายื่นอุทธรณ์เลือกบทบาทใหม่ใน 1.2.5",
       requiresNewChoices: true,
     });
@@ -861,30 +1027,41 @@ window.requestNewChoices = async function (appIndex) {
   }
 };
 
-window.adminReviewRole = async function (appIndex, actionType) {
+window.adminReviewRoleByUid = async function (targetUid, actionType) {
   const proj = projects[currentProjectIndex];
-  const app = proj.applications[appIndex];
-  const appealRole = app.pendingAppealRole || app.selectedNewRole;
-
-  if (actionType === "approve") {
-    app.assignedRole = appealRole;
-    app.status = "step_1_2_passed"; // หลังเลือกบทบาทแล้ว ส่งกลับไปเข้าระบบ 2
-    app.appealStatus = "approved";
-    delete app.pendingAppealRole;
-    delete app.selectedNewRole;
-    app.revisionNote = `แอดมินอนุมัติอุทธรณ์เปลี่ยนเป็นบทบาท: ${app.assignedRole} สำเร็จ (ส่งกลับไปเข้า 2)`;
-  } else if (actionType === "reject") {
-    app.status = "step_1_2_5_revision"; 
-    app.appealStatus = "rejected";
-    delete app.pendingAppealRole;
-    delete app.selectedNewRole;
-    app.revisionNote = `แอดมินปฏิเสธคำขออุทธรณ์บทบาท กรุณาเลือกบทบาทใหม่หรือขอยกเลิกการสมัคร`;
-  }
 
   try {
-    await updateDoc(doc(db, "projects", proj.firebaseId), {
-      applications: proj.applications,
+    await runTransaction(db, async (transaction) => {
+      const projRef = doc(db, "projects", proj.firebaseId);
+      const projDoc = await transaction.get(projRef);
+      if (!projDoc.exists()) throw new Error("ไม่พบโปรเจกต์นี้");
+
+      const projData = projDoc.data();
+      const apps = projData.applications || [];
+      const appIndex = apps.findIndex(a => a.uid === targetUid);
+      if (appIndex === -1) throw new Error("ไม่พบข้อมูลผู้สมัครรายนี้");
+
+      const app = apps[appIndex];
+      const appealRole = app.pendingAppealRole || app.selectedNewRole;
+
+      if (actionType === "approve") {
+        app.assignedRole = appealRole;
+        app.status = "step_1_2_passed";
+        app.appealStatus = "approved";
+        delete app.pendingAppealRole;
+        delete app.selectedNewRole;
+        app.revisionNote = `แอดมินอนุมัติอุทธรณ์เปลี่ยนเป็นบทบาท: ${app.assignedRole} สำเร็จ (ส่งกลับไปเข้า 2)`;
+      } else if (actionType === "reject") {
+        app.status = "step_1_2_5_revision"; 
+        app.appealStatus = "rejected";
+        delete app.pendingAppealRole;
+        delete app.selectedNewRole;
+        app.revisionNote = `แอดมินปฏิเสธคำขออุทธรณ์บทบาท กรุณาเลือกบทบาทใหม่หรือขอยกเลิกการสมัคร`;
+      }
+
+      transaction.update(projRef, { applications: apps, updatedAt: serverTimestamp() });
     });
+
     window.renderApplicationsList();
     alert(actionType === "approve" ? "✅ อนุมัติอุทธรณ์บทบาทสำเร็จ!" : "❌ ปฏิเสธคำขออุทธรณ์เรียบร้อย!");
   } catch (err) {
@@ -895,18 +1072,18 @@ window.adminReviewRole = async function (appIndex, actionType) {
 // ==========================================
 // 1.9.5 การขอแก้ไขเอกสารรอบ 2
 // ==========================================
-window.approveEditRequest = async function (appIndex) {
+window.approveEditRequestByUid = async function (targetUid) {
   if (!confirm("🔓 ต้องการอนุมัติคำขอแก้ไขเอกสารรอบ 2 (1.9.5) ให้ผู้ใช้หรือไม่?")) return;
-  await updateAppStatusWithData(appIndex, "step_1_9_5_allowed", {
+  await updateAppStatusWithDataByUid(targetUid, "step_1_9_5_allowed", {
     revisionNote: "แอดมินอนุมัติคำขอแก้ไขเอกสารรอบ 2 แล้ว สามารถส่งข้อมูลกลับมาใหม่ใน 2 ได้",
   });
   alert("✅ อนุมัติสิทธิ์ให้ผู้ใช้แก้ไขเรียบร้อย!");
 };
 
-window.rejectEditRequest = async function (appIndex) {
+window.rejectEditRequestByUid = async function (targetUid) {
   const note = prompt("ระบุเหตุผลที่ไม่อนุมัติคำขอแก้ไข (1.9.5):");
   if (note !== null) {
-    await updateAppStatusWithData(appIndex, "step_2_submitted", {
+    await updateAppStatusWithDataByUid(targetUid, "step_2_submitted", {
       editReason: null,
       revisionNote: `ไม่อนุมัติคำขอแก้ไขรอบ 2 (1.9.5): ${note}`,
     });
@@ -917,20 +1094,20 @@ window.rejectEditRequest = async function (appIndex) {
 // ==========================================
 // 2.1 ขั้นตอนยืนยันข้อมูล & ตีกลับไปขั้นตอน 2 ใหม่
 // ==========================================
-window.openRevisionPrompt = function (appIndex) {
+window.openRevisionPromptByUid = function (targetUid) {
   const note = prompt("ระบุจุดที่ต้องการตีกลับให้ผู้ใช้แก้ไขในรอบ 2:");
   if (note !== null) {
-    updateAppStatusWithData(appIndex, "step_1_2_passed", {
+    updateAppStatusWithDataByUid(targetUid, "step_1_2_passed", {
       revisionNote: note || "ข้อมูลในรอบ 2 ไม่ถูกต้อง กรุณาแก้ไขและส่งข้อมูลใหม่ในขั้นตอนที่ 2",
-      stage2Answers: null // ล้างข้อมูลเก่าเพื่อให้ผู้ใช้ส่งใหม่ในขั้นตอนที่ 2 ได้อย่างสมบูรณ์
+      stage2Answers: null 
     });
     alert("🔄 ตีกลับข้อมูลไปยังขั้นตอนที่ 2 ให้ผู้ใช้แก้ไขเรียบร้อยแล้ว!");
   }
 };
 
-window.rejectApplicationCompletely = async function (appIndex) {
+window.rejectApplicationCompletelyByUid = async function (targetUid) {
   if (confirm("⚠️ ต้องการปฏิเสธการสมัครของผู้สมัครรายนี้?")) {
-    await updateAppStatusWithData(appIndex, "rejected", {
+    await updateAppStatusWithDataByUid(targetUid, "rejected", {
       approvalNote: "ปฏิเสธการสมัครเนื่องจากไม่ผ่านเกณฑ์",
     });
     const modal = document.getElementById("appChoicesModal");
@@ -939,8 +1116,8 @@ window.rejectApplicationCompletely = async function (appIndex) {
   }
 };
 
-window.openInterviewPrompt = function (appIndex) {
-  selectedAppIndexForInterview = appIndex;
+window.openInterviewPrompt = function (targetUid) {
+  selectedAppIndexForInterview = targetUid;
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   document.getElementById("interviewDatetimeInput").value = tomorrow.toISOString().slice(0, 16);
@@ -958,32 +1135,46 @@ window.confirmInterviewSchedule = async function () {
   const [dPart, tPart] = dtInput.split("T");
   const [y, m, d] = dPart.split("-");
   if (selectedAppIndexForInterview !== null) {
-    await updateAppStatusWithData(selectedAppIndexForInterview, "step_1_1_interview", {
+    await updateAppStatusWithDataByUid(selectedAppIndexForInterview, "step_1_1_interview", {
       interviewDate: `${d}/${m}/${y} เวลา ${tPart} น.`,
     });
     window.closeInterviewModal();
   }
 };
 
-window.updateAppStatus = async function (appIndex, newStatus) {
-  await updateAppStatusWithData(appIndex, newStatus, {});
+window.updateAppStatusByUid = async function (targetUid, newStatus) {
+  await updateAppStatusWithDataByUid(targetUid, newStatus, {});
 };
 
-async function updateAppStatusWithData(appIndex, newStatus, additionalData) {
+async function updateAppStatusWithDataByUid(targetUid, newStatus, additionalData) {
   const proj = projects[currentProjectIndex];
   const currentDateTime = new Date().toLocaleString("th-TH");
-  proj.applications[appIndex] = {
-    ...proj.applications[appIndex],
-    status: newStatus,
-    ...additionalData,
-    updatedAtString: currentDateTime,
-  };
+
   try {
-    await updateDoc(doc(db, "projects", proj.firebaseId), {
-      applications: proj.applications,
-      updatedAt: serverTimestamp(),
-      updatedAtString: currentDateTime,
+    await runTransaction(db, async (transaction) => {
+      const projRef = doc(db, "projects", proj.firebaseId);
+      const projDoc = await transaction.get(projRef);
+      if (!projDoc.exists()) throw new Error("ไม่พบโปรเจกต์นี้");
+
+      const projData = projDoc.data();
+      const apps = projData.applications || [];
+      const appIndex = apps.findIndex(a => a.uid === targetUid);
+      if (appIndex === -1) throw new Error("ไม่พบข้อมูลผู้สมัครรายนี้");
+
+      apps[appIndex] = {
+        ...apps[appIndex],
+        status: newStatus,
+        ...additionalData,
+        updatedAtString: currentDateTime,
+      };
+
+      transaction.update(projRef, {
+        applications: apps,
+        updatedAt: serverTimestamp(),
+        updatedAtString: currentDateTime,
+      });
     });
+
     window.renderApplicationsList();
   } catch (err) {
     alert("❌ เกิดข้อผิดพลาด: " + err.message);
@@ -995,7 +1186,7 @@ window.closeAppModal = function () {
 };
 
 // ==========================================
-// 3. ขั้นตอนเข้าสู่โปรเจกต์แล้ว (จัดการประกาศและสมาชิก)
+// 3. ขั้นตอนเข้าสู่โปรเจกต์แล้ว
 // ==========================================
 window.openProjectWindow3 = function (index) {
   currentProjectIndexForWindow3 = index;
@@ -1016,6 +1207,7 @@ window.closeProjectWindow3 = function () {
 function renderProjectNewsList() {
   const proj = projects[currentProjectIndexForWindow3];
   const container = document.getElementById("projectNewsListContainer");
+  if (!container) return;
   container.innerHTML = "";
   const pNews = proj.projectNews || [];
 
@@ -1082,6 +1274,7 @@ window.deleteProjectNews = async function (newsIdx) {
 function renderProjectMembersList() {
   const proj = projects[currentProjectIndexForWindow3];
   const container = document.getElementById("projectMembersListContainer");
+  if (!container) return;
   container.innerHTML = "";
 
   const members = proj.applications ? proj.applications.filter((a) => isCountedAsPassed(a.status)) : [];
@@ -1092,30 +1285,41 @@ function renderProjectMembersList() {
   }
 
   members.forEach((m) => {
-    const realIndex = proj.applications.findIndex(
-      (item) => item.uid === m.uid && item.accountEmail === m.accountEmail,
-    );
     container.innerHTML += `
       <div style="background:#181818; padding:8px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
         <div><strong>${m.user || "ไม่ระบุ"}</strong> <span style="color:#28a745; font-size:0.8rem;">(${m.assignedRole || "สมาชิก"})</span><div style="font-size:0.75rem; color:#aaa;">${m.accountEmail}</div></div>
-        <button class="btn-secondary" style="background:#c9302c; padding:3px 8px; font-size:0.75rem;" onclick="removeMemberFromProject(${realIndex})">ปลดออก</button>
+        <button class="btn-secondary" style="background:#c9302c; padding:3px 8px; font-size:0.75rem;" onclick="removeMemberFromProjectByUid('${m.uid}')">ปลดออก</button>
       </div>
     `;
   });
 };
 
-window.removeMemberFromProject = async function (appIndex) {
+window.removeMemberFromProjectByUid = async function (targetUid) {
   if (!confirm("⚠️ ต้องการปลดสมาชิกออกจากโปรเจกต์และคืนโควตาใช่หรือไม่?")) return;
   const proj = projects[currentProjectIndexForWindow3];
   const currentDateTime = new Date().toLocaleString("th-TH");
-  proj.applications[appIndex].status = "rejected";
-  proj.applications[appIndex].updatedAtString = currentDateTime;
+
   try {
-    await updateDoc(doc(db, "projects", proj.firebaseId), {
-      applications: proj.applications,
-      updatedAt: serverTimestamp(),
-      updatedAtString: currentDateTime,
+    await runTransaction(db, async (transaction) => {
+      const projRef = doc(db, "projects", proj.firebaseId);
+      const projDoc = await transaction.get(projRef);
+      if (!projDoc.exists()) throw new Error("ไม่พบโปรเจกต์นี้");
+
+      const projData = projDoc.data();
+      const apps = projData.applications || [];
+      const appIndex = apps.findIndex(a => a.uid === targetUid);
+      if (appIndex === -1) throw new Error("ไม่พบสมาชิกรายนี้");
+
+      apps[appIndex].status = "rejected";
+      apps[appIndex].updatedAtString = currentDateTime;
+
+      transaction.update(projRef, {
+        applications: apps,
+        updatedAt: serverTimestamp(),
+        updatedAtString: currentDateTime,
+      });
     });
+
     renderProjectMembersList();
     alert("✅ ปลดสมาชิกสำเร็จ!");
   } catch (err) {
@@ -1244,7 +1448,7 @@ window.deleteNews = async function (index) {
 };
 
 // ==========================================
-// 6. USERS MANAGEMENT & SEARCH
+// 6. USERS MANAGEMENT & SEARCH (แก้ไขระบบแบนและลบผู้ใช้ให้เสถียรขึ้น)
 // ==========================================
 window.renderUsers = function() {
   const tbody = document.getElementById("userTable") || document.getElementById("userTableBody");
@@ -1271,7 +1475,6 @@ window.renderUsers = function() {
   }
 
   filteredUsers.forEach((u) => {
-    const index = users.indexOf(u);
     const isBanned = u.status === "Banned";
     tbody.innerHTML += `
       <tr>
@@ -1279,16 +1482,17 @@ window.renderUsers = function() {
         <td>${u.email || "-"}</td>
         <td><span style="color:${isBanned ? "#ff2a2a" : "#28a745"}">${u.status || "Active"}</span></td>
         <td>
-          <button class="btn-secondary" style="background:${isBanned ? "#28a745" : "#f0ad4e"}; color:${isBanned ? "#fff" : "#000"}; padding:3px 8px; font-size:0.8rem;" onclick="toggleBanUser(${index})">${isBanned ? "ปลดแบน" : "แบน"}</button>
-          <button class="btn-secondary" style="background:#c9302c; padding:3px 8px; font-size:0.8rem;" onclick="deleteUser(${index})">ลบ</button>
+          <button class="btn-secondary" style="background:${isBanned ? "#28a745" : "#f0ad4e"}; color:${isBanned ? "#fff" : "#000"}; padding:3px 8px; font-size:0.8rem;" onclick="toggleBanUser('${u.firebaseId}')">${isBanned ? "ปลดแบน" : "แบน"}</button>
+          <button class="btn-secondary" style="background:#c9302c; padding:3px 8px; font-size:0.8rem;" onclick="deleteUser('${u.firebaseId}')">ลบ</button>
         </td>
       </tr>
     `;
   });
 };
 
-window.toggleBanUser = async function (index) {
-  const u = users[index];
+window.toggleBanUser = async function (firebaseId) {
+  const u = users.find(item => item.firebaseId === firebaseId);
+  if (!u) return;
   const newStatus = u.status === "Banned" ? "Active" : "Banned";
   if (confirm(`ยืนยันเปลี่ยนสถานะผู้ใช้เป็น "${newStatus}"?`)) {
     try {
@@ -1300,10 +1504,12 @@ window.toggleBanUser = async function (index) {
   }
 };
 
-window.deleteUser = async function (index) {
+window.deleteUser = async function (firebaseId) {
+  const u = users.find(item => item.firebaseId === firebaseId);
+  if (!u) return;
   if (confirm("ยืนยันลบผู้ใช้?")) {
     try {
-      await deleteDoc(doc(db, "users", users[index].firebaseId));
+      await deleteDoc(doc(db, "users", u.firebaseId));
       alert("✅ ลบผู้ใช้สำเร็จ!");
     } catch (err) {
       alert("❌ เกิดข้อผิดพลาด: " + err.message);
