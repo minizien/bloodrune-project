@@ -176,7 +176,18 @@ window.renderProjects = function() {
 
   filteredProjects.forEach((proj) => {
     const index = projects.indexOf(proj);
-    const isHidden = proj.hidden === true || proj.hidden === "true";
+    
+    const projStatus = proj.status || (proj.hidden === true || proj.hidden === "true" ? "hidden" : "open");
+    
+    let statusBadgeText = "🌐 เปิดรับสมัคร";
+    let statusBadgeClass = "status-active";
+    if (projStatus === "closed") {
+      statusBadgeText = "🛑 ปิดรับสมัคร";
+      statusBadgeClass = "status-closed";
+    } else if (projStatus === "hidden") {
+      statusBadgeText = "🔒 ซ่อนอยู่";
+      statusBadgeClass = "status-hidden";
+    }
 
     const approvedCount = proj.applications
       ? proj.applications.filter((a) => isCountedAsPassed(a.status)).length
@@ -219,8 +230,8 @@ window.renderProjects = function() {
     card.className = "card";
     card.innerHTML = `
       ${imagePreviewHtml}
-      <span class="card-status ${isHidden ? "status-hidden" : "status-active"}">
-        ${isHidden ? "🔒 ซ่อนอยู่" : "🌐 เปิดรับสมัคร"}
+      <span class="card-status ${statusBadgeClass}">
+        ${statusBadgeText}
       </span>
       <h4 class="card-title">${proj.name}</h4>${descHtml}
       <div class="card-info">
@@ -228,12 +239,17 @@ window.renderProjects = function() {
         <p style="margin-top:6px;"><strong>สถานะบทบาท:</strong></p>
         <ul style="padding-left: 15px; font-size: 0.85rem; color: #ccc;">${rolesHtml}</ul>
       </div>
-      <div class="card-actions" style="margin-top: 10px;">
-        <button class="btn-secondary" onclick="editProject(${index})" style="background:#2a2a2a;">⚙️ ตั้งค่าโปรเจกต์</button>
-        <button class="btn-secondary" onclick="openStage2Config(${index})" style="background:#17a2b8;">📝 ฟอร์มรอบ 2</button>
-        <button class="btn-secondary" onclick="openProjectWindow3(${index})" style="background:#28a745;">📢 บอร์ด (ขั้นตอนที่ 3)</button>
-        <button class="btn-secondary" onclick="viewApps(${index})">📋 ประวัติผู้สมัคร (${proj.applications ? proj.applications.length : 0})</button>
-        <button class="btn-secondary" style="background: #c9302c;" onclick="deleteProject(${index})">🗑️ ลบ</button>
+      
+      <div class="card-actions" style="margin-top: 12px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+          <button class="btn-secondary" onclick="editProject(${index})" style="background:#2a2a2a; width:100%;">⚙️ ตั้งค่าโปรเจกต์</button>
+          <button class="btn-secondary" onclick="openStage2Config(${index})" style="background:#17a2b8; width:100%;">📝 ฟอร์มรอบ 2</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+          <button class="btn-secondary" onclick="openProjectWindow3(${index})" style="background:#28a745; width:100%;">📢 บอร์ด (3)</button>
+          <button class="btn-secondary" onclick="viewApps(${index})" style="background:#444; width:100%;">📋 ผู้สมัคร (${proj.applications ? proj.applications.length : 0})</button>
+          <button class="btn-secondary" style="background: #c9302c; width:100%;" onclick="deleteProject(${index})">🗑️ ลบ</button>
+        </div>
       </div>
     `;
     container.appendChild(card);
@@ -247,7 +263,10 @@ window.openProjectModal = function () {
   if (document.getElementById("projImageUrl")) document.getElementById("projImageUrl").value = "";
   if (document.getElementById("projDescription")) document.getElementById("projDescription").value = "";
   document.getElementById("projMaxMembers").value = "";
-  document.getElementById("projHidden").value = "true";
+  
+  const statusSelect = document.getElementById("projStatus");
+  if (statusSelect) statusSelect.value = "open";
+
   document.getElementById("roleInputsContainer").innerHTML = "";
   document.getElementById("customQuestionsContainer").innerHTML = "";
   window.addRoleInput();
@@ -274,7 +293,7 @@ window.addRoleInput = function (name = "", count = "") {
 };
 
 // ==========================================
-// FORM BUILDER UI (คำถามส่วนที่ 1 - ไม่มีช่องข้อความธรรมดาแล้ว)
+// FORM BUILDER UI (คำถามส่วนที่ 1)
 // ==========================================
 window.addQuestionInput = function (qText = "", qType = "text", optionsList = []) {
   const container = document.getElementById("customQuestionsContainer");
@@ -325,7 +344,7 @@ window.addQuestionInput = function (qText = "", qType = "text", optionsList = []
 };
 
 // ==========================================
-// FORM BUILDER UI (คำถามส่วนที่ 2 - มีช่องข้อความธรรมดา "แสดงผลจริงรอบ 2")
+// FORM BUILDER UI (คำถามส่วนที่ 2)
 // ==========================================
 window.addStage2QuestionInput = function (qText = "", qType = "text", optionsList = [], placeholder = "") {
   const container = document.getElementById("stage2QuestionsContainer");
@@ -351,7 +370,6 @@ window.addStage2QuestionInput = function (qText = "", qType = "text", optionsLis
       </select>
     </div>
 
-    <!-- ช่องข้อความธรรมดา "แสดงผลจริงรอบ 2" -->
     <div class="question-preview-area" style="width: 100%; margin-top: 12px; padding: 10px 12px; background: #181818; border: 1px dashed #444; border-radius: 6px; box-sizing: border-box;">
       <span style="font-size: 0.75rem; color: #888; display: block; margin-bottom: 4px;">👁️ แสดงผลจริงรอบ 2:</span>
       <input type="text" class="q-placeholder-input" value="${placeholder}" placeholder="[ช่องข้อความธรรมดาที่ลิงก์กับโปรเจกต์]" style="width: 100%; padding: 8px 10px; background: #111; border: 1px solid #333; color: #fff; border-radius: 4px; font-size: 0.85rem; box-sizing: border-box;" />
@@ -449,7 +467,10 @@ window.handleSaveProject = async function (e) {
   const imageUrl = document.getElementById("projImageUrl") ? document.getElementById("projImageUrl").value.trim() : "";
   const description = document.getElementById("projDescription") ? document.getElementById("projDescription").value.trim() : "";
   const maxMembers = Number(document.getElementById("projMaxMembers").value);
-  const hidden = document.getElementById("projHidden").value === "true";
+  
+  const statusElem = document.getElementById("projStatus");
+  const status = statusElem ? statusElem.value : "open";
+  const hidden = status === "hidden";
 
   const roleNames = document.querySelectorAll(".role-name");
   const roleCounts = document.querySelectorAll(".role-count");
@@ -498,6 +519,7 @@ window.handleSaveProject = async function (e) {
     imageUrl,
     description,
     maxMembers,
+    status,
     hidden,
     roles,
     customQuestions,
@@ -540,7 +562,11 @@ window.editProject = function (index) {
   if (document.getElementById("projImageUrl")) document.getElementById("projImageUrl").value = proj.imageUrl || "";
   if (document.getElementById("projDescription")) document.getElementById("projDescription").value = proj.description || "";
   document.getElementById("projMaxMembers").value = proj.maxMembers;
-  document.getElementById("projHidden").value = proj.hidden ? "true" : "false";
+  
+  const statusSelect = document.getElementById("projStatus");
+  if (statusSelect) {
+    statusSelect.value = proj.status || (proj.hidden ? "hidden" : "open");
+  }
 
   const roleContainer = document.getElementById("roleInputsContainer");
   roleContainer.innerHTML = "";
@@ -1186,7 +1212,7 @@ window.closeAppModal = function () {
 };
 
 // ==========================================
-// 3. ขั้นตอนเข้าสู่โปรเจกต์แล้ว
+// 3. ขั้นตอนเข้าสู่โปรเจกต์แล้ว (บอร์ดโปรเจกต์)
 // ==========================================
 window.openProjectWindow3 = function (index) {
   currentProjectIndexForWindow3 = index;
@@ -1194,6 +1220,10 @@ window.openProjectWindow3 = function (index) {
   document.getElementById("w3ProjTitle").innerText = `บอร์ดโปรเจกต์ (3): ${proj.name}`;
   document.getElementById("pNewsTitle").value = "";
   document.getElementById("pNewsContent").value = "";
+  
+  const searchInput = document.getElementById("projectMemberSearchInput");
+  if (searchInput) searchInput.value = "";
+
   renderProjectNewsList();
   renderProjectMembersList();
   document.getElementById("projectWindow3Modal").classList.add("open");
@@ -1204,6 +1234,7 @@ window.closeProjectWindow3 = function () {
   currentProjectIndexForWindow3 = null;
 };
 
+// เรนเดอร์รายการประกาศ (รองรับดีไซน์การ์ดลอย)
 function renderProjectNewsList() {
   const proj = projects[currentProjectIndexForWindow3];
   const container = document.getElementById("projectNewsListContainer");
@@ -1212,21 +1243,47 @@ function renderProjectNewsList() {
   const pNews = proj.projectNews || [];
 
   if (pNews.length === 0) {
-    container.innerHTML = '<p style="color:#888; font-size:0.85rem;">ยังไม่มีประกาศเฉพาะกลุ่มใน 3</p>';
+    container.innerHTML = '<p style="color:#6b7280; font-size:0.85rem; text-align:center; padding: 15px; font-style: italic;">ยังไม่มีประกาศในโปรเจกต์นี้</p>';
+    const detailBox = document.getElementById("selectedNewsDetail");
+    if (detailBox) {
+      detailBox.innerHTML = '<span style="color: #6b7280; font-style: italic; display: flex; align-items: center; justify-content: center; height: 100%; min-height: 70px;">👉 คลิกเลือกประกาศจากรายการด้านบนเพื่อดูเนื้อหาเต็ม</span>';
+    }
     return;
   }
 
   pNews.forEach((n, nIdx) => {
     container.innerHTML += `
-      <div style="background:#181818; padding:8px; border-radius:4px; border-left:3px solid #ff2a2a; margin-bottom:6px;">
-        <strong>${n.title}</strong>
-        <p style="font-size:0.85rem; color:#aaa;">${n.content}</p>
-        <div style="font-size:0.7rem; color:#777; margin-top:2px;">🕒 ${n.date || "-"}</div>
-        <button class="btn-secondary" style="background:#c9302c; padding:2px 6px; font-size:0.75rem; margin-top:4px;" onclick="deleteProjectNews(${nIdx})">ลบข่าว</button>
+      <div onclick="selectNewsDetail(${nIdx})" style="background: #15151c; padding: 10px 12px; border-radius: 6px; border: 1px solid #262636; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#ef4444'; this.style.background='#1a1a24'" onmouseout="this.style.borderColor='#262636'; this.style.background='#15151c'">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="color: #fff; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;">📌 ${n.title}</strong>
+          <button type="button" class="btn-secondary" style="background: rgba(220, 38, 38, 0.2); color: #ef4444; border: 1px solid rgba(220, 38, 38, 0.4); padding: 2px 8px; font-size: 0.7rem; border-radius: 4px;" onclick="event.stopPropagation(); deleteProjectNews(${nIdx})">ลบ</button>
+        </div>
+        <div style="font-size: 0.72rem; color: #9ca3af; margin-top: 3px;">🕒 ${n.date || "-"}</div>
       </div>
     `;
   });
+
+  if (pNews.length > 0) {
+    selectNewsDetail(0);
+  }
 }
+
+// ฟังก์ชันคลิกแสดงรายละเอียดในการ์ดลอย
+window.selectNewsDetail = function(newsIdx) {
+  const proj = projects[currentProjectIndexForWindow3];
+  if (!proj || !proj.projectNews) return;
+  const newsItem = proj.projectNews[newsIdx];
+  const detailBox = document.getElementById("selectedNewsDetail");
+  if (!detailBox || !newsItem) return;
+
+  detailBox.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; border-bottom: 1px solid #222230; padding-bottom: 6px;">
+      <strong style="color: #fff; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">📌 ${newsItem.title}</strong>
+      <span style="font-size: 0.7rem; color: #9ca3af; background: #1f1f2e; padding: 2px 6px; border-radius: 4px;">📅 ${newsItem.date || "-"}</span>
+    </div>
+    <p style="color: #d1d5db; margin: 0; white-space: pre-line; line-height: 1.5; font-size: 0.88rem;">${newsItem.content}</p>
+  `;
+};
 
 window.handleSaveProjectNews = async function (e) {
   e.preventDefault();
@@ -1271,24 +1328,39 @@ window.deleteProjectNews = async function (newsIdx) {
   }
 };
 
-function renderProjectMembersList() {
+// เรนเดอร์รายชื่อสมาชิก พร้อมระบบค้นหา (Search)
+window.renderProjectMembersList = function () {
   const proj = projects[currentProjectIndexForWindow3];
   const container = document.getElementById("projectMembersListContainer");
   if (!container) return;
   container.innerHTML = "";
 
+  const searchInputElem = document.getElementById("projectMemberSearchInput");
+  const keyword = searchInputElem ? searchInputElem.value.toLowerCase().trim() : "";
+
   const members = proj.applications ? proj.applications.filter((a) => isCountedAsPassed(a.status)) : [];
 
-  if (members.length === 0) {
-    container.innerHTML = '<p style="color:#888; font-size:0.85rem;">ยังไม่มีสมาชิกใน 3</p>';
+  const filteredMembers = members.filter(m => {
+    const name = (m.user || "").toLowerCase();
+    const email = (m.accountEmail || "").toLowerCase();
+    const role = (m.assignedRole || "").toLowerCase();
+    return name.includes(keyword) || email.includes(keyword) || role.includes(keyword);
+  });
+
+  if (filteredMembers.length === 0) {
+    container.innerHTML = '<p style="color:#888; font-size:0.85rem; text-align:center; padding: 20px;">ไม่พบรายชื่อสมาชิกที่ค้นหา</p>';
     return;
   }
 
-  members.forEach((m) => {
+  filteredMembers.forEach((m) => {
     container.innerHTML += `
-      <div style="background:#181818; padding:8px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <div><strong>${m.user || "ไม่ระบุ"}</strong> <span style="color:#28a745; font-size:0.8rem;">(${m.assignedRole || "สมาชิก"})</span><div style="font-size:0.75rem; color:#aaa;">${m.accountEmail}</div></div>
-        <button class="btn-secondary" style="background:#c9302c; padding:3px 8px; font-size:0.75rem;" onclick="removeMemberFromProjectByUid('${m.uid}')">ปลดออก</button>
+      <div style="background:#181818; padding:10px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; border: 1px solid #222;">
+        <div>
+          <strong style="color: #fff;">${m.user || "ไม่ระบุ"}</strong> 
+          <span style="color:#28a745; font-size:0.8rem; background: rgba(40,167,69,0.15); padding: 2px 6px; border-radius: 4px;">(${m.assignedRole || "สมาชิก"})</span>
+          <div style="font-size:0.75rem; color:#aaa; margin-top: 3px;">📧 ${m.accountEmail || "-"}</div>
+        </div>
+        <button class="btn-secondary" style="background:#c9302c; padding:4px 10px; font-size:0.75rem; border-radius: 4px; cursor: pointer;" onclick="removeMemberFromProjectByUid('${m.uid}')">ปลดออก</button>
       </div>
     `;
   });
@@ -1448,7 +1520,7 @@ window.deleteNews = async function (index) {
 };
 
 // ==========================================
-// 6. USERS MANAGEMENT & SEARCH (แก้ไขระบบแบนและลบผู้ใช้ให้เสถียรขึ้น)
+// 6. USERS MANAGEMENT & SEARCH
 // ==========================================
 window.renderUsers = function() {
   const tbody = document.getElementById("userTable") || document.getElementById("userTableBody");
