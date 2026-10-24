@@ -367,9 +367,9 @@
       </div>
     </div>
 
-    <!-- MODAL: WINDOW 3 -->
+    <!-- MODAL: WINDOW 3 (แบ่งเป็น 2 Tabs และหน้า 1 แบ่ง 2 ซีก) -->
     <div id="projectWindow3Modal" class="modal-overlay">
-      <div class="modal-card" style="max-width: 900px">
+      <div class="modal-card" style="max-width: 850px; width: 95%;">
         <button
           class="close-modal"
           type="button"
@@ -380,92 +380,119 @@
         <h3 id="w3ProjTitle" style="color: #ff2a2a; margin-bottom: 5px">
           หน้าต่างที่ 3: ระบบจัดการสมาชิกและประกาศเฉพาะโปรเจกต์
         </h3>
-        <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 20px">
+        <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 15px">
           หน้านี้จะประกาศข่าวสารที่เห็นเฉพาะสมาชิกที่ผ่านเข้าร่วมโปรเจกต์นี้เท่านั้น
         </p>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
-          <div
-            style="
-              background: #101010;
-              padding: 15px;
-              border-radius: 6px;
-              border: 1px solid #222;
-            "
-          >
-            <h4
-              style="
-                color: #fff;
-                margin-bottom: 12px;
-                border-bottom: 1px solid #222;
-                padding-bottom: 8px;
-              "
-            >
-              สร้างประกาศสำหรับสมาชิกโปรเจกต์
-            </h4>
-            <form onsubmit="handleSaveProjectNews(event)">
-              <div class="form-group">
-                <label>หัวข้อประกาศ</label>
-                <input
-                  type="text"
-                  id="pNewsTitle"
-                  placeholder="หัวข้อประกาศ..."
-                  required
-                />
-              </div>
-              <div class="form-group">
-                <label>เนื้อหาประกาศ</label>
-                <textarea
-                  id="pNewsContent"
-                  rows="4"
-                  placeholder="รายละเอียดประกาศ..."
-                  required
-                ></textarea>
-              </div>
-              <button type="submit" class="btn-primary" style="width: 100%">
-                ส่งประกาศไปยังหน้า USER ของสมาชิก
-              </button>
-            </form>
+        <!-- แถบปุ่มเปลี่ยนหน้า (Tabs) -->
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 12px;">
+          <button type="button" id="w3BtnTabNews" class="btn-secondary" onclick="switchW3Tab('news')" style="background: #ff2a2a; color: #fff; flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; cursor: pointer;">
+            📢 หน้า 1: ประกาศข่าวสารโปรเจกต์
+          </button>
+          <button type="button" id="w3BtnTabMembers" class="btn-secondary" onclick="switchW3Tab('members')" style="background: #222; color: #aaa; flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; cursor: pointer;">
+            👥 หน้า 2: รายชื่อสมาชิกในโปรเจกต์
+          </button>
+        </div>
 
-            <div style="margin-top: 20px">
-              <h5 style="color: #aaa; margin-bottom: 10px">
-                ประกาศที่ส่งแล้วในโปรเจกต์นี้:
-              </h5>
+        <!-- หน้าที่ 1: ประกาศข่าวสาร (แบ่ง 2 ซีกซ้าย-ขวา ด้วย Flexbox) -->
+        <div id="w3TabNews" class="w3-tab-pane" style="display: block;">
+          <div style="display: flex; gap: 15px; width: 100%; align-items: stretch; flex-wrap: wrap;">
+            
+            <!-- ซีกซ้าย: สร้างประกาศใหม่ -->
+            <div style="flex: 1; min-width: 280px; background: #101010; padding: 15px; border-radius: 6px; border: 1px solid #222; box-sizing: border-box;">
+              <h4 style="color: #fff; margin-bottom: 12px; border-bottom: 1px solid #222; padding-bottom: 8px;">
+                ✍️ สร้างประกาศใหม่
+              </h4>
+              <form onsubmit="handleSaveProjectNews(event)">
+                <div class="form-group">
+                  <label>หัวข้อประกาศ</label>
+                  <input
+                    type="text"
+                    id="pNewsTitle"
+                    placeholder="หัวข้อประกาศ..."
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label>เนื้อหาประกาศ</label>
+                  <textarea
+                    id="pNewsContent"
+                    rows="5"
+                    placeholder="รายละเอียดประกาศ..."
+                    required
+                  ></textarea>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;">
+                  🚀 ส่งประกาศไปยังหน้า USER ของสมาชิก
+                </button>
+              </form>
+            </div>
+
+            <!-- ซีกขวา: รายการประกาศเก่า + แสดงรายละเอียดการ์ดลอย -->
+            <div style="flex: 1; min-width: 280px; background: #101010; padding: 15px; border-radius: 6px; border: 1px solid #222; display: flex; flex-direction: column; box-sizing: border-box;">
+              <h4 style="color: #fff; margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 8px;">
+                📋 รายการประกาศที่ผ่านมา[cite: 17]
+              </h4>
+              <p style="font-size: 0.75rem; color: #888; margin-bottom: 10px;">คลิกที่รายการเพื่อดูรายละเอียดเต็มด้านล่าง[cite: 17]</p>
+              
+              <!-- รายการประกาศเก่า -->
               <div
                 id="projectNewsListContainer"
                 style="
-                  max-height: 200px;
+                  max-height: 160px;
                   overflow-y: auto;
                   display: flex;
                   flex-direction: column;
-                  gap: 8px;
+                  gap: 6px;
+                  margin-bottom: 12px;
+                  padding-right: 4px;
                 "
               ></div>
-            </div>
-          </div>
 
-          <div
-            style="
-              background: #101010;
-              padding: 15px;
-              border-radius: 6px;
-              border: 1px solid #222;
-            "
-          >
-            <h4
-              style="
-                color: #fff;
-                margin-bottom: 12px;
-                border-bottom: 1px solid #222;
-                padding-bottom: 8px;
-              "
-            >
-              สมาชิกที่ผ่านเข้าโปรเจกต์นี้
-            </h4>
+              <!-- กล่องรายละเอียดประกาศที่ถูกเลือก (UI การ์ดลอยแบบโมเดิร์น) -->
+              <div style="margin-top: auto; padding-top: 12px;">
+                <label style="display: block; font-size: 0.82rem; color: #ef4444; margin-bottom: 6px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                  🔍 รายละเอียดประกาศที่เลือก
+                </label>
+                <div
+                  id="selectedNewsDetail"
+                  style="
+                    background: #14141c;
+                    border: 1px solid #2a2a3c;
+                    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(239, 68, 68, 0.05);
+                    padding: 14px;
+                    border-radius: 8px;
+                    font-size: 0.85rem;
+                    color: #d1d5db;
+                    min-height: 95px;
+                    max-height: 150px;
+                    overflow-y: auto;
+                  "
+                >
+                  <span style="color: #6b7280; font-style: italic; display: flex; align-items: center; justify-content: center; height: 100%; min-height: 70px;">👉 คลิกเลือกประกาศจากรายการด้านบนเพื่อดูเนื้อหาเต็ม</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- หน้าที่ 2: รายชื่อสมาชิก + ช่องค้นหา (Search) -->
+        <div id="w3TabMembers" class="w3-tab-pane" style="display: none;">
+          <div style="background: #101010; padding: 15px; border-radius: 6px; border: 1px solid #222;">
+            <div style="margin-bottom: 15px;">
+              <input 
+                type="text" 
+                id="projectMemberSearchInput" 
+                placeholder="🔍 ค้นหาชื่อ หรือ อีเมลสมาชิกในโปรเจกต์..." 
+                oninput="renderProjectMembersList()"
+                style="width: 100%; padding: 10px; background: #090909; border: 1px solid #333; color: #fff; border-radius: 4px; box-sizing: border-box;"
+              />
+            </div>
             <div
               id="projectMembersListContainer"
               style="
-                max-height: 400px;
+                max-height: 350px;
                 overflow-y: auto;
                 display: flex;
                 flex-direction: column;
@@ -474,6 +501,7 @@
             ></div>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -588,6 +616,35 @@
         </form>
       </div>
     </div>
+
+    <!-- Script สำหรับสลับหน้า Tabs ของ Window 3 -->
+    <script>
+      function switchW3Tab(tabName) {
+        const tabNews = document.getElementById('w3TabNews');
+        const tabMembers = document.getElementById('w3TabMembers');
+        const btnNews = document.getElementById('w3BtnTabNews');
+        const btnMembers = document.getElementById('w3BtnTabMembers');
+
+        if (tabName === 'news') {
+          tabNews.style.display = 'block';
+          tabMembers.style.display = 'none';
+          btnNews.style.background = '#ff2a2a';
+          btnNews.style.color = '#fff';
+          btnMembers.style.background = '#222';
+          btnMembers.style.color = '#aaa';
+        } else {
+          tabNews.style.display = 'none';
+          tabMembers.style.display = 'block';
+          btnNews.style.background = '#222';
+          btnNews.style.color = '#aaa';
+          btnMembers.style.background = '#ff2a2a';
+          btnMembers.style.color = '#fff';
+          
+          const searchInput = document.getElementById('projectMemberSearchInput');
+          if (searchInput) searchInput.focus();
+        }
+      }
+    </script>
 
     <script type="module" src="Admin.js"></script>
   </body>
