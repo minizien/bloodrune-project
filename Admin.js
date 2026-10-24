@@ -179,13 +179,13 @@ window.renderProjects = function() {
     
     const projStatus = proj.status || (proj.hidden === true || proj.hidden === "true" ? "hidden" : "open");
     
-    let statusBadgeText = "🌐 เปิดรับสมัคร";
+    let statusBadgeText = " เปิดรับสมัคร ";
     let statusBadgeClass = "status-active";
     if (projStatus === "closed") {
-      statusBadgeText = "🛑 ปิดรับสมัคร";
+      statusBadgeText = " ปิดรับสมัคร ";
       statusBadgeClass = "status-closed";
     } else if (projStatus === "hidden") {
-      statusBadgeText = "🔒 ซ่อนอยู่";
+      statusBadgeText = " ซ่อนอยู่ ";
       statusBadgeClass = "status-hidden";
     }
 
