@@ -238,7 +238,9 @@
         container.innerHTML = '';
 
         projectsList.forEach((proj, index) => {
-          const isHidden = proj.hidden === true || proj.hidden === "true";
+          const projStatus = proj.status || (proj.hidden === true || proj.hidden === "true" ? "hidden" : "open");
+          const isHidden = projStatus === "hidden";
+          const isClosed = projStatus === "closed";
 
           const totalApps = proj.applications ? proj.applications.length : 0;
           const passedCount = proj.applications 
@@ -254,15 +256,28 @@
             ? `<img src="${imageUrls[0]}" class="banner-thumb" onerror="this.style.display='none'" />` 
             : `<div class="banner-thumb" style="display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem;">ไม่มีรูป</div>`;
 
+          let statusBadgeText = "";
+          let btnText = "เข้าสู่โปรเจกต์ ➔";
+          let bannerClass = "";
+
+          if (isClosed) {
+            statusBadgeText = '<span style="color:#ef4444; font-size:0.8rem;">[ปิดรับสมัคร]</span>';
+            btnText = "ดูข้อมูลโปรเจกต์ (ปิดรับ)";
+          } else if (isHidden) {
+            statusBadgeText = '<span style="color:#f59e0b; font-size:0.8rem;">[Coming Soon]</span>';
+            btnText = "Coming Soon";
+            bannerClass = "locked";
+          }
+
           const banner = document.createElement('div');
-          banner.className = `project-banner ${isHidden ? 'locked' : ''}`;
+          banner.className = `project-banner ${bannerClass}`;
           banner.innerHTML = `
             ${thumbHtml}
             <div class="banner-info">
-              <h3> ${proj.name || 'โปรเจกต์ไม่มีชื่อ'} ${isHidden ? '<span style="color:#ef4444; font-size:0.8rem;">[Coming Soon]</span>' : ''}</h3>
+              <h3> ${proj.name || 'โปรเจกต์ไม่มีชื่อ'} ${statusBadgeText}</h3>
               <p>รับสมัครสูงสุด: ${proj.maxMembers || 0} คน | สมัครทั้งหมด ${totalApps} คน | ผ่านคัดเลือกแล้ว ${passedCount} คน</p>
             </div>
-            <button class="banner-action-btn ${isHidden ? 'disabled' : ''}" ${isHidden ? 'disabled' : `onclick="openProjectInner(${index})"`}>${isHidden ? 'Coming Soon' : 'เข้าสู่โปรเจกต์ ➔'}</button>
+            <button class="banner-action-btn ${isHidden ? 'disabled' : ''}" ${isHidden ? 'disabled' : `onclick="openProjectInner(${index})"`}>${btnText}</button>
           `;
           container.appendChild(banner);
         });
@@ -273,7 +288,8 @@
         const proj = loadedProjects[index];
         if (!proj) return;
 
-        if (proj.hidden === true || proj.hidden === "true") {
+        const projStatus = proj.status || (proj.hidden === true || proj.hidden === "true" ? "hidden" : "open");
+        if (projStatus === "hidden") {
           alert("โปรเจกต์นี้ยังไม่เปิดรับสมัคร (Coming Soon)");
           return;
         }
@@ -357,7 +373,20 @@
         const submitBtn = document.getElementById('submitAppBtn');
         const withdrawBtn = document.getElementById('withdrawAppBtn');
 
-        if (!currentUser && !currentUid) {
+        if (projStatus === "closed") {
+          // ถ้าปิดรับสมัคร ให้แสดงข้อมูลได้ แต่ปิดปุ่มสมัคร
+          formSectionTitle.innerText = 'สถานะโปรเจกต์: ปิดรับสมัครแล้ว';
+          round1Section.style.display = 'block';
+          stage2Form.style.display = 'none';
+          statusNotice.innerHTML = '<span style="color:#ef4444; font-weight:bold;">โปรเจกต์นี้ปิดรับสมัครแล้ว (สามารถดูข้อมูลรายละเอียดและรายชื่อผู้ผ่านการคัดเลือกได้ปกติ)</span>';
+          submitBtn.innerText = 'ปิดรับสมัครแล้ว';
+          submitBtn.disabled = true;
+          submitBtn.style.background = '#555';
+          submitBtn.style.cursor = 'not-allowed';
+          if (withdrawBtn) withdrawBtn.style.display = 'none';
+          setFormInputsEditable(false);
+          renderRound1Form(proj, userApp);
+        } else if (!currentUser && !currentUid) {
           formSectionTitle.innerText = 'ยื่นใบสมัครเข้าร่วมโปรเจกต์';
           round1Section.style.display = 'block';
           stage2Form.style.display = 'none';
