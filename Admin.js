@@ -177,6 +177,7 @@ window.renderProjects = function() {
   filteredProjects.forEach((proj) => {
     const index = projects.indexOf(proj);
     
+    // ตรวจสอบและดึงค่าสถานะอย่างแม่นยำ
     const projStatus = proj.status || (proj.hidden === true || proj.hidden === "true" ? "hidden" : "open");
     
     let statusBadgeText = " เปิดรับสมัคร ";
@@ -264,6 +265,7 @@ window.openProjectModal = function () {
   if (document.getElementById("projDescription")) document.getElementById("projDescription").value = "";
   document.getElementById("projMaxMembers").value = "";
   
+  // ตั้งค่า Default สถานะโปรเจกต์ใหม่ให้เป็น open เสมอ
   const statusSelect = document.getElementById("projStatus");
   if (statusSelect) statusSelect.value = "open";
 
@@ -470,7 +472,8 @@ window.handleSaveProject = async function (e) {
   
   const statusElem = document.getElementById("projStatus");
   const status = statusElem ? statusElem.value : "open";
-  const hidden = status === "hidden";
+  // ปรับการซิงค์ค่าระหว่าง status และ hidden ให้ตรงกันเสมอ
+  const hidden = (status === "hidden");
 
   const roleNames = document.querySelectorAll(".role-name");
   const roleCounts = document.querySelectorAll(".role-count");
@@ -563,9 +566,10 @@ window.editProject = function (index) {
   if (document.getElementById("projDescription")) document.getElementById("projDescription").value = proj.description || "";
   document.getElementById("projMaxMembers").value = proj.maxMembers;
   
+  // ซิงค์การดึงสถานะเข้า Select element ให้ถูกต้องแม่นยำ
   const statusSelect = document.getElementById("projStatus");
   if (statusSelect) {
-    statusSelect.value = proj.status || (proj.hidden ? "hidden" : "open");
+    statusSelect.value = proj.status || (proj.hidden === true || proj.hidden === "true" ? "hidden" : "open");
   }
 
   const roleContainer = document.getElementById("roleInputsContainer");
@@ -1587,4 +1591,4 @@ window.deleteUser = async function (firebaseId) {
       alert("❌ เกิดข้อผิดพลาด: " + err.message);
     }
   }
-};
+}; 
