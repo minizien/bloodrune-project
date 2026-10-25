@@ -238,9 +238,10 @@
         container.innerHTML = '';
 
         projectsList.forEach((proj, index) => {
+          // ดึงสถานะให้รองรับทั้งฟิลด์ status และ hidden แบบเก่า
           const projStatus = proj.status || (proj.hidden === true || proj.hidden === "true" ? "hidden" : "open");
-          const isHidden = projStatus === "hidden";
-          const isClosed = projStatus === "closed";
+          const isHidden = (projStatus === "hidden");
+          const isClosed = (projStatus === "closed");
 
           const totalApps = proj.applications ? proj.applications.length : 0;
           const passedCount = proj.applications 
@@ -277,6 +278,7 @@
               <h3> ${proj.name || 'โปรเจกต์ไม่มีชื่อ'} ${statusBadgeText}</h3>
               <p>รับสมัครสูงสุด: ${proj.maxMembers || 0} คน | สมัครทั้งหมด ${totalApps} คน | ผ่านคัดเลือกแล้ว ${passedCount} คน</p>
             </div>
+            <!-- สถานะ hidden จะกดไม่ได้ แต่ closed จะคลิกเข้ามาดูข้อมูลข้างในได้ปกติ -->
             <button class="banner-action-btn ${isHidden ? 'disabled' : ''}" ${isHidden ? 'disabled' : `onclick="openProjectInner(${index})"`}>${btnText}</button>
           `;
           container.appendChild(banner);
@@ -378,7 +380,7 @@
           formSectionTitle.innerText = 'สถานะโปรเจกต์: ปิดรับสมัครแล้ว';
           round1Section.style.display = 'block';
           stage2Form.style.display = 'none';
-          statusNotice.innerHTML = '<span style="color:#ef4444; font-weight:bold;">โปรเจกต์นี้ปิดรับสมัครแล้ว (สามารถดูข้อมูลรายละเอียดและรายชื่อผู้ผ่านการคัดเลือกได้ปกติ)</span>';
+          statusNotice.innerHTML = '<span style="color:#ef4444; font-weight:bold;">🛑 โปรเจกต์นี้ปิดรับสมัครแล้ว (สามารถดูข้อมูลรายละเอียดและรายชื่อผู้ผ่านการคัดเลือกได้ปกติ)</span>';
           submitBtn.innerText = 'ปิดรับสมัครแล้ว';
           submitBtn.disabled = true;
           submitBtn.style.background = '#555';
