@@ -27,13 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const rawUserData = localStorage.getItem('userData');
     if (rawUserData) {
       const parsedUser = JSON.parse(rawUserData);
-      const currentUid = parsedUser.uid;
+      const currentUid = parsedUser.uid || parsedUser.firebaseId;
 
       if (currentUid && currentUid !== 'N/A') {
         onSnapshot(doc(db, "users", currentUid), (docSnap) => {
           if (docSnap.exists()) {
             const userInfo = docSnap.data();
-            if (userInfo.isBanned === true || userInfo.status === 'banned') {
+            if (userInfo.status === 'Banned' || userInfo.isBanned === true || userInfo.status === 'banned') {
               alert("⚠️ บัญชีของคุณถูกระงับการใช้งาน (Banned) กรุณาติดต่อผู้ดูแลระบบ");
               localStorage.removeItem('userData');
               localStorage.removeItem('userToken');
@@ -47,6 +47,11 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (err) {
     console.error("Ban Listener Error:", err);
   }
+
+  // ----------------------------------------------------
+  // 0.1 ระบบดึงและแสดงประกาศลอย (Lobby Popup Announcement จาก localStorage สูงสุด 3 อัน)
+  // ----------------------------------------------------
+  loadLobbyAnnouncementsPopup();
 
   // ----------------------------------------------------
   // 1. ตรวจสอบสถานะผู้ใช้งาน (Auth Status & Profile Click)
@@ -249,6 +254,85 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ----------------------------------------------------
+// ฟังก์ชันจัดการประกาศลอย (Popup Announcement - อ่านจาก localStorage สูงสุด 3 อัน)
+// ----------------------------------------------------
+function loadLobbyAnnouncementsPopup() {
+  try {
+    let savedAnn = localStorage.getItem('lobbyCustomAnnouncements');
+    if (!savedAnn) return;
+
+    let announcements = JSON.parse(savedAnn);
+    if (!Array.isArray(announcements) || announcements.length === 0) return;
+
+    // กรองเฉพาะอันที่เปิดใช้งาน (active !== false) และจำกัดสูงสุด 3 อัน
+    announcements = announcements.filter(ann => ann.active !== false && ann.imageUrl).slice(0, 3);
+    if (announcements.length === 0) return;
+
+    const popupModal = document.getElementById('lobbyPopupModal');
+    const popupCard = popupModal ? popupModal.querySelector('.lobby-popup-card') : null;
+
+    if (popupCard) {
+      let slidesHtml = announcements.map((ann, idx) => {
+        const imgTag = `<img src="${ann.imageUrl}" style="width: 100%; border-radius: 8px; max-height: 350px; object-fit: contain; display: block;" onerror="this.style.display='none'" />`;
+        
+        if (ann.targetUrl && ann.targetUrl.trim() !== "") {
+          return `<div class="ann-popup-slide" style="display: ${idx === 0 ? 'block' : 'none'};"><a href="${ann.targetUrl}">${imgTag}</a></div>`;
+        } else {
+          return `<div class="ann-popup-slide" style="display: ${idx === 0 ? 'block' : 'none'};">${imgTag}</div>`;
+        }
+      }).join('');
+
+      let navControls = '';
+      if (announcements.length > 1) {
+        navControls = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+            <button id="popPrevBtn" style="background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 4px 12px; border-radius: 4px; cursor: pointer;">❮ ก่อนหน้า</button>
+            <span id="popIndicator" style="font-size: 0.8rem; color: #aaa;">1 / ${announcements.length}</span>
+            <button id="popNextBtn" style="background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 4px 12px; border-radius: 4px; cursor: pointer;">ถัดไป ❯</button>
+          </div>
+        `;
+      }
+
+      popupCard.innerHTML = `
+        <button class="lobby-popup-close" onclick="closeLobbyPopup()">✕</button>
+        <div style="padding: 10px 0;">
+          ${slidesHtml}
+          ${navControls}
+        </div>
+      `;
+
+      popupModal.classList.add('open');
+
+      if (announcements.length > 1) {
+        let currentPopIdx = 0;
+        const slides = popupCard.querySelectorAll('.ann-popup-slide');
+        const indicator = document.getElementById('popIndicator');
+
+        const updatePopSlide = () => {
+          slides.forEach((s, i) => s.style.display = i === currentPopIdx ? 'block' : 'none');
+          if (indicator) indicator.innerText = `${currentPopIdx + 1} / ${slides.length}`;
+        };
+
+        const prevBtn = document.getElementById('popPrevBtn');
+        const nextBtn = document.getElementById('popNextBtn');
+
+        if (prevBtn) prevBtn.addEventListener('click', () => {
+          currentPopIdx = (currentPopIdx - 1 + slides.length) % slides.length;
+          updatePopSlide();
+        });
+
+        if (nextBtn) nextBtn.addEventListener('click', () => {
+          currentPopIdx = (currentPopIdx + 1) % slides.length;
+          updatePopSlide();
+        });
+      }
+    }
+  } catch (err) {
+    console.error("Error loading lobby popup announcements:", err);
+  }
+}
+
+// ----------------------------------------------------
 // Global Profile & Auth Functions
 // ----------------------------------------------------
 
@@ -275,7 +359,7 @@ function checkAuthStatus() {
   }
 }
 
-// ตรวจสอบสิทธิ์ Admin จาก Firestore โดยตรง ป้องกันการปลอมแปลง localStorage
+// ตรวจสอบสิทธิ์ Admin/OWNER จาก Firestore โดยตรง
 async function openProfileModal() {
   try {
     const rawData = localStorage.getItem('userData');
@@ -298,18 +382,38 @@ async function openProfileModal() {
     if (adminBtn) {
       adminBtn.style.display = 'none';
 
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        const userDocRef = doc(db, "users", currentUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          const dbData = userDocSnap.data();
-          userRole = dbData.RoleUser || userRole;
-          setElemText('prof-role', userRole.toUpperCase());
+      const cleanRoleLocal = userRole.toLowerCase();
+      if (cleanRoleLocal === 'admin' || cleanRoleLocal === 'owner') {
+        adminBtn.style.display = 'block';
+      }
 
-          if (userRole.toLowerCase() === 'admin' || dbData.isAdmin === true) {
-            adminBtn.style.display = 'block';
+      const targetUid = userData.uid || userData.firebaseId || (auth.currentUser ? auth.currentUser.uid : null);
+      if (targetUid) {
+        try {
+          const userDocRef = doc(db, "users", targetUid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            const dbData = userDocSnap.data();
+            
+            if (dbData.status === 'Banned' || dbData.isBanned === true) {
+              alert("⚠️ บัญชีของคุณถูกระงับการใช้งาน");
+              localStorage.clear();
+              window.location.href = 'login-signin.html';
+              return;
+            }
+
+            userRole = dbData.RoleUser || userRole;
+            setElemText('prof-role', userRole.toUpperCase());
+
+            const cleanRoleDb = userRole.toLowerCase();
+            if (cleanRoleDb === 'admin' || cleanRoleDb === 'owner' || dbData.isAdmin === true) {
+              adminBtn.style.display = 'block';
+            } else {
+              adminBtn.style.display = 'none';
+            }
           }
+        } catch (dbErr) {
+          console.warn("ไม่สามารถดึงสิทธิ์จาก Firestore ได้:", dbErr);
         }
       }
     }
@@ -333,6 +437,8 @@ window.closeProfile = function() {
 
 window.handleLogout = function() {
   localStorage.removeItem('userData');
+  localStorage.removeItem('userToken');
+  localStorage.removeItem('userLoggedIn');
   alert('ออกจากระบบเรียบร้อยแล้ว');
   location.reload();
 };
