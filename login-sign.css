@@ -35,14 +35,15 @@ body {
 
 .tab-btn {
   flex: 1;
-  padding: 12px;
+  padding: 12px 6px;
   background: transparent;
   border: none;
   color: #888;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-align: center;
 }
 
 .tab-btn.active {
@@ -106,7 +107,6 @@ body {
   cursor: not-allowed;
 }
 
-/* จัดตำแหน่งปุ่มเปิด/ซ่อนรหัสผ่าน */
 .password-wrapper {
   position: relative;
   display: flex;
@@ -134,7 +134,6 @@ body {
   color: #ff1e27;
 }
 
-/* UI เลือกวันเดือนปีเกิดแบบ Dropdown */
 .dob-group {
   display: flex;
   gap: 8px;
@@ -161,6 +160,24 @@ body {
 .dob-group select option {
   background-color: #1a0505;
   color: #ffffff;
+}
+
+.forgot-password-link {
+  text-align: right;
+  margin-top: -8px;
+  margin-bottom: 15px;
+}
+
+.forgot-password-link a {
+  color: #aaa;
+  font-size: 12px;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.forgot-password-link a:hover {
+  color: #ff1e27;
+  text-decoration: underline;
 }
 
 .btn-submit {
