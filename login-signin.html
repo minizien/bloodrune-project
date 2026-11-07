@@ -3,12 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BR.PJ-login/signin</title>
+    <title>BR.PJ - Login / Sign Up / Recovery</title>
     <link rel="stylesheet" href="login-sign.css" />
   </head>
   <body>
     <div class="auth-container">
-      <!-- ปุ่มสลับ Tab (Login / Sign Up) -->
+      <!-- 🟢 ปุ่มกลับไปหน้า Lobby (index.html) -->
+      <div style="margin-bottom: 15px; text-align: left;">
+        <a href="index.html" style="color: #aaa; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; transition: color 0.2s;" onmouseover="this.style.color='#ff1e27'" onmouseout="this.style.color='#aaa'">
+          ⬅ Return
+        </a>
+      </div>
+
+      <!-- ปุ่มสลับ Tab (Login / Sign Up / Forgot Password) -->
       <div class="tab-nav">
         <button
           class="tab-btn active"
@@ -19,6 +26,9 @@
         </button>
         <button class="tab-btn" type="button" onclick="switchTab('signup')">
           สมัครสมาชิก
+        </button>
+        <button class="tab-btn" type="button" onclick="switchTab('forgot')">
+          กู้คืนรหัส
         </button>
       </div>
 
@@ -56,6 +66,10 @@
                 🐵
               </button>
             </div>
+          </div>
+
+          <div class="forgot-password-link">
+            <a href="#" onclick="switchTab('forgot'); return false;">ลืมรหัสผ่านใช่หรือไม่?</a>
           </div>
 
           <button type="submit" class="btn-submit">เข้าสู่ระบบ</button>
@@ -189,6 +203,33 @@
 
         <div id="signup-msg" class="message-box"></div>
       </section>
+
+      <!-- SECTION 3: FORGOT PASSWORD / RECOVERY -->
+      <section id="forgot-section" class="auth-section">
+        <h2 class="section-title">กู้คืนรหัสผ่าน</h2>
+        <p class="section-subtitle">กรอกอีเมลของคุณเพื่อรับลิงก์รีเซ็ตรหัสผ่าน</p>
+
+        <form id="forgot-form" novalidate onsubmit="handleForgotPassword(event)">
+          <div class="form-group">
+            <label for="forgot-email">อีเมลที่ลงทะเบียน</label>
+            <input
+              type="text"
+              id="forgot-email"
+              placeholder="example@gmail.com"
+              autocomplete="off"
+              required
+            />
+          </div>
+
+          <button type="submit" class="btn-submit">ส่งลิงก์กู้คืนรหัสผ่าน</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 15px;">
+          <a href="#" onclick="switchTab('login'); return false;" style="color: #ff1e27; font-size: 13px; text-decoration: none;">← กลับไปหน้าเข้าสู่ระบบ</a>
+        </div>
+
+        <div id="forgot-msg" class="message-box"></div>
+      </section>
     </div>
 
     <!-- FIREBASE SDK & SCRIPT -->
@@ -198,6 +239,7 @@
         getAuth,
         createUserWithEmailAndPassword,
         signInWithEmailAndPassword,
+        sendPasswordResetEmail,
         signOut,
       } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
       import {
@@ -295,9 +337,41 @@
         if (tabName === "login") {
           document.querySelectorAll(".tab-btn")[0].classList.add("active");
           document.getElementById("login-section").classList.add("active");
-        } else {
+        } else if (tabName === "signup") {
           document.querySelectorAll(".tab-btn")[1].classList.add("active");
           document.getElementById("signup-section").classList.add("active");
+        } else if (tabName === "forgot") {
+          document.querySelectorAll(".tab-btn")[2].classList.add("active");
+          document.getElementById("forgot-section").classList.add("active");
+        }
+      };
+
+      window.handleForgotPassword = async function (e) {
+        e.preventDefault();
+        const msgBox = document.getElementById("forgot-msg");
+        msgBox.className = "message-box";
+        msgBox.innerText = "กำลังส่งลิงก์รีเซ็ตรหัสผ่าน...";
+
+        const email = document.getElementById("forgot-email").value.trim();
+
+        if (!email || !isValidEmail(email)) {
+          msgBox.className = "message-box error";
+          msgBox.innerText = "❌ กรุณากรอกอีเมลที่ถูกต้อง";
+          return;
+        }
+
+        try {
+          await sendPasswordResetEmail(auth, email);
+          msgBox.className = "message-box success";
+          msgBox.innerText = "✅ ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณเรียบร้อยแล้ว กรุณาตรวจสอบกล่องข้อความ";
+        } catch (error) {
+          console.error(error);
+          msgBox.className = "message-box error";
+          let errText = error.message;
+          if (error.code === "auth/user-not-found") {
+            errText = "ไม่พบอีเมลนี้ในระบบ";
+          }
+          msgBox.innerText = `❌ เกิดข้อผิดพลาด: ${errText}`;
         }
       };
 
@@ -352,7 +426,6 @@
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           const user = userCredential.user;
 
-          // บันทึกเฉพาะข้อมูลโปรไฟล์ (ตัดฟิลด์ password ออกเพื่อความปลอดภัยสูงสุด)
           await setDoc(doc(db, "users", user.uid), {
             RoleUser: "member",
             age: Number(age),
@@ -427,7 +500,7 @@
               nickname: userData.nickname,
               age: userData.age,
               dob: userData.dob,
-              email: userData.email,
+              email: user.email,
               RoleUser: userData.RoleUser || "member",
               status: userData.status || "Active",
             }),
