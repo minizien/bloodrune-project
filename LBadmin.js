@@ -140,7 +140,7 @@ window.handleSaveLobbyAnnouncement = async function(e) {
 
   lobbyAnnouncements.push({
     imageUrl,
-    targetUrl,
+    targetUrl: targetUrl || "",
     active: true
   });
 
