@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="Lobby.css" />
     <title>BR.PJ-Lobby</title>
     <style>
-      /* สไตล์สำหรับ Popup ประกาศลอยหน้า Lobby ฉบับปรับปรุง UI ใหม่ให้สวยงาม */
+      /* สไตล์สำหรับ Popup ประกาศลอยหน้า Lobby ฉบับคลีน สะอาดตา */
       .lobby-popup-overlay {
         display: none;
         position: fixed;
@@ -32,7 +32,7 @@
         border: 1px solid rgba(239, 68, 68, 0.3);
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 20px rgba(239, 68, 68, 0.15);
         border-radius: 16px;
-        padding: 28px;
+        padding: 24px;
         width: 90%;
         max-width: 520px;
         color: #fff;
@@ -47,7 +47,7 @@
 
       .lobby-popup-close {
         position: absolute;
-        top: 18px; right: 18px;
+        top: 14px; right: 14px;
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.1);
         color: #aaa; 
@@ -57,32 +57,13 @@
         font-size: 1rem;
         cursor: pointer;
         transition: all 0.2s;
+        z-index: 10;
       }
       .lobby-popup-close:hover {
         background: #ef4444;
         color: #fff;
         border-color: #ef4444;
         transform: rotate(90deg);
-      }
-
-      /* สไตล์ปุ่มกดรับทราบแบบพรีเมียม */
-      .lobby-popup-btn {
-        background: linear-gradient(135deg, #ef4444, #b91c1c);
-        color: #fff;
-        border: none;
-        padding: 10px 24px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-family: 'Chakra Petch', sans-serif;
-        font-weight: bold;
-        font-size: 0.95rem;
-        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-        transition: all 0.2s;
-      }
-      .lobby-popup-btn:hover {
-        background: linear-gradient(135deg, #f87171, #dc2626);
-        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
-        transform: translateY(-2px);
       }
     </style>
   </head>
@@ -121,7 +102,7 @@
         </div>
       </div>
 
-      <!-- Full-Width Slider Container (รองรับ 4 จุด เชื่อมกับระบบ Admin)[cite: 16] -->
+      <!-- Full-Width Slider Container (รองรับ 4 จุด เชื่อมกับระบบ Admin) -->
       <div class="slide-container">
         <div class="slide-ALL" id="slider">
           <div class="slide-page">
@@ -167,158 +148,29 @@
       </div>
     </div>
 
-    <!-- 📢 Lobby Popup Announcement Modal (ดีไซน์ใหม่พรีเมียม & ระบบจดจำการปิด) -->
+    <!-- 📢 Lobby Popup Announcement Modal (ดีไซน์คลีน ไม่มีปุ่มรก) -->
     <div id="lobbyPopupModal" class="lobby-popup-overlay">
       <div class="lobby-popup-card">
         <button class="lobby-popup-close" onclick="closeLobbyPopup()">✕</button>
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
-          <span style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; letter-spacing: 0.5px;">📢 ประกาศด่วน / LOBBY NOTICE</span>
-          <span id="lobbyPopupDate" style="color: #9ca3af; font-size: 0.8rem;">-</span>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold;">📢 ประกาศด่วน</span>
         </div>
         
-        <!-- ส่วนสไลเดอร์ประกาศลอย (รองรับสูงสุด 3 อันตามที่ตั้งค่าในระบบ Admin) -->
-        <div id="lobbyPopupSliderContainer" style="position: relative; margin-bottom: 15px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid #222;">
-          <!-- จะถูกเรนเดอร์เนื้อหาและสไลด์โดย script ด้านล่าง -->
-        </div>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-          <span style="font-size: 0.8rem; color: #888;">*แสดงผลเฉพาะเมื่อมีประกาศใหม่</span>
-          <button class="lobby-popup-btn" onclick="closeLobbyPopup()">รับทราบและปิด</button>
+        <!-- ส่วนสไลเดอร์ประกาศลอย -->
+        <div id="lobbyPopupSliderContainer" style="position: relative; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid #222;">
+          <!-- เรนเดอร์เนื้อหาโดย script.js -->
         </div>
       </div>
     </div>
 
-    <!-- สคริปต์ควบคุม Sidebar, สไลเดอร์ และระบบจดจำการปิด Popup ถาวร -->
+    <!-- สคริปต์ควบคุม Sidebar -->
     <script>
-      let currentActiveAnnouncementKey = ""; // ตัวแปรเก็บรหัสประกาศปัจจุบัน
-
       function toggleSidebar() {
         const drawer = document.getElementById('sideDrawer');
         const overlay = document.getElementById('drawerOverlay');
         drawer.classList.toggle('open');
         overlay.classList.toggle('open');
       }
-
-      // ปิด Popup และบันทึกรหัสประกาศนี้ลง localStorage เพื่อไม่ให้เด้งขึ้นมาซ้ำอีก
-      function closeLobbyPopup() {
-        const modal = document.getElementById('lobbyPopupModal');
-        if (modal) {
-          modal.classList.remove('open');
-        }
-        if (currentActiveAnnouncementKey) {
-          localStorage.setItem('dismissedAnnouncementKey', currentActiveAnnouncementKey);
-        }
-      }
-
-      window.addEventListener('DOMContentLoaded', () => {
-        // 1. โหลดสไลเดอร์หลักหน้า Lobby (4 จุด)
-        const savedSlides = localStorage.getItem('lobbyCustomSlides');
-        if (savedSlides) {
-          try {
-            const slidesData = JSON.parse(savedSlides);
-            const slider = document.getElementById('slider');
-            if (slider && Array.isArray(slidesData)) {
-              slider.innerHTML = '';
-              slidesData.forEach((item, index) => {
-                const pageDiv = document.createElement('div');
-                pageDiv.className = 'slide-page';
-                
-                const imgSrc = item.img && item.img.trim() !== "" ? item.img : `https://via.placeholder.com/1200x500?text=Slide+${index+1}`;
-                
-                if (item.link && item.link.trim() !== "") {
-                  pageDiv.innerHTML = `<a href="${item.link}"><img src="${imgSrc}" alt="Slide ${index+1}" /></a>`;
-                } else {
-                  pageDiv.innerHTML = `<img src="${imgSrc}" alt="Slide ${index+1}" style="cursor: default;" />`;
-                }
-                slider.appendChild(pageDiv);
-              });
-            }
-          } catch (e) {
-            console.error("Render custom slides error:", e);
-          }
-        }
-
-        // 2. ระบบตรวจสอบและแสดงประกาศลอย (Popup Announcement) พร้อมเช็คจดจำการปิด
-        try {
-          const savedAnn = localStorage.getItem('lobbyCustomAnnouncements');
-          if (savedAnn) {
-            let announcements = JSON.parse(savedAnn);
-            if (Array.isArray(announcements) && announcements.length > 0) {
-              // กรองเฉพาะอันที่เปิดใช้งาน
-              announcements = announcements.filter(ann => ann.active !== false && ann.imageUrl).slice(0, 3);
-              
-              if (announcements.length > 0) {
-                // สร้าง Key เอกลักษณ์จากรูปรวมทั้งหมด เพื่อใช้เช็คว่าถ้าแอดมินเปลี่ยนรูปประกาศใหม่ มันจะเด้งขึ้นมาอีกครั้งอัตโนมัติ
-                currentActiveAnnouncementKey = announcements.map(a => a.imageUrl).join('_');
-                const dismissedKey = localStorage.getItem('dismissedAnnouncementKey');
-
-                // ถ้าผู้ใช้ยังไม่เคยปิดประกาศชุดนี้ หรือถ้าแอดมินเปลี่ยนรูปประกาศใหม่ ค่อยแสดง Popup
-                if (dismissedKey !== currentActiveAnnouncementKey) {
-                  const popupModal = document.getElementById('lobbyPopupModal');
-                  const popupContainer = document.getElementById('lobbyPopupSliderContainer');
-
-                  if (popupContainer && popupModal) {
-                    let slidesHtml = announcements.map((ann, idx) => {
-                      const imgTag = `<img src="${ann.imageUrl}" style="width: 100%; max-height: 320px; object-fit: contain; display: block; margin: 0 auto;" onerror="this.style.display='none'" />`;
-                      
-                      if (ann.targetUrl && ann.targetUrl.trim() !== "") {
-                        return `<div class="ann-popup-slide" style="display: ${idx === 0 ? 'block' : 'none'};"><a href="${ann.targetUrl}" target="_blank">${imgTag}</a></div>`;
-                      } else {
-                        return `<div class="ann-popup-slide" style="display: ${idx === 0 ? 'block' : 'none'};">${imgTag}</div>`;
-                      }
-                    }).join('');
-
-                    let navControls = '';
-                    if (announcements.length > 1) {
-                      navControls = `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(0,0,0,0.5);">
-                          <button id="popPrevBtn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">❮ ก่อนหน้า</button>
-                          <span id="popIndicator" style="font-size: 0.8rem; color: #aaa;">1 / ${announcements.length}</span>
-                          <button id="popNextBtn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">ถัดไป ❯</button>
-                        </div>
-                      `;
-                    }
-
-                    popupContainer.innerHTML = `
-                      ${slidesHtml}
-                      ${navControls}
-                    `;
-
-                    popupModal.classList.add('open');
-
-                    // ระบบกดเปลี่ยนสไลด์ใน Popup (กรณีมีหลายอัน)
-                    if (announcements.length > 1) {
-                      let currentPopIdx = 0;
-                      const slides = popupContainer.querySelectorAll('.ann-popup-slide');
-                      const indicator = document.getElementById('popIndicator');
-
-                      const updatePopSlide = () => {
-                        slides.forEach((s, i) => s.style.display = i === currentPopIdx ? 'block' : 'none');
-                        if (indicator) indicator.innerText = `${currentPopIdx + 1} / ${slides.length}`;
-                      };
-
-                      const prevBtn = document.getElementById('popPrevBtn');
-                      const nextBtn = document.getElementById('popNextBtn');
-
-                      if (prevBtn) prevBtn.addEventListener('click', () => {
-                        currentPopIdx = (currentPopIdx - 1 + slides.length) % slides.length;
-                        updatePopSlide();
-                      });
-
-                      if (nextBtn) nextBtn.addEventListener('click', () => {
-                        currentPopIdx = (currentPopIdx + 1) % slides.length;
-                        updatePopSlide();
-                      });
-                    }
-                  }
-                }
-              }
-            }
-          }
-        } catch (err) {
-          console.error("Error loading lobby popup announcement:", err);
-        }
-      });
     </script>
 
     <!-- External Script File -->
