@@ -1,11 +1,11 @@
 import { db } from "./firebase-config.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { logAdminAction } from "./HTowner.js";
 
 let lobbyAnnouncements = [];
 
-// ตรวจสอบสิทธิ์ Owner (เพื่อความปลอดภัยในระบบ Admin)
+// ตรวจสอบสิทธิ์ Owner
 async function checkIsOwner() {
   const auth = getAuth();
   const user = auth.currentUser;
@@ -26,19 +26,32 @@ async function checkIsOwner() {
   return false;
 }
 
-// อ่านข้อมูลจาก LocalStorage แบบปลอดภัย ไม่ติด FireStore Permissions
-function getStoredAnnouncements() {
+// โหลดข้อมูลประกาศจาก Firebase Firestore (settings/lobby)
+async function getStoredAnnouncements() {
   try {
-    const saved = localStorage.getItem('lobbyCustomAnnouncements');
-    return saved ? JSON.parse(saved) : [];
+    const docRef = doc(db, "settings", "lobby");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().announcements || [];
+    } else {
+      // ถ้ายังไม่มี Document ให้สร้างโครงสร้างเริ่มต้นไว้ทันที
+      await setDoc(docRef, { announcements: [] });
+      return [];
+    }
   } catch (e) {
-    console.error("Load local announcements error:", e);
+    console.error("Load announcements from Firestore error:", e);
     return [];
   }
 }
 
-function saveStoredAnnouncements(data) {
-  localStorage.setItem('lobbyCustomAnnouncements', JSON.stringify(data));
+// บันทึกข้อมูลประกาศลง Firebase Firestore
+async function saveStoredAnnouncements(data) {
+  try {
+    await setDoc(doc(db, "settings", "lobby"), { announcements: data }, { merge: true });
+  } catch (e) {
+    console.error("Save announcements to Firestore error:", e);
+    alert("เกิดข้อผิดพลาดในการบันทึกข้อมูลลง Firebase: " + e.message);
+  }
 }
 
 export async function initLobbyAdminModule() {
@@ -50,25 +63,24 @@ export async function initLobbyAdminModule() {
   if (!isOwner) {
     container.innerHTML = `
       <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; padding: 20px; border-radius: 8px; text-align: center;">
-        <h3 style="color: #ef4444; margin-bottom: 8px;">🚫 จำกัดสิทธิ์เฉพาะ Owner เท่านั้น</h3>
+        <h3 style="color: #ef4444; margin-bottom: 8px;">จำกัดสิทธิ์เฉพาะ Owner เท่านั้น</h3>
         <p style="color: #ccc; font-size: 0.9rem;">คุณไม่มีสิทธิ์ในการจัดการประกาศลอยหรือตั้งค่าหน้า Lobby ส่วนนี้สงวนไว้สำหรับ Owner เท่านั้น</p>
       </div>
     `;
     return;
   }
 
-  // ดึงข้อมูลประกาศลอยมาเรนเดอร์ทันทีโดยไม่พึ่ง Firebase
-  lobbyAnnouncements = getStoredAnnouncements();
+  lobbyAnnouncements = await getStoredAnnouncements();
   if (typeof window.renderLobbyAnnouncementsAdmin === 'function') {
     window.renderLobbyAnnouncementsAdmin();
   }
 }
 
-window.renderLobbyAnnouncementsAdmin = function() {
+window.renderLobbyAnnouncementsAdmin = async function() {
   const listContainer = document.getElementById("lobbyAnnouncementsList");
   if (!listContainer) return;
 
-  lobbyAnnouncements = getStoredAnnouncements();
+  lobbyAnnouncements = await getStoredAnnouncements();
   listContainer.innerHTML = "";
 
   if (lobbyAnnouncements.length === 0) {
@@ -86,25 +98,25 @@ window.renderLobbyAnnouncementsAdmin = function() {
       <div style="background: #181818; border: 1px solid #333; padding: 14px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
         <div style="flex: 1;">
           <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-            <h4 style="color: #fff; margin: 0; font-size: 0.95rem;">🖼️ ประกาศลอยลำดับที่ ${index + 1}</h4>
+            <h4 style="color: #fff; margin: 0; font-size: 0.95rem;">ประกาศลอยลำดับที่ ${index + 1}</h4>
             ${statusBadge}
           </div>
-          <div style="font-size: 0.85rem; color: #aaa; word-break: break-all; margin-bottom: 3px;">🖼️ รูปภาพ: <a href="${item.imageUrl}" target="_blank" style="color: #3b82f6;">${item.imageUrl}</a></div>
-          <div style="font-size: 0.85rem; color: #aaa; word-break: break-all;">🔗 ลิงก์นำทาง: ${item.targetUrl ? `<a href="${item.targetUrl}" target="_blank" style="color: #10b981;">${item.targetUrl}</a>` : '<span style="color: #777;">(ไม่มี - ไม่ใส่ลิงก์เพื่อป้องกันการกดบัค)</span>'}</div>
+          <div style="font-size: 0.85rem; color: #aaa; word-break: break-all; margin-bottom: 3px;">รูปภาพ: <a href="${item.imageUrl}" target="_blank" style="color: #3b82f6;">${item.imageUrl}</a></div>
+          <div style="font-size: 0.85rem; color: #aaa; word-break: break-all;">ลิงก์นำทาง: ${item.targetUrl ? `<a href="${item.targetUrl}" target="_blank" style="color: #10b981;">${item.targetUrl}</a>` : '<span style="color: #777;">(ไม่มี)</span>'}</div>
         </div>
         <div style="display: flex; gap: 6px;">
           <button class="banner-action-btn" style="background: #f59e0b; color: #000; padding: 6px 12px; font-size: 0.85rem; cursor: pointer;" onclick="toggleLobbyAnnouncementStatus(${index})">${isActive ? 'ซ่อน' : 'แสดง'}</button>
-          <button class="banner-action-btn" style="background: #c9302c; color: #fff; padding: 6px 12px; font-size: 0.85rem; cursor: pointer;" onclick="deleteLobbyAnnouncement(${index})">🗑️ ลบ</button>
+          <button class="banner-action-btn" style="background: #c9302c; color: #fff; padding: 6px 12px; font-size: 0.85rem; cursor: pointer;" onclick="deleteLobbyAnnouncement(${index})">ลบ</button>
         </div>
       </div>
     `;
   });
 };
 
-window.openLobbyAnnouncementModal = function() {
-  lobbyAnnouncements = getStoredAnnouncements();
+window.openLobbyAnnouncementModal = async function() {
+  lobbyAnnouncements = await getStoredAnnouncements();
   if (lobbyAnnouncements.length >= 3) {
-    alert("⚠️ ประกาศลอยจำกัดสูงสุดไม่เกิน 3 อันครับ! กรุณาลบประกาศเดิมออกก่อนสร้างใหม่");
+    alert("ประกาศลอยจำกัดสูงสุดไม่เกิน 3 อันครับ! กรุณาลบประกาศเดิมออกก่อนสร้างใหม่");
     return;
   }
   const modal = document.getElementById("lobbyAnnouncementModal");
@@ -120,13 +132,13 @@ window.handleSaveLobbyAnnouncement = async function(e) {
   e.preventDefault();
   const isOwner = await checkIsOwner();
   if (!isOwner) {
-    alert("❌ ปฏิเสธการเข้าถึง: เฉพาะ Owner เท่านั้นที่สามารถสร้างประกาศได้!");
+    alert("ปฏิเสธการเข้าถึง: เฉพาะ Owner เท่านั้นที่สามารถสร้างประกาศได้!");
     return;
   }
 
-  lobbyAnnouncements = getStoredAnnouncements();
+  lobbyAnnouncements = await getStoredAnnouncements();
   if (lobbyAnnouncements.length >= 3) {
-    alert("❌ ไม่สามารถสร้างเกิน 3 ประกาศได้!");
+    alert("ไม่สามารถสร้างเกิน 3 ประกาศได้!");
     return;
   }
 
@@ -144,7 +156,7 @@ window.handleSaveLobbyAnnouncement = async function(e) {
     active: true
   });
 
-  saveStoredAnnouncements(lobbyAnnouncements);
+  await saveStoredAnnouncements(lobbyAnnouncements);
 
   try {
     await logAdminAction("สร้างประกาศลอย Lobby", `Owner ได้สร้างประกาศลอยรูปภาพใหม่ (รวมเป็น ${lobbyAnnouncements.length}/3)`);
@@ -154,37 +166,37 @@ window.handleSaveLobbyAnnouncement = async function(e) {
 
   window.closeLobbyAnnouncementModal();
   document.getElementById("lobbyAnnounceForm").reset();
-  window.renderLobbyAnnouncementsAdmin();
-  alert("✅ สร้างประกาศลอยรูปภาพสำเร็จ!");
+  await window.renderLobbyAnnouncementsAdmin();
+  alert("สร้างประกาศลอยรูปภาพและบันทึกลง Firebase สำเร็จ!");
 };
 
 window.toggleLobbyAnnouncementStatus = async function(index) {
   const isOwner = await checkIsOwner();
   if (!isOwner) {
-    alert("❌ เฉพาะ Owner เท่านั้นที่มีสิทธิ์แก้ไข!");
+    alert("เฉพาะ Owner เท่านั้นที่มีสิทธิ์แก้ไข!");
     return;
   }
 
-  lobbyAnnouncements = getStoredAnnouncements();
+  lobbyAnnouncements = await getStoredAnnouncements();
   if (lobbyAnnouncements[index]) {
     lobbyAnnouncements[index].active = lobbyAnnouncements[index].active === false ? true : false;
-    saveStoredAnnouncements(lobbyAnnouncements);
-    window.renderLobbyAnnouncementsAdmin();
-    alert("✅ เปลี่ยนแปลงสถานะประกาศสำเร็จ!");
+    await saveStoredAnnouncements(lobbyAnnouncements);
+    await window.renderLobbyAnnouncementsAdmin();
+    alert("เปลี่ยนแปลงสถานะประกาศสำเร็จ!");
   }
 };
 
 window.deleteLobbyAnnouncement = async function(index) {
   const isOwner = await checkIsOwner();
-  if (!isOwner) {
-    alert("❌ เฉพาะ Owner เท่านั้นที่มีสิทธิ์ลบประกาศ!");
+  if (!isOwner) { 
+    alert("เฉพาะ Owner เท่านั้นที่มีสิทธิ์ลบประกาศ!");
     return;
   }
 
   if (confirm("ยืนยันการลบประกาศลอยรูปภาพนี้ออกจาก Lobby?")) {
-    lobbyAnnouncements = getStoredAnnouncements();
+    lobbyAnnouncements = await getStoredAnnouncements();
     lobbyAnnouncements.splice(index, 1);
-    saveStoredAnnouncements(lobbyAnnouncements);
+    await saveStoredAnnouncements(lobbyAnnouncements);
 
     try {
       await logAdminAction("ลบประกาศลอย Lobby", `Owner ได้ลบประกาศลอยออก`);
@@ -192,7 +204,7 @@ window.deleteLobbyAnnouncement = async function(index) {
       console.warn("Log admin action warning:", err);
     }
 
-    window.renderLobbyAnnouncementsAdmin();
-    alert("✅ ลบประกาศสำเร็จ!");
+    await window.renderLobbyAnnouncementsAdmin();
+    alert("ลบประกาศสำเร็จ!");
   }
 };
