@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="Lobby.css" />
+    <title>BR.PJ-Lobby</title>
+    <style>
+      /* สไตล์สำหรับ Popup ประกาศลอยหน้า Lobby ฉบับปรับปรุง UI ใหม่ให้สวยงาม */
+      .lobby-popup-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(5, 5, 8, 0.85);
+        z-index: 99999;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(8px);
+        animation: fadeInOverlay 0.3s ease;
+      }
+      .lobby-popup-overlay.open {
+        display: flex !important;
+      }
+      @keyframes fadeInOverlay {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      .lobby-popup-card {
+        background: linear-gradient(145deg, #16161c, #0d0d12);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 20px rgba(239, 68, 68, 0.15);
+        border-radius: 16px;
+        padding: 28px;
+        width: 90%;
+        max-width: 520px;
+        color: #fff;
+        position: relative;
+        font-family: 'Chakra Petch', sans-serif;
+        animation: scaleUpModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      @keyframes scaleUpModal {
+        from { transform: scale(0.85); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+
+      .lobby-popup-close {
+        position: absolute;
+        top: 18px; right: 18px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #aaa; 
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .lobby-popup-close:hover {
+        background: #ef4444;
+        color: #fff;
+        border-color: #ef4444;
+        transform: rotate(90deg);
+      }
+
+      /* สไตล์ปุ่มกดรับทราบแบบพรีเมียม */
+      .lobby-popup-btn {
+        background: linear-gradient(135deg, #ef4444, #b91c1c);
+        color: #fff;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: 'Chakra Petch', sans-serif;
+        font-weight: bold;
+        font-size: 0.95rem;
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        transition: all 0.2s;
+      }
+      .lobby-popup-btn:hover {
+        background: linear-gradient(135deg, #f87171, #dc2626);
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+        transform: translateY(-2px);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+      <!-- ปุ่มเมนู 3 ขีด ด้านซ้ายบน -->
+      <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
+      
+      <!-- เมนูด้านขวาบน -->
+      <div class="top-nav-right">
+        <button class="nav-btn" id="auth-btn">Login / Sign In</button>
+      </div>
+    </header>
+
+    <!-- Side Drawer Menu (สไลด์เปิดออกจากซ้าย) -->
+    <div id="sideDrawer" class="side-drawer">
+      <button class="close-drawer-btn" onclick="toggleSidebar()">✕</button>
+      <nav class="drawer-nav">
+        <a href="News.html" class="drawer-item">NEWS</a>
+        <a href="Store.html" class="drawer-item">STORE</a>
+        <a href="Project.html" class="drawer-item">PROJECT</a>
+        <a href="user.html" class="drawer-item">USER</a>
+      </nav>
+    </div>
+    <!-- ฉากหลังสีคล้ำเวลาเปิด Sidebar -->
+    <div id="drawerOverlay" class="drawer-overlay" onclick="toggleSidebar()"></div>
+
+    <main class="lobby-main">
+      <!-- Hero / Home Section -->
+      <div class="HOME">
+        <h1 class="HOMEH1">BloodRune Project</h1>
+        <div class="search-Lobby">
+          <input type="text" class="search-input" placeholder="Search projects, products, news..." />
+          <button class="search-button">🔍︎</button>
+        </div>
+      </div>
+
+      <!-- Full-Width Slider Container (รองรับ 4 จุด เชื่อมกับระบบ Admin)[cite: 16] -->
+      <div class="slide-container">
+        <div class="slide-ALL" id="slider">
+          <div class="slide-page">
+            <img src="https://lh3.googleusercontent.com/d/1apdsts0OV5-ZWMCDkTmEWoUEfF069Z15" alt="Slide 1" />
+          </div>
+          <div class="slide-page">
+            <img src="https://lh3.googleusercontent.com/d/1wEIVvFUtexLRz9-lQOtl43SKK8oCjkBS" alt="Slide 2" />
+          </div>
+          <div class="slide-page">
+            <img src="https://lh3.googleusercontent.com/d/1bnP71geWli2R6TAxd_KpgQ4NlpLa-oih" alt="Slide 3" />
+          </div>
+          <div class="slide-page">
+            <img src="https://lh3.googleusercontent.com/d/1EeTmru63oZcDwrDoTKG8xVos-VHBIrSX" alt="Slide 4" />
+          </div>
+        </div>
+        
+        <!-- Slider Navigation Controls -->
+        <div class="slider-controls">
+          <button id="prevBtn">❮</button>
+          <button id="nextBtn">❯</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Profile Section (Pop-up Modal ลอย) -->
+    <div id="profileModal" class="profile-modal-overlay">
+      <div class="profile-card">
+        <button class="btn-close" onclick="closeProfile()">✕</button>
+        <h2>ข้อมูลโปรไฟล์</h2>
+        <div class="profile-info">
+          <p><span>ชื่อเล่น :</span> <strong id="prof-nickname">-</strong></p>
+          <p><span>อายุ :</span> <strong id="prof-age">-</strong> ปี</p>
+          <p><span>วันเกิด :</span> <strong id="prof-dob">-</strong></p>
+          <p><span>Gmail :</span> <strong id="prof-email">-</strong></p>
+          <p><span>ระดับบัญชี :</span> <strong id="prof-role" style="color: #ff1e27;">-</strong></p>
+        </div>
+        <div class="profile-actions">
+          <button id="adminBtn" class="btn-admin" style="display: none;" onclick="location.href='Admin.html'">
+            Admin Zone
+          </button>
+          <button class="btn-logout" onclick="handleLogout()">ออกจากระบบ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 📢 Lobby Popup Announcement Modal (ดีไซน์ใหม่พรีเมียม & ระบบจดจำการปิด) -->
+    <div id="lobbyPopupModal" class="lobby-popup-overlay">
+      <div class="lobby-popup-card">
+        <button class="lobby-popup-close" onclick="closeLobbyPopup()">✕</button>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+          <span style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; letter-spacing: 0.5px;">📢 ประกาศด่วน / LOBBY NOTICE</span>
+          <span id="lobbyPopupDate" style="color: #9ca3af; font-size: 0.8rem;">-</span>
+        </div>
+        
+        <!-- ส่วนสไลเดอร์ประกาศลอย (รองรับสูงสุด 3 อันตามที่ตั้งค่าในระบบ Admin) -->
+        <div id="lobbyPopupSliderContainer" style="position: relative; margin-bottom: 15px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid #222;">
+          <!-- จะถูกเรนเดอร์เนื้อหาและสไลด์โดย script ด้านล่าง -->
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+          <span style="font-size: 0.8rem; color: #888;">*แสดงผลเฉพาะเมื่อมีประกาศใหม่</span>
+          <button class="lobby-popup-btn" onclick="closeLobbyPopup()">รับทราบและปิด</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- สคริปต์ควบคุม Sidebar, สไลเดอร์ และระบบจดจำการปิด Popup ถาวร -->
+    <script>
+      let currentActiveAnnouncementKey = ""; // ตัวแปรเก็บรหัสประกาศปัจจุบัน
+
+      function toggleSidebar() {
+        const drawer = document.getElementById('sideDrawer');
+        const overlay = document.getElementById('drawerOverlay');
+        drawer.classList.toggle('open');
+        overlay.classList.toggle('open');
+      }
+
+      // ปิด Popup และบันทึกรหัสประกาศนี้ลง localStorage เพื่อไม่ให้เด้งขึ้นมาซ้ำอีก
+      function closeLobbyPopup() {
+        const modal = document.getElementById('lobbyPopupModal');
+        if (modal) {
+          modal.classList.remove('open');
+        }
+        if (currentActiveAnnouncementKey) {
+          localStorage.setItem('dismissedAnnouncementKey', currentActiveAnnouncementKey);
+        }
+      }
+
+      window.addEventListener('DOMContentLoaded', () => {
+        // 1. โหลดสไลเดอร์หลักหน้า Lobby (4 จุด)
+        const savedSlides = localStorage.getItem('lobbyCustomSlides');
+        if (savedSlides) {
+          try {
+            const slidesData = JSON.parse(savedSlides);
+            const slider = document.getElementById('slider');
+            if (slider && Array.isArray(slidesData)) {
+              slider.innerHTML = '';
+              slidesData.forEach((item, index) => {
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'slide-page';
+                
+                const imgSrc = item.img && item.img.trim() !== "" ? item.img : `https://via.placeholder.com/1200x500?text=Slide+${index+1}`;
+                
+                if (item.link && item.link.trim() !== "") {
+                  pageDiv.innerHTML = `<a href="${item.link}"><img src="${imgSrc}" alt="Slide ${index+1}" /></a>`;
+                } else {
+                  pageDiv.innerHTML = `<img src="${imgSrc}" alt="Slide ${index+1}" style="cursor: default;" />`;
+                }
+                slider.appendChild(pageDiv);
+              });
+            }
+          } catch (e) {
+            console.error("Render custom slides error:", e);
+          }
+        }
+
+        // 2. ระบบตรวจสอบและแสดงประกาศลอย (Popup Announcement) พร้อมเช็คจดจำการปิด
+        try {
+          const savedAnn = localStorage.getItem('lobbyCustomAnnouncements');
+          if (savedAnn) {
+            let announcements = JSON.parse(savedAnn);
+            if (Array.isArray(announcements) && announcements.length > 0) {
+              // กรองเฉพาะอันที่เปิดใช้งาน
+              announcements = announcements.filter(ann => ann.active !== false && ann.imageUrl).slice(0, 3);
+              
+              if (announcements.length > 0) {
+                // สร้าง Key เอกลักษณ์จากรูปรวมทั้งหมด เพื่อใช้เช็คว่าถ้าแอดมินเปลี่ยนรูปประกาศใหม่ มันจะเด้งขึ้นมาอีกครั้งอัตโนมัติ
+                currentActiveAnnouncementKey = announcements.map(a => a.imageUrl).join('_');
+                const dismissedKey = localStorage.getItem('dismissedAnnouncementKey');
+
+                // ถ้าผู้ใช้ยังไม่เคยปิดประกาศชุดนี้ หรือถ้าแอดมินเปลี่ยนรูปประกาศใหม่ ค่อยแสดง Popup
+                if (dismissedKey !== currentActiveAnnouncementKey) {
+                  const popupModal = document.getElementById('lobbyPopupModal');
+                  const popupContainer = document.getElementById('lobbyPopupSliderContainer');
+
+                  if (popupContainer && popupModal) {
+                    let slidesHtml = announcements.map((ann, idx) => {
+                      const imgTag = `<img src="${ann.imageUrl}" style="width: 100%; max-height: 320px; object-fit: contain; display: block; margin: 0 auto;" onerror="this.style.display='none'" />`;
+                      
+                      if (ann.targetUrl && ann.targetUrl.trim() !== "") {
+                        return `<div class="ann-popup-slide" style="display: ${idx === 0 ? 'block' : 'none'};"><a href="${ann.targetUrl}" target="_blank">${imgTag}</a></div>`;
+                      } else {
+                        return `<div class="ann-popup-slide" style="display: ${idx === 0 ? 'block' : 'none'};">${imgTag}</div>`;
+                      }
+                    }).join('');
+
+                    let navControls = '';
+                    if (announcements.length > 1) {
+                      navControls = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(0,0,0,0.5);">
+                          <button id="popPrevBtn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">❮ ก่อนหน้า</button>
+                          <span id="popIndicator" style="font-size: 0.8rem; color: #aaa;">1 / ${announcements.length}</span>
+                          <button id="popNextBtn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">ถัดไป ❯</button>
+                        </div>
+                      `;
+                    }
+
+                    popupContainer.innerHTML = `
+                      ${slidesHtml}
+                      ${navControls}
+                    `;
+
+                    popupModal.classList.add('open');
+
+                    // ระบบกดเปลี่ยนสไลด์ใน Popup (กรณีมีหลายอัน)
+                    if (announcements.length > 1) {
+                      let currentPopIdx = 0;
+                      const slides = popupContainer.querySelectorAll('.ann-popup-slide');
+                      const indicator = document.getElementById('popIndicator');
+
+                      const updatePopSlide = () => {
+                        slides.forEach((s, i) => s.style.display = i === currentPopIdx ? 'block' : 'none');
+                        if (indicator) indicator.innerText = `${currentPopIdx + 1} / ${slides.length}`;
+                      };
+
+                      const prevBtn = document.getElementById('popPrevBtn');
+                      const nextBtn = document.getElementById('popNextBtn');
+
+                      if (prevBtn) prevBtn.addEventListener('click', () => {
+                        currentPopIdx = (currentPopIdx - 1 + slides.length) % slides.length;
+                        updatePopSlide();
+                      });
+
+                      if (nextBtn) nextBtn.addEventListener('click', () => {
+                        currentPopIdx = (currentPopIdx + 1) % slides.length;
+                        updatePopSlide();
+                      });
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error loading lobby popup announcement:", err);
+        }
+      });
+    </script>
+
+    <!-- External Script File -->
+    <script type="module" src="script.js"></script>
+  </body>
+</html>

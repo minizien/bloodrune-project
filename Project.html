@@ -1,0 +1,1567 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BR.PJ - Projects</title>
+    <link rel="stylesheet" href="Project.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="top-nav">
+      <div style="display: flex; align-items: center; gap: 15px">
+        <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
+      </div>
+      <h1 class="nav-title">PROJECTS</h1>
+      <div style="width: 100px"></div>
+    </header>
+
+    <div id="sideDrawer" class="side-drawer">
+      <button class="close-drawer-btn" onclick="toggleSidebar()">✕</button>
+      <nav class="drawer-nav">
+        <a href="index.html" class="drawer-item">LOBBY</a>
+        <a href="News.html" class="drawer-item">NEWS</a>
+        <a href="Store.html" class="drawer-item">STORE</a>
+        <a href="user.html" class="drawer-item">USER</a>
+      </nav>
+    </div>
+    <div
+      id="drawerOverlay"
+      class="drawer-overlay"
+      onclick="toggleSidebar()"
+    ></div>
+
+    <main class="project-container">
+      <!-- หน้าที่ 1: รายการโปรเจกต์ -->
+      <div id="projectListView">
+        <div class="project-header">
+          <h2>ศูนย์รวมโปรเจกต์ทั้งหมด</h2>
+        </div>
+        <div id="projectBannerContainer" class="banner-container">
+          <div class="loading-state inner-load">
+            <p>กำลังโหลดข้อมูลจาก Firebase...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- หน้าที่ 2: หน้าภายในโปรเจกต์ -->
+      <div id="projectInnerView" style="display: none">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+          "
+        >
+          <button
+            class="back-to-list-btn"
+            onclick="backToList()"
+            style="margin: 0"
+          >
+            Return
+          </button>
+
+          <!-- ปุ่มลอยสมัครเข้าร่วม / ดูสถานะ -->
+          <button
+            id="topRightApplyBtn"
+            onclick="handleTopRightBtnClick()"
+            class="banner-action-btn"
+            style="
+              background: #dc2626;
+              padding: 10px 20px;
+              font-weight: bold;
+              cursor: pointer;
+              margin: 0;
+            "
+          >
+            สมัครเข้าร่วม / ส่งใบสมัคร
+          </button>
+        </div>
+
+        <div
+          class="project-header"
+          style="margin-bottom: 15px; text-align: center"
+        >
+          <h2 id="innerProjName" style="color: #ef4444">ชื่อโปรเจกต์</h2>
+        </div>
+
+        <div
+          id="innerImageGallery"
+          style="
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            overflow-x: auto;
+            margin: 0 auto 20px auto;
+            padding-bottom: 5px;
+            max-width: 100%;
+          "
+        ></div>
+
+        <!-- แท็บเมนูหลัก (3 แท็บหลัก) -->
+        <div class="project-tabs">
+          <button
+            class="tab-btn active"
+            id="tabBtnInfo"
+            onclick="switchTab('info', event)"
+          >
+            ข้อมูลโปรเจกต์
+          </button>
+          <button
+            class="tab-btn"
+            id="tabBtnPassed"
+            onclick="switchTab('passed', event)"
+          >
+            ข้อมูลผู้ผ่าน
+          </button>
+          <button
+            class="tab-btn"
+            id="tabBtnStories"
+            onclick="switchTab('stories', event)"
+          >
+            บันทึกเรื่องราว
+          </button>
+        </div>
+
+        <!-- แท็บที่ 1: ข้อมูลโปรเจกต์ -->
+        <div id="tab-info" class="tab-pane active">
+          <div
+            style="
+              background: #121216;
+              padding: 20px;
+              border-radius: 8px;
+              border: 1px solid #2a1b1b;
+            "
+          >
+            <h3 style="color: #fff; margin-bottom: 12px">
+              รายละเอียดและตำแหน่งที่เปิดรับ
+            </h3>
+
+            <div
+              id="innerProjDescBox"
+              style="
+                background: #0a0a0d;
+                padding: 14px 16px;
+                border-radius: 6px;
+                border: 1px solid #222;
+                margin-bottom: 15px;
+              "
+            >
+              <p
+                style="
+                  color: #ef4444;
+                  font-size: 0.85rem;
+                  font-weight: bold;
+                  margin-bottom: 4px;
+                "
+              >
+                รายละเอียดโปรเจกต์:
+              </p>
+              <p
+                id="innerProjDesc"
+                style="
+                  color: #ddd;
+                  font-size: 0.95rem;
+                  line-height: 1.5;
+                  white-space: pre-line;
+                "
+              ></p>
+            </div>
+
+            <p
+              id="infoMaxMember"
+              style="color: #9ca3af; margin-bottom: 15px"
+            ></p>
+            <div id="infoRolesList" class="roles-box"></div>
+          </div>
+        </div>
+
+        <!-- แท็บที่ 2: รายชื่อผู้ผ่านการคัดเลือก -->
+        <div id="tab-passed" class="tab-pane">
+          <div
+            style="
+              background: #121216;
+              padding: 20px;
+              border-radius: 8px;
+              border: 1px solid #2a1b1b;
+            "
+          >
+            <h3 style="color: #ef4444; margin-bottom: 10px">
+              รายชื่อผู้ผ่านการคัดเลือก
+            </h3>
+            <div id="passedUsersContainer"></div>
+          </div>
+        </div>
+
+        <!-- แท็บที่ 3: บันทึกเรื่องราว -->
+        <div id="tab-stories" class="tab-pane">
+          <div
+            style="
+              background: #121216;
+              padding: 20px;
+              border-radius: 8px;
+              border: 1px solid #2a1b1b;
+              max-width: 750px;
+            "
+          >
+            <h3 style="color: #ef4444; margin-bottom: 10px">บันทึกเรื่องราว</h3>
+            <p style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 20px">
+              พื้นที่อัปเดตความคืบหน้า แชร์ผลงาน
+              หรือบันทึกเรื่องราวของสมาชิกภายในโปรเจกต์
+            </p>
+
+            <div
+              id="createPostBox"
+              style="
+                background: #0a0a0d;
+                padding: 15px;
+                border-radius: 8px;
+                border: 1px solid #222;
+                margin-bottom: 20px;
+                display: none;
+              "
+            >
+              <h4 style="color: #fff; font-size: 0.95rem; margin-bottom: 10px">
+                เขียนบันทึกเรื่องราวใหม่
+              </h4>
+              <textarea
+                id="postContentInput"
+                placeholder="แชร์ความคืบหน้า เรื่องราว หรือผลงานของคุณในโปรเจกต์นี้..."
+                style="
+                  width: 100%;
+                  padding: 12px;
+                  background: #121216;
+                  border: 1px solid #333;
+                  color: #fff;
+                  border-radius: 6px;
+                  min-height: 90px;
+                  box-sizing: border-box;
+                  margin-bottom: 10px;
+                  font-family: &quot;Chakra Petch&quot;, sans-serif;
+                "
+              ></textarea>
+              <input
+                type="url"
+                id="postImageInput"
+                placeholder="วางลิงก์รูปภาพประกอบ (ถ้ามี - URL)"
+                style="
+                  width: 100%;
+                  padding: 10px;
+                  background: #121216;
+                  border: 1px solid #333;
+                  color: #fff;
+                  border-radius: 6px;
+                  box-sizing: border-box;
+                  margin-bottom: 12px;
+                  font-size: 0.9rem;
+                "
+              />
+              <button
+                type="button"
+                onclick="submitProjectPost()"
+                class="banner-action-btn"
+                style="
+                  background: #10b981;
+                  padding: 8px 20px;
+                  font-weight: bold;
+                  cursor: pointer;
+                "
+              >
+                โพสต์เรื่องราว
+              </button>
+            </div>
+
+            <div id="projectPostsContainer">
+              <p style="color: #666; text-align: center; padding: 20px">
+                กำลังโหลดบันทึกเรื่องราว...
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- หน้าสำหรับสมัครเข้าร่วม / ส่งข้อมูลรอบ 2 -->
+        <div id="tab-apply" class="tab-pane">
+          <div
+            style="
+              background: #121216;
+              padding: 20px;
+              border-radius: 8px;
+              border: 1px solid #2a1b1b;
+              max-width: 650px;
+            "
+          >
+            <h3
+              id="formSectionTitle"
+              style="color: #ef4444; margin-bottom: 10px"
+            >
+              ยื่นใบสมัครเข้าร่วมโปรเจกต์
+            </h3>
+            <p
+              id="applyStatusNotice"
+              style="font-size: 0.9rem; color: #ccc; margin-bottom: 15px"
+            ></p>
+
+            <form id="applyForm" onsubmit="submitApplication(event)">
+              <div id="round1FormSection">
+                <div
+                  class="form-group"
+                  style="
+                    background: #09090b;
+                    padding: 15px;
+                    border-radius: 6px;
+                    border: 1px solid #222;
+                  "
+                >
+                  <label
+                    style="
+                      color: #ef4444;
+                      font-weight: bold;
+                      margin-bottom: 8px;
+                      display: block;
+                    "
+                    >เลือกลำดับบทบาทที่ต้องการสมัคร</label
+                  >
+
+                  <div style="margin-bottom: 10px">
+                    <label style="font-size: 0.85rem; color: #aaa"
+                      >อยากเล่นเป็น อันดับที่ 1 (หลัก):</label
+                    >
+                    <select
+                      id="roleRank1"
+                      required
+                      onchange="validateRoleSelection()"
+                    ></select>
+                  </div>
+                  <div style="margin-bottom: 10px">
+                    <label style="font-size: 0.85rem; color: #aaa"
+                      >อยากเล่นเป็น อันดับที่ 2 (สำรอง):</label
+                    >
+                    <select
+                      id="roleRank2"
+                      onchange="validateRoleSelection()"
+                    ></select>
+                  </div>
+                  <div>
+                    <label style="font-size: 0.85rem; color: #aaa"
+                      >อยากเล่นเป็น อันดับที่ 3 (สำรอง):</label
+                    >
+                    <select
+                      id="roleRank3"
+                      onchange="validateRoleSelection()"
+                    ></select>
+                  </div>
+                </div>
+
+                <div
+                  id="dynamicQuestionsContainer"
+                  style="margin-top: 15px"
+                ></div>
+
+                <div style="margin-top: 20px">
+                  <button
+                    type="submit"
+                    id="submitAppBtn"
+                    class="banner-action-btn"
+                    style="width: 100%; padding: 10px"
+                  >
+                    ยื่นใบสมัคร
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <form
+              id="stage2Form"
+              onsubmit="submitStage2Application(event)"
+              style="display: none"
+            >
+              <div
+                id="stage2DescBox"
+                style="
+                  background: #09090b;
+                  padding: 12px;
+                  border-radius: 6px;
+                  border: 1px solid #222;
+                  margin-bottom: 15px;
+                  color: #ddd;
+                  font-size: 0.9rem;
+                "
+              ></div>
+              <div id="stage2QuestionsContainer" style="margin-top: 15px"></div>
+              <div style="margin-top: 20px">
+                <button
+                  type="submit"
+                  id="submitStage2Btn"
+                  class="banner-action-btn"
+                  style="width: 100%; padding: 10px; background: #10b981"
+                >
+                  ยืนยันการส่งข้อมูลรอบ 2
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal แสดงข้อมูลคำตอบของผู้สมัครเมื่อคลิกดู -->
+    <div id="userDetailModal" class="modal-overlay">
+      <div class="modal-card">
+        <h3 style="color: #ef4444; margin-bottom: 5px" id="modalUserTitle">
+          คำถามและคำตอบรอบที่ 2
+        </h3>
+        <p style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 15px">
+          รายละเอียดข้อมูลและรูปภาพรอบที่ 2 ที่บันทึกไว้ในระบบ
+        </p>
+
+        <div
+          id="userDetailContent"
+          style="
+            background: #09090b;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #222;
+            font-size: 0.9rem;
+            color: #ddd;
+            max-height: 350px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+          "
+        ></div>
+
+        <button
+          type="button"
+          class="banner-action-btn"
+          onclick="closeUserDetailModal()"
+          style="width: 100%"
+        >
+          ปิดหน้าต่าง
+        </button>
+      </div>
+    </div>
+
+    <script>
+      function toggleSidebar() {
+        const drawer = document.getElementById("sideDrawer");
+        const overlay = document.getElementById("drawerOverlay");
+        drawer.classList.toggle("open");
+        overlay.classList.toggle("open");
+      }
+    </script>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        onSnapshot,
+        doc,
+        updateDoc,
+        arrayUnion,
+        runTransaction,
+      } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+      import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+      import { logAdminAction } from "./HTowner.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyA-SB3kOtVOK0xwEt2xjF6JJHZKPYhNURY",
+        authDomain: "bloodrune-project.firebaseapp.com",
+        projectId: "bloodrune-project",
+        storageBucket: "bloodrune-project.firebasestorage.app",
+        messagingSenderId: "394744755352",
+        appId: "1:394744755352:web:0af156b7f8c888dc164ced",
+        measurementId: "G-B6BX636YH3",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+
+      let loadedProjects = [];
+      let currentActiveProjIndex = null;
+      let activeUsersList = [];
+      let currentTopRightAction = "apply";
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetProjectId = urlParams.get("id");
+
+      function isCountedAsPassed(status) {
+        const countedStatuses = [
+          "step_1_2_passed",
+          "passed",
+          "step_2_submitted",
+          "stage2_submitted",
+          "step_2_revision",
+          "revision_requested",
+          "step_1_9_5_requested",
+          "edit_requested",
+          "step_1_9_5_allowed",
+          "edit_allowed",
+          "step_3_approved",
+          "approved",
+          "step_3_completed",
+          "completed",
+          "step_1_2_5_pending",
+          "role_pending_review",
+        ];
+        return countedStatuses.includes(status);
+      }
+
+      onSnapshot(
+        collection(db, "projects"),
+        (snapshot) => {
+          const container = document.getElementById("projectBannerContainer");
+          loadedProjects = [];
+
+          if (snapshot.empty) {
+            if (container)
+              container.innerHTML = `<p style="color:#666; text-align:center;">ไม่พบข้อมูลโปรเจกต์ในฐานข้อมูล Firebase</p>`;
+            return;
+          }
+
+          snapshot.forEach((docSnap) => {
+            loadedProjects.push({ docId: docSnap.id, ...docSnap.data() });
+          });
+
+          loadedProjects.sort((a, b) => {
+            const getTime = (val) => {
+              if (!val) return 0;
+              if (typeof val.toDate === "function")
+                return val.toDate().getTime();
+              const parsed = new Date(val).getTime();
+              return isNaN(parsed) ? 0 : parsed;
+            };
+            return getTime(b.createdAt) - getTime(a.createdAt);
+          });
+
+          if (
+            targetProjectId &&
+            currentActiveProjIndex === null &&
+            !window._hasAutoOpened
+          ) {
+            const foundIndex = loadedProjects.findIndex(
+              (p) => p.docId === targetProjectId,
+            );
+            if (foundIndex !== -1) {
+              window._hasAutoOpened = true;
+              openProjectInner(foundIndex);
+              return;
+            }
+          }
+
+          renderProjectBanners(loadedProjects);
+
+          if (currentActiveProjIndex !== null) {
+            const updatedProj = loadedProjects[currentActiveProjIndex];
+            if (updatedProj) {
+              updateInnerProjectViewQuietly(updatedProj);
+            }
+          }
+        },
+        (err) => {
+          console.error("Firebase Error:", err);
+          const container = document.getElementById("projectBannerContainer");
+          if (container)
+            container.innerHTML = `<p style="color:#ef4444; text-align:center;">เกิดข้อผิดพลาดในการเชื่อมต่อ Firebase: ${err.message}</p>`;
+        },
+      );
+
+      function renderProjectBanners(projectsList) {
+        const container = document.getElementById("projectBannerContainer");
+        if (!container) return;
+        container.innerHTML = "";
+
+        projectsList.forEach((proj, index) => {
+          const projStatus =
+            proj.status ||
+            (proj.hidden === true || proj.hidden === "true"
+              ? "hidden"
+              : "open");
+          const isHidden = projStatus === "hidden";
+          const isClosed = projStatus === "closed";
+
+          const totalApps = proj.applications ? proj.applications.length : 0;
+          const passedCount = proj.applications
+            ? proj.applications.filter((a) => isCountedAsPassed(a.status))
+                .length
+            : 0;
+
+          let imageUrls = [];
+          const rawImg = proj.imageUrl || proj.image || "";
+          if (rawImg) {
+            imageUrls = rawImg
+              .split(/[\n,]+/)
+              .map((u) => u.trim())
+              .filter((u) => u.length > 0);
+          }
+          const thumbHtml =
+            imageUrls.length > 0
+              ? `<img src="${imageUrls[0]}" class="banner-thumb" onerror="this.style.display='none'" />`
+              : `<div class="banner-thumb" style="display:flex; align-items:center; justify-content:center; color:#555; font-size:0.75rem;">ไม่มีรูป</div>`;
+
+          let statusBadgeText = "";
+          let btnText = "เข้าสู่โปรเจกต์";
+          let bannerClass = "";
+
+          if (isClosed) {
+            statusBadgeText =
+              '<span style="color:#ef4444; font-size:0.8rem;">[ปิดรับสมัคร]</span>';
+            btnText = "ดูข้อมูลโปรเจกต์ (ปิดรับ)";
+          } else if (isHidden) {
+            statusBadgeText =
+              '<span style="color:#f59e0b; font-size:0.8rem;">[Coming Soon]</span>';
+            btnText = "Coming Soon";
+            bannerClass = "locked";
+          }
+
+          const banner = document.createElement("div");
+          banner.className = `project-banner ${bannerClass}`;
+          banner.innerHTML = `
+            ${thumbHtml}
+            <div class="banner-info">
+              <h3> ${proj.name || "โปรเจกต์ไม่มีชื่อ"} ${statusBadgeText}</h3>
+              <p>รับสมัครสูงสุด: ${proj.maxMembers || 0} คน | สมัครทั้งหมด ${totalApps} คน | ผ่านคัดเลือกแล้ว ${passedCount} คน</p>
+            </div>
+            <button class="banner-action-btn ${isHidden ? "disabled" : ""}" ${isHidden ? "disabled" : `onclick="openProjectInner(${index})"`}>${btnText}</button>
+          `;
+          container.appendChild(banner);
+        });
+      }
+
+      window.openProjectInner = function (index) {
+        currentActiveProjIndex = index;
+        const proj = loadedProjects[index];
+        if (!proj) return;
+
+        const projStatus =
+          proj.status ||
+          (proj.hidden === true || proj.hidden === "true" ? "hidden" : "open");
+        if (projStatus === "hidden") {
+          alert("โปรเจกต์นี้ยังไม่เปิดรับสมัคร (Coming Soon)");
+          return;
+        }
+
+        document.getElementById("projectListView").style.display = "none";
+        document.getElementById("projectInnerView").style.display = "block";
+
+        document.getElementById("innerProjName").innerText =
+          proj.name || "โปรเจกต์ไม่มีชื่อ";
+
+        const descText = proj.description || "ไม่มีรายละเอียดเพิ่มเติม";
+        document.getElementById("innerProjDesc").innerText = descText;
+
+        const galleryContainer = document.getElementById("innerImageGallery");
+        galleryContainer.innerHTML = "";
+        const rawImg = proj.imageUrl || proj.image || "";
+        if (rawImg) {
+          const urls = rawImg
+            .split(/[\n,]+/)
+            .map((u) => u.trim())
+            .filter((u) => u.length > 0);
+          urls.forEach((url) => {
+            galleryContainer.innerHTML += `<div style="flex: 0 0 160px; height: 100px; border-radius: 6px; overflow: hidden; background: #000; border: 1px solid #333;"><img src="${url}" alt="Project Image" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"/></div>`;
+          });
+        }
+
+        const applications = proj.applications || [];
+        activeUsersList = applications.filter((app) =>
+          isCountedAsPassed(app.status),
+        );
+
+        const totalPassedCount = activeUsersList.length;
+        document.getElementById("infoMaxMember").innerText =
+          `จำนวนสมาชิกสูงสุดที่รับ: ${totalPassedCount}/${proj.maxMembers || 0} คน`;
+        const rolesListContainer = document.getElementById("infoRolesList");
+
+        if (proj.roles && proj.roles.length > 0) {
+          rolesListContainer.innerHTML =
+            `<h4 style="color:#ff2a2a; margin-bottom:8px;">ตำแหน่งที่เปิดรับ:</h4><ul>` +
+            proj.roles
+              .map((r) => {
+                const currentFilledCount = activeUsersList.filter((item) => {
+                  const itemRole =
+                    item.assignedRole ||
+                    (item.rolePriority ? item.rolePriority.rank1 : "") ||
+                    "";
+                  return itemRole.trim() === r.name.trim();
+                }).length;
+
+                return `<li><span>${r.name}</span> <span>(${currentFilledCount}/${r.count} คน)</span></li>`;
+              })
+              .join("") +
+            `</ul>`;
+        } else {
+          rolesListContainer.innerHTML = `<p style="color:#666;">ยังไม่มีการระบุตำแหน่ง</p>`;
+        }
+
+        const passedContainer = document.getElementById("passedUsersContainer");
+        let htmlContent = "";
+        if (activeUsersList.length > 0) {
+          activeUsersList.forEach((item, i) => {
+            const userName =
+              item.user ||
+              item.name ||
+              item.username ||
+              item.fullName ||
+              item.uid ||
+              "ผู้ใช้งาน";
+            const userRole =
+              item.assignedRole ||
+              (item.rolePriority ? item.rolePriority.rank1 : "") ||
+              "ไม่ระบุบทบาท";
+            const serverStatus = item.serverStatus || "ว่าง";
+
+            let statusColor = "#10b981";
+            if (serverStatus !== "ว่าง") {
+              statusColor = "#ef4444";
+            }
+
+            htmlContent += `
+              <div class="new-user-card" onclick="window.showUserModalData(${index}, ${i})" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 14px 20px;">
+                <div>
+                  <h4 style="color: #fff; font-size: 1.1rem; margin-bottom: 4px;">${userName}</h4>
+                  <p style="color: #9ca3af; font-size: 0.85rem; margin: 0;">บทบาท: <span style="color: #ef4444; font-weight: bold;">[${userRole}]</span></p>
+                </div>
+                <div>
+                  <span style="background: ${statusColor}; color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; display: inline-block;">
+                    สถานะ: ${serverStatus}
+                  </span>
+                </div>
+              </div>
+            `;
+          });
+        } else {
+          htmlContent = `
+            <div class="new-user-card" style="text-align:center; padding:20px;">
+              <h4 style="color: #aaa; font-size: 1.1rem;">ยังไม่มีผู้ผ่านการคัดเลือกในระบบ</h4>
+              <p style="color: #9ca3af; font-size: 0.85rem; margin-top:5px;">รายชื่อจะแสดงที่นี่เมื่อแอดมินอนุมัติผ่านรอบ 1 หรือผ่านเข้าโปรเจกต์</p>
+            </div>
+          `;
+        }
+        passedContainer.innerHTML = htmlContent;
+
+        renderProjectStories(proj);
+
+        const currentUser = auth.currentUser;
+        const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+        const currentUid = currentUser ? currentUser.uid : userData.uid || "";
+        const userApp = proj.applications
+          ? proj.applications.find((app) => app.uid === currentUid)
+          : null;
+
+        const isPassedMember = userApp && isCountedAsPassed(userApp.status);
+        const createPostBox = document.getElementById("createPostBox");
+        if (createPostBox) {
+          createPostBox.style.display = isPassedMember ? "block" : "none";
+        }
+
+        const round1Section = document.getElementById("round1FormSection");
+        const stage2Form = document.getElementById("stage2Form");
+        const formSectionTitle = document.getElementById("formSectionTitle");
+        const statusNotice = document.getElementById("applyStatusNotice");
+        const submitBtn = document.getElementById("submitAppBtn");
+        const topRightApplyBtn = document.getElementById("topRightApplyBtn");
+
+        submitBtn.onclick = null;
+
+        if (projStatus === "closed") {
+          formSectionTitle.innerText = "สถานะโปรเจกต์: ปิดรับสมัครแล้ว";
+          round1Section.style.display = "none";
+          stage2Form.style.display = "none";
+          statusNotice.innerHTML =
+            '<span style="color:#ef4444; font-weight:bold;">โปรเจกต์นี้ได้ปิดรับสมัครสมาชิกเพิ่มเติมแล้ว</span>';
+
+          topRightApplyBtn.innerText = "โปรเจกต์ปิดรับสมัครแล้ว";
+          topRightApplyBtn.style.background = "#333";
+          topRightApplyBtn.disabled = true;
+          currentTopRightAction = "closed";
+
+          renderRound1Form(proj, userApp);
+        } else {
+          topRightApplyBtn.disabled = false;
+        }
+
+        if (projStatus !== "closed") {
+          if (!currentUser && !currentUid) {
+            formSectionTitle.innerText = "ยื่นใบสมัครเข้าร่วมโปรเจกต์";
+            round1Section.style.display = "block";
+            stage2Form.style.display = "none";
+            statusNotice.innerHTML =
+              '<span style="color:#ef4444;">กรุณาเข้าสู่ระบบก่อนจึงจะสามารถส่งใบสมัครได้</span>';
+            submitBtn.innerText = "กรุณาเข้าสู่ระบบก่อนสมัคร";
+            submitBtn.disabled = true;
+            submitBtn.style.background = "#555";
+            topRightApplyBtn.innerText = "กรุณาเข้าสู่ระบบก่อนสมัคร";
+            topRightApplyBtn.style.background = "#555";
+            currentTopRightAction = "login";
+            setFormInputsEditable(false);
+          } else if (!userApp) {
+            formSectionTitle.innerText = "ยื่นใบสมัครเข้าร่วมโปรเจกต์";
+            round1Section.style.display = "block";
+            stage2Form.style.display = "none";
+            statusNotice.innerHTML =
+              "กรอกข้อมูลบทบาทและตอบคำถามด้านล่างเพื่อยื่นใบสมัคร";
+            submitBtn.innerText = "ยืนยันการส่งใบสมัคร";
+            submitBtn.disabled = false;
+            submitBtn.style.background = "#dc2626";
+            topRightApplyBtn.innerText = "สมัครเข้าร่วม / ส่งใบสมัคร";
+            topRightApplyBtn.style.background = "#dc2626";
+            currentTopRightAction = "apply";
+            setFormInputsEditable(true);
+            renderRound1Form(proj, userApp);
+          } else {
+            const appStatus = userApp.status || "pending";
+            const needsStage2 = [
+              "step_1_2_passed",
+              "passed",
+              "step_1_9_5_allowed",
+              "edit_allowed",
+              "step_2_revision",
+              "revision_requested",
+            ].includes(appStatus);
+
+            if (needsStage2) {
+              formSectionTitle.innerText = "กรอกข้อมูลและส่งเอกสารรอบที่ 2";
+              round1Section.style.display = "none";
+              stage2Form.style.display = "block";
+              statusNotice.innerHTML = `<span style="color:#10b981;">ผ่านรอบที่ 1 แล้ว! กรุณากรอกข้อมูลรอบที่ 2 ตามหัวข้อด้านล่าง</span>`;
+              document.getElementById("stage2DescBox").innerText =
+                proj.stage2Description ||
+                "กรุณากรอกข้อมูลและแนบลิงก์รูปภาพประกอบตามหัวข้อด้านล่างให้ครบถ้วน";
+              topRightApplyBtn.innerText = "ส่งข้อมูลรอบที่ 2";
+              topRightApplyBtn.style.background = "#10b981";
+              currentTopRightAction = "stage2";
+              renderStage2Form(proj, userApp);
+            } else {
+              formSectionTitle.innerText = "สถานะการสมัครเข้าร่วมโปรเจกต์";
+              round1Section.style.display = "block";
+              stage2Form.style.display = "none";
+              statusNotice.innerHTML = `<span style="color:#10b981;">สถานะการสมัคร: [${appStatus}] / คุณได้ยื่นใบสมัครโปรเจกต์นี้เรียบร้อยแล้ว</span>`;
+
+              submitBtn.innerText = "ดูสถานะการสมัครในหน้า User";
+              submitBtn.disabled = false;
+              submitBtn.style.background = "#2563eb";
+              submitBtn.onclick = function () {
+                window.location.href = "user.html";
+              };
+
+              topRightApplyBtn.innerText = "ดูสถานะการสมัครของคุณ";
+              topRightApplyBtn.style.background = "#2563eb";
+              currentTopRightAction = "userStatus";
+
+              renderRound1Form(proj, userApp);
+              setFormInputsEditable(false);
+            }
+          }
+        }
+      };
+
+      window.handleTopRightBtnClick = function () {
+        if (
+          currentTopRightAction === "apply" ||
+          currentTopRightAction === "stage2"
+        ) {
+          switchTab("apply", null);
+        } else if (currentTopRightAction === "userStatus") {
+          window.location.href = "user.html";
+        }
+      };
+
+      function renderProjectStories(proj) {
+        const container = document.getElementById("projectPostsContainer");
+        if (!container) return;
+
+        const posts = proj.posts || [];
+        if (posts.length === 0) {
+          container.innerHTML = `<p style="color:#666; text-align:center; padding:20px;">ยังไม่มีบันทึกเรื่องราวจากสมาชิกในโปรเจกต์นี้ เป็นคนแรกที่แชร์เรื่องราวสิ!</p>`;
+          return;
+        }
+
+        let html = "";
+        const sortedPosts = [...posts].reverse();
+        sortedPosts.forEach((post) => {
+          let imgHtml = "";
+          if (post.imageUrl) {
+            imgHtml = `<div style="margin-top:10px;"><img src="${post.imageUrl}" style="max-width:100%; border-radius:6px; border:1px solid #333;" onerror="this.style.display='none'"/></div>`;
+          }
+
+          html += `
+            <div style="background: #0a0a0d; padding: 15px; border-radius: 8px; border: 1px solid #222; margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="color: #ef4444; font-weight: bold; font-size: 0.95rem;">${post.authorName || "สมาชิกโปรเจกต์"}</span>
+                <span style="color: #777; font-size: 0.75rem;">${post.dateString || "-"}</span>
+              </div>
+              <p style="color: #ddd; font-size: 0.95rem; line-height: 1.5; white-space: pre-line; margin: 0;">${post.content || ""}</p>
+              ${imgHtml}
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      }
+
+      window.submitProjectPost = async function () {
+        if (currentActiveProjIndex === null) return;
+        const contentInput = document.getElementById("postContentInput");
+        const imageInput = document.getElementById("postImageInput");
+
+        const content = contentInput.value.trim();
+        const imageUrl = imageInput.value.trim();
+
+        if (!content) {
+          alert("กรุณากรอกข้อความเนื้อหาเรื่องราวที่ต้องการโพสต์");
+          return;
+        }
+
+        const currentUser = auth.currentUser;
+        const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+        const authorName =
+          userData.nickname ||
+          userData.fullName ||
+          (currentUser ? currentUser.displayName : "สมาชิกโปรเจกต์");
+        const currentUid = currentUser ? currentUser.uid : userData.uid || "";
+
+        const proj = loadedProjects[currentActiveProjIndex];
+
+        try {
+          const projRef = doc(db, "projects", proj.docId);
+          const newPost = {
+            authorUid: currentUid,
+            authorName: authorName,
+            content: content,
+            imageUrl: imageUrl,
+            dateString: new Date().toLocaleString("th-TH"),
+            createdAt: new Date().toISOString(),
+          };
+
+          await updateDoc(projRef, {
+            posts: arrayUnion(newPost),
+          });
+
+          contentInput.value = "";
+          imageInput.value = "";
+          alert("โพสต์บันทึกเรื่องราวเรียบร้อยแล้ว!");
+          openProjectInner(currentActiveProjIndex);
+        } catch (err) {
+          console.error("Error submitting post:", err);
+          alert("เกิดข้อผิดพลาดในการโพสต์: " + err.message);
+        }
+      };
+
+      function renderRound1Form(proj, userApp) {
+        const rank1 = document.getElementById("roleRank1");
+        const rank2 = document.getElementById("roleRank2");
+        const rank3 = document.getElementById("roleRank3");
+        rank1.innerHTML = '<option value="">-- เลือกบทบาทอันดับ 1 --</option>';
+        rank2.innerHTML =
+          '<option value="">-- เลือกบทบาทอันดับ 2 (สำรอง) --</option>';
+        rank3.innerHTML =
+          '<option value="">-- เลือกบทบาทอันดับ 3 (สำรอง) --</option>';
+
+        if (proj.roles) {
+          proj.roles.forEach((r) => {
+            rank1.innerHTML += `<option value="${r.name}">${r.name} (รับ ${r.count})</option>`;
+            rank2.innerHTML += `<option value="${r.name}">${r.name} (รับ ${r.count})</option>`;
+            rank3.innerHTML += `<option value="${r.name}">${r.name} (รับ ${r.count})</option>`;
+          });
+        }
+
+        if (userApp && userApp.rolePriority) {
+          rank1.value = userApp.rolePriority.rank1 || "";
+          rank2.value = userApp.rolePriority.rank2 || "";
+          rank3.value = userApp.rolePriority.rank3 || "";
+        }
+
+        const qContainer = document.getElementById("dynamicQuestionsContainer");
+        qContainer.innerHTML = "";
+
+        if (proj.customQuestions && proj.customQuestions.length > 0) {
+          proj.customQuestions.forEach((qItem, qIdx) => {
+            const qTitle = typeof qItem === "object" ? qItem.title : qItem;
+            const qType =
+              typeof qItem === "object" && qItem.type ? qItem.type : "text";
+            const qOptions =
+              typeof qItem === "object" && Array.isArray(qItem.options)
+                ? qItem.options
+                : [];
+            const prevAns =
+              userApp && userApp.answers ? userApp.answers[qTitle] || "" : "";
+
+            qContainer.innerHTML += generateFieldHTML(
+              qIdx,
+              qTitle,
+              qType,
+              qOptions,
+              prevAns,
+              "r1",
+            );
+          });
+        }
+      }
+
+      function renderStage2Form(proj, userApp) {
+        const s2Container = document.getElementById("stage2QuestionsContainer");
+        s2Container.innerHTML = "";
+
+        const stage2Questions = proj.stage2Questions || [];
+        const existingStage2Answers = userApp.stage2Answers || {};
+
+        if (stage2Questions.length > 0) {
+          stage2Questions.forEach((qItem, qIdx) => {
+            const qTitle = typeof qItem === "object" ? qItem.title : qItem;
+            const displayLabel =
+              typeof qItem === "object" && qItem.placeholder
+                ? qItem.placeholder
+                : qTitle;
+            const qType =
+              typeof qItem === "object" && qItem.type ? qItem.type : "text";
+            const qOptions =
+              typeof qItem === "object" && Array.isArray(qItem.options)
+                ? qItem.options
+                : [];
+            const prevAns =
+              existingStage2Answers[qTitle] !== undefined
+                ? existingStage2Answers[qTitle]
+                : existingStage2Answers[displayLabel] || "";
+
+            s2Container.innerHTML += generateFieldHTML(
+              qIdx,
+              displayLabel,
+              qType,
+              qOptions,
+              prevAns,
+              "r2",
+              qTitle,
+            );
+          });
+        } else {
+          s2Container.innerHTML = `<p style="color:#888;">ยังไม่มีการตั้งค่าคำถามรอบที่ 2</p>`;
+        }
+      }
+
+      function generateFieldHTML(
+        qIdx,
+        labelTitle,
+        qType,
+        qOptions,
+        prevAns,
+        roundPrefix,
+        originalTitle = "",
+      ) {
+        const dataTitleAttr = originalTitle
+          ? `data-title="${originalTitle}" data-display-title="${labelTitle}"`
+          : `data-title="${labelTitle}"`;
+        let inputHtml = "";
+
+        if (qType === "textarea") {
+          inputHtml = `<textarea class="custom-ans-input" ${dataTitleAttr} placeholder="กรอกคำตอบของคุณ..." required style="width:100%; padding:10px; background:#0a0a0d; border:1px solid #222; color:#fff; border-radius:6px; min-height:80px; box-sizing:border-box;">${prevAns}</textarea>`;
+        } else if (qType === "radio") {
+          let radioHtml = `<div class="custom-ans-group" ${dataTitleAttr} data-type="radio" style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">`;
+          if (qOptions.length > 0) {
+            qOptions.forEach((opt) => {
+              const isChecked = prevAns === opt ? "checked" : "";
+              radioHtml += `
+                <label style="display: flex; align-items: center; gap: 10px; background: #0a0a0d; padding: 10px 14px; border-radius: 6px; border: 1px solid #222; color: #ddd; cursor: pointer;">
+                  <input type="radio" name="${roundPrefix}_q_${qIdx}" value="${opt}" class="custom-ans-input" ${dataTitleAttr} ${isChecked} required style="accent-color: #ef4444; width: 18px; height: 18px; margin: 0; cursor: pointer;" />
+                  <span style="font-size: 0.95rem;">${opt}</span>
+                </label>`;
+            });
+          } else {
+            radioHtml += `<p style="color:#777; font-size:0.85rem;">ไม่มีตัวเลือก</p>`;
+          }
+          radioHtml += `</div>`;
+          inputHtml = radioHtml;
+        } else if (qType === "checkbox") {
+          let checkHtml = `<div class="custom-ans-group" ${dataTitleAttr} data-type="checkbox" style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">`;
+          const prevAnsArray = Array.isArray(prevAns)
+            ? prevAns
+            : typeof prevAns === "string" && prevAns
+              ? prevAns.split(",").map((s) => s.trim())
+              : [];
+          if (qOptions.length > 0) {
+            qOptions.forEach((opt, optIdx) => {
+              const isChecked = prevAnsArray.includes(opt) ? "checked" : "";
+              checkHtml += `
+                <label style="display: flex; align-items: center; gap: 10px; background: #0a0a0d; padding: 10px 14px; border-radius: 6px; border: 1px solid #222; color: #ddd; cursor: pointer;">
+                  <input type="checkbox" name="${roundPrefix}_q_${qIdx}_${optIdx}" value="${opt}" class="custom-ans-input-checkbox" ${dataTitleAttr} ${isChecked} style="accent-color: #ef4444; width: 18px; height: 18px; margin: 0; cursor: pointer;" />
+                  <span style="font-size: 0.95rem;">${opt}</span>
+                </label>`;
+            });
+          } else {
+            checkHtml += `<p style="color:#777; font-size:0.85rem;">ไม่มีตัวเลือก</p>`;
+          }
+          checkHtml += `<input type="hidden" class="custom-ans-input" ${dataTitleAttr} value="${Array.isArray(prevAns) ? prevAns.join(", ") : prevAns}" />`;
+          checkHtml += `</div>`;
+          inputHtml = checkHtml;
+        } else if (qType === "select") {
+          let selectHtml = `<select class="custom-ans-input" ${dataTitleAttr} required style="width:100%; padding:10px 12px; background:#0a0a0d; border:1px solid #222; color:#fff; border-radius:6px; font-size:0.95rem; box-sizing:border-box;">`;
+          selectHtml += `<option value="">-- กรุณาเลือก --</option>`;
+          qOptions.forEach((opt) => {
+            const isSelected = prevAns === opt ? "selected" : "";
+            selectHtml += `<option value="${opt}" ${isSelected}>${opt}</option>`;
+          });
+          selectHtml += `</select>`;
+          inputHtml = selectHtml;
+        } else if (qType === "date") {
+          let pYear = "",
+            pMonth = "",
+            pDay = "";
+          if (prevAns) {
+            const parts = prevAns.split(/[-/]/);
+            if (parts.length === 3) {
+              if (parts[0].length === 4) {
+                pYear = parts[0];
+                pMonth = parts[1];
+                pDay = parts[2];
+              } else {
+                pDay = parts[0];
+                pMonth = parts[1];
+                pYear = parts[2];
+              }
+            }
+          }
+
+          let dayOptions = '<option value="">วัน</option>';
+          for (let d = 1; d <= 31; d++) {
+            const dStr = String(d).padStart(2, "0");
+            dayOptions += `<option value="${dStr}" ${pDay === dStr ? "selected" : ""}>${d}</option>`;
+          }
+
+          const months = [
+            { val: "01", name: "มกราคม" },
+            { val: "02", name: "กุมภาพันธ์" },
+            { val: "03", name: "มีนาคม" },
+            { val: "04", name: "เมษายน" },
+            { val: "05", name: "พฤษภาคม" },
+            { val: "06", name: "มิถุนายน" },
+            { val: "07", name: "กรกฎาคม" },
+            { val: "08", name: "สิงหาคม" },
+            { val: "09", name: "กันยายน" },
+            { val: "10", name: "ตุลาคม" },
+            { val: "11", name: "พฤศจิกายน" },
+            { val: "12", name: "ธันวาคม" },
+          ];
+          let monthOptions = '<option value="">เดือน</option>';
+          months.forEach((m) => {
+            monthOptions += `<option value="${m.val}" ${pMonth === m.val ? "selected" : ""}>${m.name}</option>`;
+          });
+
+          let yearOptions = '<option value="">ปี พ.ศ. / ค.ศ.</option>';
+          const currentYear = new Date().getFullYear();
+          for (let y = currentYear; y >= currentYear - 80; y--) {
+            const yStr = String(y);
+            yearOptions += `<option value="${yStr}" ${pYear === yStr ? "selected" : ""}>${y + 543} (${y})</option>`;
+          }
+
+          inputHtml = `
+            <div class="date-picker-group" ${dataTitleAttr} style="display: flex; gap: 8px;">
+              <select class="date-day" style="flex: 1; padding: 10px; background: #0a0a0d; border: 1px solid #222; color: #fff; border-radius: 6px;" onchange="updateDateValue(this)" required>${dayOptions}</select>
+              <select class="date-month" style="flex: 1.5; padding: 10px; background: #0a0a0d; border: 1px solid #222; color: #fff; border-radius: 6px;" onchange="updateDateValue(this)" required>${monthOptions}</select>
+              <select class="date-year" style="flex: 1.2; padding: 10px; background: #0a0a0d; border: 1px solid #222; color: #fff; border-radius: 6px;" onchange="updateDateValue(this)" required>${yearOptions}</select>
+              <input type="hidden" class="custom-ans-input" ${dataTitleAttr} value="${prevAns}" required />
+            </div>
+          `;
+        } else if (qType === "number") {
+          inputHtml = `<input type="number" class="custom-ans-input" ${dataTitleAttr} value="${prevAns}" placeholder="กรอกตัวเลข..." required style="width:100%; padding:10px; background:#0a0a0d; border:1px solid #222; color:#fff; border-radius:6px; box-sizing:border-box;" />`;
+        } else if (qType === "email") {
+          inputHtml = `<input type="email" class="custom-ans-input" ${dataTitleAttr} value="${prevAns}" placeholder="example@email.com" required style="width:100%; padding:10px; background:#0a0a0d; border:1px solid #222; color:#fff; border-radius:6px; box-sizing:border-box;" />`;
+        } else if (qType === "image") {
+          inputHtml = `<input type="url" class="custom-ans-input" ${dataTitleAttr} value="${prevAns}" placeholder="วางลิงก์รูปภาพผลงาน / เอกสาร (URL)" required style="width:100%; padding:10px; background:#0a0a0d; border:1px solid #222; color:#fff; border-radius:6px; box-sizing:border-box;" />`;
+        } else {
+          inputHtml = `<input type="text" class="custom-ans-input" ${dataTitleAttr} value="${prevAns}" placeholder="กรอกคำตอบของคุณ..." required style="width:100%; padding:10px; background:#0a0a0d; border:1px solid #222; color:#fff; border-radius:6px; box-sizing:border-box;" />`;
+        }
+
+        return `
+          <div class="form-group" style="margin-bottom:16px;">
+            <label style="display:block; margin-bottom:8px; color:#ddd; font-size:0.95rem; font-weight:600;">ข้อที่ ${qIdx + 1}. ${labelTitle}</label>
+            ${inputHtml}
+          </div>`;
+      }
+
+      function updateInnerProjectViewQuietly(proj) {
+        const applications = proj.applications || [];
+        activeUsersList = applications.filter((app) =>
+          isCountedAsPassed(app.status),
+        );
+        const totalPassedCount = activeUsersList.length;
+
+        const memberInfoElem = document.getElementById("infoMaxMember");
+        if (memberInfoElem) {
+          memberInfoElem.innerText = `จำนวนสมาชิกสูงสุดที่รับ: ${totalPassedCount}/${proj.maxMembers || 0} คน`;
+        }
+      }
+
+      window.updateDateValue = function (el) {
+        const wrapper = el.closest(".date-picker-group");
+        const day = wrapper.querySelector(".date-day").value;
+        const month = wrapper.querySelector(".date-month").value;
+        const year = wrapper.querySelector(".date-year").value;
+        const hiddenInput = wrapper.querySelector(".custom-ans-input");
+        if (day && month && year) {
+          hiddenInput.value = `${day}/${month}/${year}`;
+        } else {
+          hiddenInput.value = "";
+        }
+      };
+
+      function setFormInputsEditable(isEditable) {
+        const rank1 = document.getElementById("roleRank1");
+        const rank2 = document.getElementById("roleRank2");
+        const rank3 = document.getElementById("roleRank3");
+        if (rank1) rank1.disabled = !isEditable;
+        if (rank2) rank2.disabled = !isEditable;
+        if (rank3) rank3.disabled = !isEditable;
+        document
+          .querySelectorAll(
+            '.custom-ans-input, .date-day, .date-month, .date-year, input[type="radio"], input[type="checkbox"]',
+          )
+          .forEach((input) => {
+            input.disabled = !isEditable;
+          });
+      }
+
+      window.backToList = function () {
+        currentActiveProjIndex = null;
+        window._hasAutoOpened = false;
+
+        if (window.history.pushState) {
+          const newUrl =
+            window.location.protocol +
+            "//" +
+            window.location.host +
+            window.location.pathname;
+          window.history.pushState({ path: newUrl }, "", newUrl);
+        }
+
+        document.getElementById("projectInnerView").style.display = "none";
+        document.getElementById("projectListView").style.display = "block";
+
+        if (loadedProjects.length > 0) {
+          renderProjectBanners(loadedProjects);
+        }
+      };
+
+      window.switchTab = function (tabName, event) {
+        document
+          .querySelectorAll(".tab-pane")
+          .forEach((p) => p.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((b) => b.classList.remove("active"));
+
+        const targetPane = document.getElementById(`tab-${tabName}`);
+        if (targetPane) targetPane.classList.add("active");
+
+        if (event && event.currentTarget) {
+          event.currentTarget.classList.add("active");
+        } else if (tabName === "info") {
+          const btnInfo = document.getElementById("tabBtnInfo");
+          if (btnInfo) btnInfo.classList.add("active");
+        }
+      };
+
+      window.validateRoleSelection = function () {
+        const r1 = document.getElementById("roleRank1").value;
+        const r2 = document.getElementById("roleRank2").value;
+        const r3 = document.getElementById("roleRank3").value;
+        if (r2 && r2 === r1) {
+          alert("บทบาทอันดับที่ 2 ต้องไม่ซ้ำกับอันดับที่ 1");
+          document.getElementById("roleRank2").value = "";
+        }
+        if (r3 && (r3 === r1 || r3 === r2)) {
+          alert("บทบาทอันดับที่ 3 ต้องไม่ซ้ำกับอันดับที่ 1 หรือ 2");
+          document.getElementById("roleRank3").value = "";
+        }
+      };
+
+      window.showUserModalData = function (projIdx, userIdx) {
+        let content = "";
+
+        if (userIdx === -1 || activeUsersList.length === 0) {
+          document.getElementById("modalUserTitle").innerText =
+            `ข้อมูลสถานะระบบ`;
+          content = `
+            <div style="background:#111; padding:12px; border-radius:6px; border: 1px solid #222; text-align:center;">
+              <p style="color:#aaa; margin-bottom:8px;">ขณะนี้ยังไม่มีสมาชิกหรือข้อมูลผู้สมัครที่ผ่านการคัดเลือกในระบบ</p>
+            </div>
+          `;
+        } else {
+          const uData = activeUsersList[userIdx];
+          const userName =
+            uData.user ||
+            uData.name ||
+            uData.username ||
+            uData.fullName ||
+            uData.uid ||
+            "ผู้ใช้งาน";
+          const proj = loadedProjects[projIdx];
+
+          document.getElementById("modalUserTitle").innerText =
+            `ข้อมูลรอบที่ 2 ของ: ${userName}`;
+
+          const stage2Answers = uData.stage2Answers || {};
+          const stage2Questions = proj.stage2Questions || [];
+
+          if (Object.keys(stage2Answers).length > 0) {
+            stage2Questions.forEach((qItem) => {
+              const qTitle = typeof qItem === "object" ? qItem.title : qItem;
+              const displayHeader =
+                typeof qItem === "object" && qItem.placeholder
+                  ? qItem.placeholder
+                  : qTitle;
+
+              let qAns =
+                stage2Answers[qTitle] !== undefined
+                  ? stage2Answers[qTitle]
+                  : stage2Answers[displayHeader];
+
+              if (qAns !== undefined) {
+                let displayAnswer = Array.isArray(qAns)
+                  ? qAns.join(", ")
+                  : qAns;
+
+                const isImageUrl =
+                  typeof displayAnswer === "string" &&
+                  (displayAnswer.startsWith("http://") ||
+                    displayAnswer.startsWith("https://")) &&
+                  (displayAnswer.match(/\.(jpeg|jpg|gif|png|webp)$/i) ||
+                    displayAnswer.includes("imgur") ||
+                    displayAnswer.includes("firebasestorage") ||
+                    displayAnswer.includes("googleusercontent") ||
+                    displayAnswer.includes("ibb.co") ||
+                    displayAnswer.includes("127.0.0.1") ||
+                    displayAnswer.includes("localhost"));
+                const isImageQuestion =
+                  qTitle.toLowerCase().includes("รูป") ||
+                  qTitle.toLowerCase().includes("ภาพ") ||
+                  qTitle.toLowerCase().includes("image") ||
+                  qTitle.toLowerCase().includes("photo") ||
+                  (typeof qItem === "object" && qItem.type === "image");
+
+                if (
+                  isImageUrl ||
+                  (isImageQuestion &&
+                    typeof displayAnswer === "string" &&
+                    (displayAnswer.startsWith("http://") ||
+                      displayAnswer.startsWith("https://")))
+                ) {
+                  displayAnswer = `<br><a href="${displayAnswer}" target="_blank" style="color:#ef4444; text-decoration:underline; display:inline-block; margin-top:4px;">เปิดดูลิงก์รูปภาพขนาดเต็ม</a><br><img src="${displayAnswer}" style="max-width:100%; height:auto; border-radius:6px; margin-top:8px; border:1px solid #333;" onerror="this.style.display='none'"/>`;
+                }
+
+                content += `
+                  <div style="background:#111; padding:12px; border-radius:6px; margin-bottom:10px; border: 1px solid #222;">
+                    <span style="color:#fbbf24; font-weight:600; font-size: 0.95rem;">${displayHeader} : </span>
+                    <div style="margin-top:6px; color:#fff; word-break: break-all; font-size: 0.9rem;"> ${displayAnswer}</div>
+                  </div>
+                `;
+              }
+            });
+          } else {
+            content += `<p style="color:#888; font-style:italic; text-align:center; padding: 20px;">ยังไม่มีข้อมูลหรือผู้ใช้อยู่ในขั้นตอนการส่งข้อมูลรอบที่ 2</p>`;
+          }
+        }
+
+        document.getElementById("userDetailContent").innerHTML = content;
+        const modal = document.getElementById("userDetailModal");
+        if (modal) {
+          modal.style.setProperty("display", "flex", "important");
+        }
+      };
+
+      window.closeUserDetailModal = function () {
+        const modal = document.getElementById("userDetailModal");
+        if (modal) {
+          modal.style.setProperty("display", "none", "important");
+        }
+      };
+
+      function collectFormAnswers(containerSelector) {
+        const newAnswers = {};
+        let isValid = true;
+
+        const groups = document.querySelectorAll(
+          `${containerSelector} .custom-ans-group`,
+        );
+        groups.forEach((group) => {
+          const title = group.getAttribute("data-title");
+          const type = group.getAttribute("data-type");
+          if (type === "radio") {
+            const selectedRadio = group.querySelector(
+              'input[type="radio"]:checked',
+            );
+            if (selectedRadio) {
+              newAnswers[title] = selectedRadio.value;
+            } else {
+              isValid = false;
+            }
+          } else if (type === "checkbox") {
+            const checkedBoxes = group.querySelectorAll(
+              'input[type="checkbox"]:checked',
+            );
+            let vals = [];
+            checkedBoxes.forEach((cb) => vals.push(cb.value));
+            if (vals.length > 0) {
+              newAnswers[title] = vals;
+            } else {
+              isValid = false;
+            }
+          }
+        });
+
+        document
+          .querySelectorAll(`${containerSelector} .custom-ans-input`)
+          .forEach((input) => {
+            const title = input.getAttribute("data-title");
+            if (!newAnswers[title] && title) {
+              const val = input.value.trim();
+              if (!val) isValid = false;
+              newAnswers[title] = val;
+            }
+          });
+
+        return { answers: newAnswers, isValid };
+      }
+
+      window.submitApplication = async function (e) {
+        e.preventDefault();
+        if (currentActiveProjIndex === null) return;
+
+        const currentUser = auth.currentUser;
+        const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+        const currentUid = currentUser ? currentUser.uid : userData.uid || "";
+
+        if (!currentUser && !currentUid) {
+          alert("กรุณาเข้าสู่ระบบก่อนส่งใบสมัครโปรเจกต์");
+          return;
+        }
+
+        const proj = loadedProjects[currentActiveProjIndex];
+        const r1 = document.getElementById("roleRank1").value;
+        const r2 = document.getElementById("roleRank2").value;
+        const r3 = document.getElementById("roleRank3").value;
+
+        if (!r1) {
+          alert("กรุณาเลือกบทบาทอันดับที่ 1");
+          return;
+        }
+
+        const existingApp = proj.applications
+          ? proj.applications.find((app) => app.uid === currentUid)
+          : null;
+        if (existingApp) {
+          alert("คุณได้ส่งใบสมัครโปรเจกต์นี้ไปแล้ว ไม่สามารถส่งซ้ำได้");
+          return;
+        }
+
+        const collected = collectFormAnswers("#round1FormSection");
+        if (!collected.isValid) {
+          alert("กรุณากรอกข้อมูลคำถามรอบที่ 1 ให้ครบถ้วน");
+          return;
+        }
+
+        const roleChoicesArray = [r1, r2, r3].filter(Boolean);
+        const applicantName =
+          userData.nickname ||
+          userData.fullName ||
+          (currentUser ? currentUser.displayName : "ผู้ใช้งาน");
+
+        try {
+          const projRef = doc(db, "projects", proj.docId);
+
+          const newApp = {
+            user: applicantName,
+            uid: currentUid,
+            accountEmail: currentUser
+              ? currentUser.email
+              : userData.email || "-",
+            rolePriority: { rank1: r1, rank2: r2 || null, rank3: r3 || null },
+            choices: roleChoicesArray,
+            status: "pending",
+            answers: collected.answers,
+            createdAt: new Date().toISOString(),
+          };
+
+          await updateDoc(projRef, {
+            applications: arrayUnion(newApp),
+          });
+
+          await logAdminAction(
+            "ผู้ใช้สมัครเข้าโปรเจกต์",
+            `ผู้ใช้ "${applicantName}" ได้ยื่นใบสมัครเข้าร่วมโปรเจกต์ "${proj.name}" (บทบาทอันดับ 1: ${r1})`,
+          );
+
+          alert("ส่งใบสมัครเรียบร้อยแล้ว!");
+          openProjectInner(currentActiveProjIndex);
+          switchTab("info", null);
+        } catch (err) {
+          console.error("Error submitting application:", err);
+          alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + err.message);
+        }
+      };
+
+      window.submitStage2Application = async function (e) {
+        e.preventDefault();
+        if (currentActiveProjIndex === null) return;
+
+        const currentUser = auth.currentUser;
+        const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+        const currentUid = currentUser ? currentUser.uid : userData.uid || "";
+
+        if (!currentUid) {
+          alert("ไม่พบข้อมูลการเข้าสู่ระบบ");
+          return;
+        }
+
+        const proj = loadedProjects[currentActiveProjIndex];
+        const collected = collectFormAnswers("#stage2Form");
+        if (!collected.isValid) {
+          alert("กรุณากรอกข้อมูลคำถามรอบที่ 2 ให้ครบถ้วน");
+          return;
+        }
+
+        let applicantName = "ผู้ใช้งาน";
+
+        try {
+          const projRef = doc(db, "projects", proj.docId);
+
+          await runTransaction(db, async (transaction) => {
+            const projDoc = await transaction.get(projRef);
+            if (!projDoc.exists()) throw new Error("ไม่พบโปรเจกต์นี้");
+
+            const projData = projDoc.data();
+            const apps = projData.applications || [];
+            const appIndex = apps.findIndex((a) => a.uid === currentUid);
+            if (appIndex === -1)
+              throw new Error("ไม่พบข้อมูลผู้สมัครของคุณในโปรเจกต์นี้");
+
+            applicantName = apps[appIndex].user || "ผู้ใช้งาน";
+
+            apps[appIndex] = {
+              ...apps[appIndex],
+              stage2Answers: collected.answers,
+              status: "step_2_submitted",
+              updatedAtString: new Date().toLocaleString("th-TH"),
+            };
+
+            transaction.update(projRef, { applications: apps });
+          });
+
+          await logAdminAction(
+            "ส่งข้อมูลรอบที่ 2",
+            `ผู้ใช้ "${applicantName}" ได้ส่งข้อมูลและเอกสารรอบที่ 2 ในโปรเจกต์ "${proj.name}"`,
+          );
+
+          alert("ส่งข้อมูลรอบที่ 2 สำเร็จ!");
+          openProjectInner(currentActiveProjIndex);
+          switchTab("info", null);
+        } catch (err) {
+          console.error("Error submitting stage 2:", err);
+          alert("เกิดข้อผิดพลาดในการส่งข้อมูลรอบที่ 2: " + err.message);
+        }
+      };
+    </script>
+  </body>
+</html>
